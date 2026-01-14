@@ -7,17 +7,21 @@ import UIKit
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    // Initialize Flutter engine first
-    let controller: FlutterViewController = window?.rootViewController as! FlutterViewController
-    
-    // Call super to ensure complete initialization
+    // Call super to initialize Flutter engine
     let result = super.application(application, didFinishLaunchingWithOptions: launchOptions)
     
-    // Small delay to ensure engine is fully ready before plugin registration
+    // Register plugins asynchronously to prevent crashes
+    // This ensures the Flutter engine is fully initialized before plugin registration
     DispatchQueue.main.async {
       GeneratedPluginRegistrant.register(with: self)
     }
     
     return result
+  }
+  
+  // Handle app lifecycle to prevent memory issues
+  override func applicationDidReceiveMemoryWarning(_ application: UIApplication) {
+    // Clear caches if needed
+    URLCache.shared.removeAllCachedResponses()
   }
 }
