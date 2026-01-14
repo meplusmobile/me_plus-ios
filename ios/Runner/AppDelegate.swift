@@ -11,8 +11,9 @@ import UIKit
     // Call super FIRST to initialize Flutter engine and window
     let result = super.application(application, didFinishLaunchingWithOptions: launchOptions)
     
-    // Register all plugins with delay to ensure engine is ready
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+    // Register all plugins with 1 second delay to ensure engine is fully ready
+    // PathProviderPlugin requires engine to be completely initialized
+    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
       guard let self = self else { return }
       GeneratedPluginRegistrant.register(with: self)
     }
