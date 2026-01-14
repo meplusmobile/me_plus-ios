@@ -7,17 +7,11 @@ import UIKit
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    // Register plugins BEFORE calling super to prevent timing issues
+    GeneratedPluginRegistrant.register(with: self)
+    
     // Call super to initialize Flutter engine
-    let result = super.application(application, didFinishLaunchingWithOptions: launchOptions)
-    
-    // Delay plugin registration to ensure Flutter engine is fully initialized
-    // Increased delay to 0.5s to prevent PathProviderPlugin crashes
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-      guard let self = self else { return }
-      GeneratedPluginRegistrant.register(with: self)
-    }
-    
-    return result
+    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
   
   // Handle app lifecycle to prevent memory issues
