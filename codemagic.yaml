@@ -2,6 +2,7 @@ workflows:
   ios-release:
     name: iOS Release
     max_build_duration: 60
+    instance_type: mac_mini_m1
     environment:
       flutter: stable
       xcode: latest
@@ -9,36 +10,20 @@ workflows:
         - app_store_credentials
       vars:
         BUNDLE_ID: "meplusapp"
-        XCODE_WORKSPACE: "Runner.xcworkspace"
-        XCODE_SCHEME: "Runner"
       cocoapods: default
     scripts:
-      - name: Set up provisioning profiles
+      - name: Set up code signing settings on Xcode project
         script: |
-          PROFILES_HOME="$HOME/Library/MobileDevice/Provisioning Profiles"
-          mkdir -p "$PROFILES_HOME"
-          PROFILE_PATH="$(mktemp "$PROFILES_HOME"/$(uuidgen).mobileprovision)"
-          echo ${CM_PROVISIONING_PROFILE} | base64 --decode > "$PROFILE_PATH"
-          echo "Saved provisioning profile $PROFILE_PATH"
-      - name: Set up signing certificate
-        script: |
-          echo $CM_CERTIFICATE | base64 --decode > /tmp/certificate.p12
-          security create-keychain -p "" build.keychain
-          security import /tmp/certificate.p12 -t agg -k ~/Library/Keychains/build.keychain -P "$CM_CERTIFICATE_PASSWORD" -A
-          security list-keychains -s ~/Library/Keychains/build.keychain
-          security default-keychain -s ~/Library/Keychains/build.keychain
-          security unlock-keychain -p "" ~/Library/Keychains/build.keychain
-          security set-key-partition-list -S apple-tool:,apple: -s -k "" ~/Library/Keychains/build.keychain
+          xcode-project use-profiles
       - name: Get Flutter packages
         script: |
-          flutter packages pub get
-      - name: Install pods
+          flutter pub get
+      - name: Install CocoaPods dependencies
         script: |
-          find . -name "Podfile" -execdir pod install \;
-      - name: Flutter build ipa
+          cd ios && pod install
+      - name: Build IPA for distribution
         script: |
-          flutter build ipa --release \
-            --export-options-plist=$HOME/export_options.plist
+          flutter build ipa --release
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
