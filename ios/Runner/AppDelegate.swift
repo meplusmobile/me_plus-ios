@@ -25,9 +25,3 @@ import UIKit
     URLCache.shared.removeAllCachedResponses()
   }
 }
-  
-  // Handle app lifecycle to prevent memory issues
-  override func applicationDidReceiveMemoryWarning(_ application: UIApplication) {
-    URLCache.shared.removeAllCachedResponses()
-  }
-}
