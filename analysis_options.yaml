@@ -1,0 +1,33 @@
+
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    # Style rules
+    prefer_single_quotes: true
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    prefer_final_fields: true
+    prefer_final_locals: true
+    
+    # Code quality rules
+    avoid_print: true
+    avoid_unnecessary_containers: true
+    avoid_empty_else: true
+    avoid_relative_lib_imports: true
+    avoid_slow_async_io: true
+    avoid_types_as_parameter_names: true
+    
+    # Best practices
+    always_declare_return_types: true
+    always_use_package_imports: true
+    annotate_overrides: true
+    require_trailing_commas: true
+    
+    # Error prevention
+    no_duplicate_case_values: true
+    no_logic_in_create_state: true
+    prefer_void_to_null: true
+    
+    # Documentation
+    public_member_api_docs: false  # Enable if you want to enforce documentation
