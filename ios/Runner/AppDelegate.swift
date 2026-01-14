@@ -1,5 +1,8 @@
 import Flutter
 import UIKit
+import google_sign_in_ios
+import image_picker_ios
+import url_launcher_ios
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -8,15 +11,14 @@ import UIKit
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     
-    // Call super FIRST to initialize Flutter engine and window
+    // Call super FIRST to initialize Flutter engine
     let result = super.application(application, didFinishLaunchingWithOptions: launchOptions)
     
-    // Register all plugins with 5 seconds delay to ensure engine is fully ready
-    // Testing with longer delay to diagnose PathProviderPlugin crash
-    DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
-      guard let self = self else { return }
-      GeneratedPluginRegistrant.register(with: self)
-    }
+    // Manually register only safe plugins immediately
+    // PathProviderPlugin and SharedPreferencesPlugin will auto-register via Flutter
+    FLTGoogleSignInPlugin.register(with: registrar(forPlugin: "FLTGoogleSignInPlugin")!)
+    FLTImagePickerPlugin.register(with: registrar(forPlugin: "FLTImagePickerPlugin")!)
+    URLLauncherPlugin.register(with: registrar(forPlugin: "URLLauncherPlugin")!)
     
     return result
   }
