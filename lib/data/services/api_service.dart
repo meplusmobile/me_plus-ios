@@ -18,6 +18,21 @@ class ApiService {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
+        validateStatus: (status) {
+          // Accept all status codes to handle them manually
+          return status != null && status < 500;
+        },
+      ),
+    );
+
+    // Add logging interceptor for debugging
+    _dio.interceptors.add(
+      LogInterceptor(
+        requestBody: true,
+        responseBody: true,
+        error: true,
+        requestHeader: false,
+        responseHeader: false,
       ),
     );
 
@@ -32,6 +47,29 @@ class ApiService {
           return handler.next(options);
         },
         onError: (error, handler) async {
+          // Handle connection errors
+          if (error.type == DioExceptionType.connectionTimeout ||
+              error.type == DioExceptionType.receiveTimeout ||
+              error.type == DioExceptionType.sendTimeout) {
+            return handler.next(
+              DioException(
+                requestOptions: error.requestOptions,
+                error: 'Connection timeout. Please check your internet connection.',
+                type: error.type,
+              ),
+            );
+          }
+
+          if (error.type == DioExceptionType.connectionError) {
+            return handler.next(
+              DioException(
+                requestOptions: error.requestOptions,
+                error: 'No internet connection. Please check your network settings.',
+                type: error.type,
+              ),
+            );
+          }
+
           if (error.response?.statusCode == 401) {
             // Token expired, try to refresh
             final refreshToken = await _tokenStorage.getRefreshToken();

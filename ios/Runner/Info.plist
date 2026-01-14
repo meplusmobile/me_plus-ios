@@ -46,6 +46,33 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	
+	<!-- Prevent crashes from background state -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+	</array>
+	
+	<!-- iOS 17+ Privacy Manifest -->
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>C617.1</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>CA92.1</string>
+			</array>
+		</dict>
+	</array>
+	
 	<!-- Google Sign-In Configuration -->
 	<key>CFBundleURLTypes</key>
 	<array>
@@ -57,6 +84,13 @@
 				<string>com.googleusercontent.apps.676918546872-cogu1q96g22sju22k323458bmdggbip8</string>
 			</array>
 		</dict>
+	</array>
+	
+	<!-- Required for iOS 9+ to open external URLs -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>https</string>
+		<string>http</string>
 	</array>
 	
 	<!-- Camera and Photo Library Permissions -->

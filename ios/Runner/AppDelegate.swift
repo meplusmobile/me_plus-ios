@@ -7,7 +7,12 @@ import UIKit
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    // Call super first to ensure Flutter engine is initialized
+    let result = super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    
+    // Register plugins after Flutter engine is ready
     GeneratedPluginRegistrant.register(with: self)
-    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    
+    return result
   }
 }
