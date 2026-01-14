@@ -10,9 +10,10 @@ import UIKit
     // Call super to initialize Flutter engine
     let result = super.application(application, didFinishLaunchingWithOptions: launchOptions)
     
-    // Register plugins asynchronously to prevent crashes
-    // This ensures the Flutter engine is fully initialized before plugin registration
-    DispatchQueue.main.async {
+    // Delay plugin registration to ensure Flutter engine is fully initialized
+    // This prevents crashes in PathProviderPlugin and other native plugins
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+      guard let self = self else { return }
       GeneratedPluginRegistrant.register(with: self)
     }
     
@@ -21,7 +22,6 @@ import UIKit
   
   // Handle app lifecycle to prevent memory issues
   override func applicationDidReceiveMemoryWarning(_ application: UIApplication) {
-    // Clear caches if needed
     URLCache.shared.removeAllCachedResponses()
   }
 }
