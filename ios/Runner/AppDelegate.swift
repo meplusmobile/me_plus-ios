@@ -11,10 +11,20 @@ import UIKit
     let result = super.application(application, didFinishLaunchingWithOptions: launchOptions)
     
     // Delay plugin registration to ensure Flutter engine is fully initialized
-    // This prevents crashes in PathProviderPlugin and other native plugins
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+    // Increased delay to 0.3s to prevent PathProviderPlugin crashes
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
       guard let self = self else { return }
-      GeneratedPluginRegistrant.register(with: self)
+      
+      // Double-check that Flutter engine is ready
+      if let engine = self.engine, engine.isGPUDisabled == false {
+        GeneratedPluginRegistrant.register(with: self)
+      } else {
+        // Fallback: try again after another 0.2s if engine not ready
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { [weak self] in
+          guard let self = self else { return }
+          GeneratedPluginRegistrant.register(with: self)
+        }
+      }
     }
     
     return result
