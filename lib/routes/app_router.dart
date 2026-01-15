@@ -43,9 +43,7 @@ import 'package:me_plus/presentation/screens/parent/parent_profile_screen.dart';
 import 'package:me_plus/presentation/screens/parent/parent_account_screen.dart';
 import 'package:me_plus/presentation/screens/parent/parent_notifications_screen.dart';
 
-/// Application router configuration using GoRouter
 class AppRouter {
-  /// Helper method to wrap a widget with RoleBackHandler for non-home routes
   static Widget _wrapWithBackHandler(BuildContext context, GoRouterState state, Widget child) {
     return RoleBackHandler(
       currentRoute: state.uri.path,

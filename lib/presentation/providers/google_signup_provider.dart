@@ -1,7 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
-/// Provider for managing Google Sign-In signup flow
-/// Stores temporary data between Google sign-in and completing signup
 class GoogleSignupProvider extends ChangeNotifier {
   String? accessToken;
   String? email;
@@ -56,20 +54,17 @@ class GoogleSignupProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Set student info
   void setStudentInfo({required String schoolId, required String classId}) {
     this.schoolId = schoolId;
     this.classId = classId;
     notifyListeners();
   }
 
-  /// Set parent info
   void setParentInfo({required List<String> childrenEmails}) {
     this.childrenEmails = childrenEmails;
     notifyListeners();
   }
 
-  /// Set market owner info
   void setMarketOwnerInfo({
     required String marketName,
     required String marketAddress,
@@ -90,6 +85,8 @@ class GoogleSignupProvider extends ChangeNotifier {
       password != null;
 
   /// Check if all required data is complete
+  fullName != null && fullName!.isNotEmpty;
+
   bool get isComplete {
     if (!hasGoogleAuth || !hasBasicInfo) return false;
 
@@ -105,7 +102,6 @@ class GoogleSignupProvider extends ChangeNotifier {
     }
   }
 
-  /// Clear all data
   void clear() {
     accessToken = null;
     email = null;
