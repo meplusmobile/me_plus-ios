@@ -1,6 +1,6 @@
 workflows:
   ios-release:
-    name: iOS Release Build
+    name: iOS Release (Personal Account)
     max_build_duration: 60
     instance_type: mac_mini_m1
 
@@ -10,10 +10,10 @@ workflows:
       cocoapods: default
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: meplusapp   
+        bundle_identifier: meplusapp
 
     scripts:
-      - name: Flutter clean & get packages
+      - name: Flutter clean & pub get
         script: |
           flutter clean
           flutter pub get
@@ -24,11 +24,11 @@ workflows:
           pod install
           cd ..
 
-      - name: Build Flutter iOS (Release)
+      - name: Build Flutter iOS (Release, no codesign)
         script: |
           flutter build ios --release --no-codesign
 
-      - name: Build signed IPA for App Store
+      - name: Build signed IPA (App Store)
         script: |
           xcode-project use-profiles
           xcode-project build-ipa \
@@ -40,4 +40,6 @@ workflows:
 
     publishing:
       app_store_connect:
-        api_key: AppStoreConnectAPIKey
+        issuer_id: bc99df75-7e2d-4458-902e-470d647f425a
+        key_id: 68Y9MFMUVZ
+        private_key: $APP_STORE_CONNECT_PRIVATE_KEY
