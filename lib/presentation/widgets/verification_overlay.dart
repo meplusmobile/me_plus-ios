@@ -16,7 +16,6 @@ class VerificationOverlay extends StatefulWidget {
   @override
   State<VerificationOverlay> createState() => _VerificationOverlayState();
 
-  /// Show the verification overlay on top of current screen
   static void show(
     BuildContext context, {
     VoidCallback? onComplete,
@@ -50,13 +49,11 @@ class _VerificationOverlayState extends State<VerificationOverlay>
       duration: const Duration(milliseconds: 800),
     );
 
-    // Scale animation for the card
     _scaleAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
 
-    // Fade animation
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
@@ -64,16 +61,13 @@ class _VerificationOverlayState extends State<VerificationOverlay>
       ),
     );
 
-    // Slide animation
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, -0.3),
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
 
-    // Start animation
     _controller.forward();
 
-    // Auto dismiss after duration
     Future.delayed(widget.duration, () {
       if (mounted) {
         _dismissWithAnimation();
@@ -123,7 +117,6 @@ class _VerificationOverlayState extends State<VerificationOverlay>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Animated GIF
                     Image.asset(
                       'assets/images/image.gif',
                       width: 120,

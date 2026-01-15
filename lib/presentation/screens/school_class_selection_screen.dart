@@ -129,7 +129,6 @@ class _SchoolClassSelectionScreenState
           _isLoading = false;
         });
 
-        // Show verification overlay
         VerificationOverlay.show(
           context,
           duration: const Duration(seconds: 3),
@@ -166,7 +165,6 @@ class _SchoolClassSelectionScreenState
       body: SafeArea(
         child: Stack(
           children: [
-            // Background blur image
             Positioned(
               top: -180,
               left: 0,
@@ -191,7 +189,6 @@ class _SchoolClassSelectionScreenState
               ),
             ),
 
-            // Bottom decoration
             Positioned(
               left: 0,
               right: 0,
@@ -203,7 +200,6 @@ class _SchoolClassSelectionScreenState
               ),
             ),
 
-            // Top left logo (with IgnorePointer to allow clicks through)
             Positioned(
               top: 40,
               left: 12,
@@ -253,7 +249,6 @@ class _SchoolClassSelectionScreenState
                         children: [
                           const SizedBox(height: 158),
 
-                          // Header
                           Builder(
                             builder: (context) {
                               final localizations = AppLocalizations.of(

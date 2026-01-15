@@ -42,7 +42,6 @@ class _StudentScreenSignUpState extends State<StudentScreenSignUp> {
         password: signupData.password!,
       );
 
-      // Call API - signup in background
       await _authService.signup(request);
 
       if (mounted) {
@@ -50,7 +49,6 @@ class _StudentScreenSignUpState extends State<StudentScreenSignUp> {
           _isLoading = false;
         });
 
-        // Navigate directly to school/class selection screen
         // Token is already saved in signup response automatically
         context.go('/signup/student/school-selection');
       }
@@ -77,7 +75,6 @@ class _StudentScreenSignUpState extends State<StudentScreenSignUp> {
       body: SafeArea(
         child: Stack(
           children: [
-            // Background blur image
             Positioned(
               top: -180,
               left: 0,
@@ -102,7 +99,6 @@ class _StudentScreenSignUpState extends State<StudentScreenSignUp> {
               ),
             ),
 
-            // Bottom decoration
             Positioned(
               left: 0,
               right: 0,
@@ -114,7 +110,6 @@ class _StudentScreenSignUpState extends State<StudentScreenSignUp> {
               ),
             ),
 
-            // Top left logo (with IgnorePointer to allow clicks through)
             Positioned(
               top: 40,
               left: 12,
@@ -136,7 +131,6 @@ class _StudentScreenSignUpState extends State<StudentScreenSignUp> {
                   children: [
                     const SizedBox(height: 158),
 
-                    // Header
                     Column(
                       children: [
                         const GradientText(

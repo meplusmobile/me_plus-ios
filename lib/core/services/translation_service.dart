@@ -16,8 +16,6 @@ class TranslationService {
   // Cache to avoid translating the same text multiple times
   final Map<String, String> _translationCache = {};
 
-  /// Translate text from Arabic to English or vice versa
-  /// Uses Google Translate (unofficial API, no rate limits)
   Future<String> translate(
     String text, {
     required String from,
@@ -25,7 +23,6 @@ class TranslationService {
   }) async {
     if (text.isEmpty) return text;
 
-    // Check cache first
     final cacheKey = '$from-$to:$text';
     if (_translationCache.containsKey(cacheKey)) {
       return _translationCache[cacheKey]!;
@@ -61,7 +58,6 @@ class TranslationService {
     return text;
   }
 
-  /// Auto-translate text to Arabic if only English is provided
   Future<String> translateToArabic(String text) async {
     if (text.isEmpty) return text;
 
@@ -69,7 +65,6 @@ class TranslationService {
     return await translate(text, from: 'en', to: 'ar');
   }
 
-  /// Auto-translate text to English if only Arabic is provided
   Future<String> translateToEnglish(String text) async {
     if (text.isEmpty) return text;
 
@@ -77,7 +72,6 @@ class TranslationService {
     return await translate(text, from: 'ar', to: 'en');
   }
 
-  /// Check if text contains Arabic characters
   bool _isArabic(String text) {
     if (text.isEmpty) return false;
 
@@ -85,12 +79,10 @@ class TranslationService {
     return arabicRegex.hasMatch(text);
   }
 
-  /// Detect language of text
   String detectLanguage(String text) {
     return _isArabic(text) ? 'ar' : 'en';
   }
 
-  /// Clear translation cache
   void clearCache() {
     _translationCache.clear();
   }

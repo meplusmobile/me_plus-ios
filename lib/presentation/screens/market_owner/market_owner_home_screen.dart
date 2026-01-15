@@ -401,13 +401,14 @@ class _MarketOwnerHomeScreenState extends State<MarketOwnerHomeScreen> {
   }
 
   Widget _buildRecentRequestsList() {
+    // Using mock data for now or provider data
     return Consumer<MarketOwnerProvider>(
       builder: (context, provider, child) {
+        // Filter only IN PROGRESS orders
         final inProgressOrders = provider.thisMonthOrders
             .where((order) => order.status.toUpperCase() == 'IN PROGRESS')
             .toList();
 
-        // If no orders, show empty state
         if (inProgressOrders.isEmpty) {
           return Center(
             child: Text(AppLocalizations.of(context)!.t('no_recent_requests')),

@@ -196,7 +196,6 @@ class _MarketAccountScreenState extends State<MarketAccountScreen> {
 
                                 if (_selectedImage != null) {
                                   // Handle image upload if needed, or add to data map if repository handles File
-                                  // For now, assuming repository handles FormData and we can pass file path or bytes
                                   // But repository expects Map<String, dynamic> and converts to FormData.
                                   // We need to pass MultipartFile.
                                   data['Image'] = await MultipartFile.fromFile(

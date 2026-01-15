@@ -125,7 +125,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _completeOnboarding() {
-    // Navigate to login page after completing onboarding
     context.go('/login');
   }
 
@@ -162,7 +161,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
 
-            // Logo - centered
             Positioned(
               top: 16,
               left: 0,
@@ -194,7 +192,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
 
-            // Bottom section with dots and button
             Positioned(
               bottom: 40,
               left: 0,
@@ -241,7 +238,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Image.asset(page.image, height: 280, fit: BoxFit.contain),
           const SizedBox(height: 40),
 
-          // Title
           Text(
             page.title,
             textAlign: TextAlign.center,

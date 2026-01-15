@@ -95,7 +95,6 @@ class _EditRewardScreenState extends State<EditRewardScreen> {
 
       File? imageToSend = _selectedImage;
 
-      // If image wasn't changed, download the original image
       if (!_isImageChanged && widget.reward.image != null) {
         imageToSend = await _downloadImageFromUrl(widget.reward.image!);
       }

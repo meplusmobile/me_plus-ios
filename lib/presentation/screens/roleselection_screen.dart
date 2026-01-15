@@ -71,7 +71,6 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Background blur image
           Positioned(
             top: -180,
             left: 0,
@@ -96,7 +95,6 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
             ),
           ),
 
-          // Bottom decoration
           Positioned(
             left: 0,
             right: 0,
@@ -108,7 +106,6 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
             ),
           ),
 
-          // Top left vector (with IgnorePointer to allow clicks through)
           Positioned(
             top: 40,
             left: 12,

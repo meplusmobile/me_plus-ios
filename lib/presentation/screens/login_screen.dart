@@ -119,11 +119,8 @@ class _LoginScreenState extends State<LoginScreen>
           _isLoading = false;
         });
 
-        // Navigate based on user role
         if (response.role == 'Student') {
-          // Check if schoolId is null (waiting for approval)
           if (response.schoolId == null) {
-            // Show waiting dialog
             showDialog(
               context: context,
               barrierDismissible: false,
@@ -201,7 +198,6 @@ class _LoginScreenState extends State<LoginScreen>
               ),
             );
           } else {
-            // Load profile and navigate to student home
             final profileProvider = context.read<ProfileProvider>();
             profileProvider.loadProfile(forceRefresh: true).catchError((error) {
               // Failed to load profile
@@ -224,7 +220,6 @@ class _LoginScreenState extends State<LoginScreen>
           _isLoading = false;
         });
 
-        // Show professional error dialog
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -323,7 +318,6 @@ class _LoginScreenState extends State<LoginScreen>
     });
 
     try {
-      // Get google user from Sign-In
       final googleUser = await _googleAuthService.signInWithGoogle();
 
       if (googleUser == null) {
@@ -334,7 +328,6 @@ class _LoginScreenState extends State<LoginScreen>
         return;
       }
 
-      // Get access token
       final googleAuth = await googleUser.authentication;
       final accessToken = googleAuth.accessToken;
 
@@ -342,7 +335,6 @@ class _LoginScreenState extends State<LoginScreen>
         throw Exception('Failed to get access token');
       }
 
-      // Send access token to backend
       final request = GoogleLoginRequest(accessToken: accessToken);
       final response = await _authService.googleLogin(request);
 
@@ -351,11 +343,8 @@ class _LoginScreenState extends State<LoginScreen>
           _isGoogleLoading = false;
         });
 
-        // Navigate based on user role
         if (response.role == 'Student') {
-          // Check if schoolId is null (waiting for approval)
           if (response.schoolId == null) {
-            // Show waiting dialog
             showDialog(
               context: context,
               barrierDismissible: false,
@@ -433,7 +422,6 @@ class _LoginScreenState extends State<LoginScreen>
               ),
             );
           } else {
-            // Load profile and navigate to student home
             final profileProvider = context.read<ProfileProvider>();
             profileProvider.loadProfile(forceRefresh: true).catchError((error) {
               // Failed to load profile
@@ -456,7 +444,6 @@ class _LoginScreenState extends State<LoginScreen>
           _isGoogleLoading = false;
         });
 
-        // Check if error message indicates user doesn't exist
         final errorMessage = e.toString().replaceAll('Exception: ', '');
 
         if (errorMessage.contains('not found') ||
@@ -466,7 +453,6 @@ class _LoginScreenState extends State<LoginScreen>
           // User doesn't exist, set up Google signup provider and redirect
           final googleSignupProvider = context.read<GoogleSignupProvider>();
 
-          // Get the access token again to save it
           final googleUser = await _googleAuthService.signInSilently();
 
           if (googleUser != null) {
@@ -511,7 +497,6 @@ class _LoginScreenState extends State<LoginScreen>
               ),
             );
 
-            // Navigate to Google signup details screen
             Future.delayed(const Duration(milliseconds: 500), () {
               if (mounted) {
                 context.go('/google-signup-details');
@@ -614,7 +599,6 @@ class _LoginScreenState extends State<LoginScreen>
       body: SafeArea(
         child: Stack(
           children: [
-            // Background blur effect
             Positioned(
               top: -180,
               left: 0,
@@ -639,7 +623,6 @@ class _LoginScreenState extends State<LoginScreen>
               ),
             ),
 
-            // Bottom decoration
             Positioned(
               bottom: -80,
               left: 0,
@@ -659,7 +642,6 @@ class _LoginScreenState extends State<LoginScreen>
                   children: [
                     const SizedBox(height: 40),
 
-                    // Logo and Language Switcher
                     FadeTransition(
                       opacity: _fadeAnimations[3],
                       child: SlideTransition(
@@ -683,7 +665,6 @@ class _LoginScreenState extends State<LoginScreen>
 
                     const SizedBox(height: 51),
 
-                    // Header
                     FadeTransition(
                       opacity: _fadeAnimations[0],
                       child: SlideTransition(

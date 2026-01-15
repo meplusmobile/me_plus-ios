@@ -107,7 +107,6 @@ class _SignUpScreenState extends State<SignUpScreen>
 
     _animationController.forward();
 
-    // Removed listeners - validation is handled in form, not on every keystroke
   }
 
   @override
@@ -152,7 +151,6 @@ class _SignUpScreenState extends State<SignUpScreen>
       body: SafeArea(
         child: Stack(
           children: [
-            // Background blur image
             Positioned(
               top: -180,
               left: 0,
@@ -177,7 +175,6 @@ class _SignUpScreenState extends State<SignUpScreen>
               ),
             ),
 
-            // Bottom decoration
             Positioned(
               left: 0,
               right: 0,
@@ -189,7 +186,6 @@ class _SignUpScreenState extends State<SignUpScreen>
               ),
             ),
 
-            // Top left vector
             Positioned(
               top: 40,
               left: 12,
@@ -227,7 +223,6 @@ class _SignUpScreenState extends State<SignUpScreen>
                   children: [
                     const SizedBox(height: 158),
 
-                    // Header
                     FadeTransition(
                       opacity: _fadeAnimations[0],
                       child: SlideTransition(
@@ -497,7 +492,6 @@ class _SignUpScreenState extends State<SignUpScreen>
                                             return;
                                           }
 
-                                          // Parse date from MM / DD / YYYY to yyyy-MM-dd format
                                           final dobParts = _dobController.text
                                               .split(' / ');
                                           final birthdate =
@@ -516,7 +510,6 @@ class _SignUpScreenState extends State<SignUpScreen>
                                             birthdate: birthdate,
                                           );
 
-                                          // Navigate to role selection
                                           context.go('/role-selection');
                                         }
                                       },

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Global error handler for the application
 class ErrorHandler {
-  /// Handle errors and show user-friendly messages
   static void handleError(
     BuildContext context,
     dynamic error, {
@@ -27,7 +25,6 @@ class ErrorHandler {
     }
   }
 
-  /// Get user-friendly error message based on error type
   static String _getErrorMessage(dynamic error) {
     final errorString = error.toString().toLowerCase();
 
@@ -53,7 +50,6 @@ class ErrorHandler {
     }
   }
 
-  /// Wrap async functions with error handling
   static Future<T?> tryCatch<T>(
     Future<T> Function() function, {
     void Function(dynamic error)? onError,
@@ -70,7 +66,6 @@ class ErrorHandler {
     }
   }
 
-  /// Wrap synchronous functions with error handling
   static T? tryCatchSync<T>(
     T Function() function, {
     void Function(dynamic error)? onError,

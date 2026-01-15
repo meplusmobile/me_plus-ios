@@ -16,7 +16,6 @@ class ProfileProvider with ChangeNotifier {
   String? get error => _error;
   bool get hasProfile => _profile != null;
 
-  // Getters for IDs
   int? get studentId => _profile?.id;
   int? get schoolId => _profile?.schoolId;
   int? get classId => _profile?.classId;
@@ -28,7 +27,6 @@ class ProfileProvider with ChangeNotifier {
     _loadProfileFromStorage();
   }
 
-  // Load profile from local storage on init
   Future<void> _loadProfileFromStorage() async {
     try {
       final savedProfile = await _storage.getProfile();
@@ -45,7 +43,6 @@ class ProfileProvider with ChangeNotifier {
   Future<void> loadProfile({bool forceRefresh = false}) async {
     if (_isLoading) return;
 
-    // If profile exists and not forcing refresh, return
     if (!forceRefresh && _profile != null) return;
 
     try {

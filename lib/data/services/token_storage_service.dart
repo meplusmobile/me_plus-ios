@@ -35,7 +35,6 @@ class TokenStorageService {
     }
   }
 
-  // Get token
   Future<String?> getToken() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -46,7 +45,6 @@ class TokenStorageService {
     }
   }
 
-  // Get refresh token
   Future<String?> getRefreshToken() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -57,7 +55,6 @@ class TokenStorageService {
     }
   }
 
-  // Get user ID
   Future<String?> getUserId() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -68,7 +65,6 @@ class TokenStorageService {
     }
   }
 
-  // Get user email
   Future<String?> getUserEmail() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -79,7 +75,6 @@ class TokenStorageService {
     }
   }
 
-  // Get user role
   Future<String?> getUserRole() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -90,7 +85,6 @@ class TokenStorageService {
     }
   }
 
-  // Get is first time user
   Future<bool> isFirstTimeUser() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -101,7 +95,6 @@ class TokenStorageService {
     }
   }
 
-  // Check if user is logged in
   Future<bool> isLoggedIn() async {
     try {
       final token = await getToken();
@@ -149,7 +142,6 @@ class TokenStorageService {
     }
   }
 
-  // Get Remember Me status
   Future<bool> getRememberMe() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -160,7 +152,6 @@ class TokenStorageService {
     }
   }
 
-  // Get saved email
   Future<String?> getSavedEmail() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -171,7 +162,6 @@ class TokenStorageService {
     }
   }
 
-  // Get saved password
   Future<String?> getSavedPassword() async {
     try {
       final prefs = await SharedPreferences.getInstance();

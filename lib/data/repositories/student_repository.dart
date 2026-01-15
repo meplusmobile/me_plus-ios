@@ -22,7 +22,6 @@ class StudentRepository {
     // Create FormData
     final formData = FormData.fromMap(data);
 
-    // Send update request
     await _apiService.put('/api/me', data: formData, isFormData: true);
 
     // Fetch full profile data from /student/profile endpoint
@@ -277,7 +276,6 @@ class StudentRepository {
       activities = data.map((item) => Activity.fromJson(item)).toList();
     }
 
-    // Auto-translate activities
     final translatedActivities = <Activity>[];
     for (var activity in activities) {
       translatedActivities.add(await _autoTranslateActivity(activity));
@@ -286,14 +284,12 @@ class StudentRepository {
     return translatedActivities;
   }
 
-  /// Auto-translate activity fields if they're missing in either language
   Future<Activity> _autoTranslateActivity(Activity activity) async {
     String? titleAr = activity.titleAr;
     String? titleEn = activity.titleEn;
     String? descriptionAr = activity.descriptionAr;
     String? descriptionEn = activity.descriptionEn;
 
-    // Translate title
     if (titleAr == null && titleEn == null) {
       final detectedLang = _translationService.detectLanguage(activity.title);
       if (detectedLang == 'ar') {
@@ -309,7 +305,6 @@ class StudentRepository {
       titleEn = await _translationService.translateToEnglish(titleAr);
     }
 
-    // Translate description
     if (descriptionAr == null && descriptionEn == null) {
       final detectedLang = _translationService.detectLanguage(
         activity.description,
@@ -378,7 +373,6 @@ class StudentRepository {
           .map((notification) => NotificationModel.fromJson(notification))
           .toList();
 
-      // Auto-translate notifications if language is missing
       final translatedNotifications = <NotificationModel>[];
       for (var notification in notifications) {
         translatedNotifications.add(
@@ -391,7 +385,6 @@ class StudentRepository {
     return [];
   }
 
-  /// Auto-translate notification fields if they're missing in either language
   Future<NotificationModel> _autoTranslateNotification(
     NotificationModel notification,
   ) async {
@@ -400,7 +393,6 @@ class StudentRepository {
     String? messageAr = notification.messageAr;
     String? messageEn = notification.messageEn;
 
-    // If backend doesn't provide titleAr/titleEn, use the main title field
     if (titleAr == null && titleEn == null && notification.title.isNotEmpty) {
       final detectedLang = _translationService.detectLanguage(
         notification.title,
@@ -510,7 +502,6 @@ class StudentRepository {
       return 'You requested a $itemName, Did you receive it?';
     }
 
-    // If no pattern matches, use regular translation
     if (toLang == 'ar') {
       return await _translationService.translateToArabic(message);
     } else {

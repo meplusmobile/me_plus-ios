@@ -65,7 +65,6 @@ class _AccountScreenState extends State<AccountScreen> {
         _lastNameController.text = profile.lastName;
         _emailController.text = profile.email ?? '';
 
-        // Parse phone number
         if (profile.phone != null && profile.phone!.isNotEmpty) {
           _fullPhoneNumber = profile.phone;
           // Extract country code and number
@@ -76,7 +75,6 @@ class _AccountScreenState extends State<AccountScreen> {
             if (phone.startsWith('+961')) {
               _initialCountryCode = 'LB';
               String number = phone.substring(4); // Remove +961
-              // Remove leading 0 if exists
               if (number.startsWith('0')) {
                 number = number.substring(1);
               }
@@ -84,7 +82,6 @@ class _AccountScreenState extends State<AccountScreen> {
             } else if (phone.startsWith('+970')) {
               _initialCountryCode = 'PS';
               String number = phone.substring(4); // Remove +970
-              // Remove leading 0 if exists
               if (number.startsWith('0')) {
                 number = number.substring(1);
               }
@@ -128,7 +125,6 @@ class _AccountScreenState extends State<AccountScreen> {
     try {
       final profileProvider = context.read<ProfileProvider>();
 
-      // Build update data as form-data
       final updateData = <String, dynamic>{
         'FirstName': _firstNameController.text.trim(),
         'LastName': _lastNameController.text.trim(),
@@ -160,11 +156,9 @@ class _AccountScreenState extends State<AccountScreen> {
         // Reload profile data from API after successful update
         await _refreshProfile();
 
-        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              // ignore: use_build_context_synchronously
               AppLocalizations.of(context)!.t('profile_updated_successfully'),
             ),
             backgroundColor: AppColors.success,

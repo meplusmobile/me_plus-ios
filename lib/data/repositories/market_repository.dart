@@ -34,12 +34,10 @@ class MarketRepository {
     }
   }
 
-  // Get market items with pagination and sorting
   Future<List<StoreReward>> getMarketItems({
     String sortType = 'sortBy',
     String sortValue = 'oldest',
   }) async {
-    // Build query parameters - use either sortBy OR priceOrder
     final Map<String, dynamic> queryParams = {'pageSize': 35, 'pageNumber': 1};
 
     // Add the appropriate sort parameter
@@ -178,7 +176,6 @@ class MarketRepository {
           .map((notification) => NotificationModel.fromJson(notification))
           .toList();
 
-      // Auto-translate notifications if language is missing
       final translatedNotifications = <NotificationModel>[];
       for (var notification in notifications) {
         translatedNotifications.add(
@@ -192,7 +189,6 @@ class MarketRepository {
     return [];
   }
 
-  /// Auto-translate notification fields if they're missing in either language
   Future<NotificationModel> _autoTranslateNotification(
     NotificationModel notification,
   ) async {
@@ -201,7 +197,6 @@ class MarketRepository {
     String? messageAr = notification.messageAr;
     String? messageEn = notification.messageEn;
 
-    // If backend doesn't provide titleAr/titleEn, use the main title field
     if (titleAr == null && titleEn == null && notification.title.isNotEmpty) {
       final detectedLang = _translationService.detectLanguage(
         notification.title,
@@ -271,7 +266,6 @@ class MarketRepository {
     );
   }
 
-  /// Smart translation that preserves item names and student names in order notifications
   Future<String> _smartTranslateMessage(
     String message,
     String fromLang,
@@ -324,7 +318,6 @@ class MarketRepository {
       return 'You requested a $itemName, Did you receive it?';
     }
 
-    // If no pattern matches, use regular translation
     if (toLang == 'ar') {
       return await _translationService.translateToArabic(message);
     } else {

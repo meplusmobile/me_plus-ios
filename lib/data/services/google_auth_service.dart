@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:google_sign_in/google_sign_in.dart';
 
-/// Service for handling Google Sign-In authentication
 class GoogleAuthService {
   // Initialize GoogleSignIn with platform-specific configuration
   late final GoogleSignIn _googleSignIn;
@@ -26,8 +25,6 @@ class GoogleAuthService {
     }
   }
 
-  /// Sign in with Google and return the user account
-  /// Returns null if user cancels or sign-in fails
   Future<GoogleSignInAccount?> signInWithGoogle() async {
     try {
       // Trigger the Google Sign-In flow
@@ -46,7 +43,6 @@ class GoogleAuthService {
     }
   }
 
-  /// Sign out from Google
   Future<void> signOut() async {
     try {
       await _googleSignIn.signOut();
@@ -56,7 +52,6 @@ class GoogleAuthService {
     }
   }
 
-  /// Check if user is currently signed in
   Future<bool> isSignedIn() async {
     try {
       return await _googleSignIn.isSignedIn();
@@ -66,7 +61,6 @@ class GoogleAuthService {
     }
   }
 
-  /// Get current user info if signed in
   Future<GoogleSignInAccount?> getCurrentUser() async {
     try {
       return _googleSignIn.currentUser;
@@ -76,7 +70,6 @@ class GoogleAuthService {
     }
   }
 
-  /// Silent sign-in (attempts to sign in without showing UI)
   Future<GoogleSignInAccount?> signInSilently() async {
     try {
       final GoogleSignInAccount? googleUser =

@@ -1,13 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-/// A widget that handles system back button presses for non-home routes.
-/// 
-/// When the back button is pressed on any route, it navigates to the appropriate
-/// role home page (/student/home, /parent/home, /market-owner/home).
-/// 
-/// This widget should ONLY be used on non-home screens. Home routes should
-/// allow normal back button behavior to exit the app.
 class RoleBackHandler extends StatelessWidget {
   final Widget child;
   final String currentRoute;
@@ -18,7 +11,6 @@ class RoleBackHandler extends StatelessWidget {
     required this.currentRoute,
   });
 
-  /// Determines the home route based on the current route path
   String _getHomeRoute() {
     if (currentRoute.startsWith('/student/')) {
       return '/student/home';
@@ -31,7 +23,6 @@ class RoleBackHandler extends StatelessWidget {
     return '/login';
   }
 
-  /// Checks if the current route is a home route
   bool _isHomeRoute() {
     return currentRoute == '/student/home' ||
         currentRoute == '/parent/home' ||
@@ -50,7 +41,6 @@ class RoleBackHandler extends StatelessWidget {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (!didPop) {
-          // Navigate to the appropriate home route, replacing current route
           final homeRoute = _getHomeRoute();
           if (context.mounted) {
             // Use pushReplacement to replace current route instead of adding new one

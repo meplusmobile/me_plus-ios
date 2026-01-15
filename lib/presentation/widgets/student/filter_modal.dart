@@ -46,9 +46,7 @@ class _FilterModalState extends State<FilterModal> {
 
   // Helper to translate options if they are keys, or return as is
   String _translateOption(BuildContext context, String option) {
-    // If the option matches a key in your localization, translate it.
     // Otherwise, return it directly.
-    // For now, we assume the options passed might be keys or English text.
     // You might want to map specific English strings to keys if needed.
     final t = AppLocalizations.of(context)!;
     switch (option.toLowerCase()) {
@@ -92,7 +90,6 @@ class _FilterModalState extends State<FilterModal> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Handle bar
           Center(
             child: Container(
               width: 60,
@@ -105,7 +102,6 @@ class _FilterModalState extends State<FilterModal> {
           ),
           const SizedBox(height: 24),
 
-          // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -138,7 +134,6 @@ class _FilterModalState extends State<FilterModal> {
           ),
           const SizedBox(height: 32),
 
-          // Cost Range
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -154,7 +149,6 @@ class _FilterModalState extends State<FilterModal> {
             ],
           ),
           const SizedBox(height: 16), // Increased spacing for better visual
-          // Professional Slider
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
               activeTrackColor: const Color(0xFFF0F0F0), // Light grey track
@@ -191,7 +185,6 @@ class _FilterModalState extends State<FilterModal> {
               },
             ),
           ),
-          // Labels below slider
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
             child: Row(
@@ -218,7 +211,6 @@ class _FilterModalState extends State<FilterModal> {
           ),
           const SizedBox(height: 24),
 
-          // Status Dropdown
           if (widget.statusOptions != null &&
               widget.statusOptions!.isNotEmpty) ...[
             Text(
@@ -270,7 +262,6 @@ class _FilterModalState extends State<FilterModal> {
             const SizedBox(height: 24),
           ],
 
-          // Reward Type Dropdown
           Text(
             t.t('reward_type'),
             style: const TextStyle(
@@ -319,7 +310,6 @@ class _FilterModalState extends State<FilterModal> {
           ),
           const SizedBox(height: 40),
 
-          // Apply Button
           SizedBox(
             width: double.infinity,
             height: 56,

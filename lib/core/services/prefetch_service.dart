@@ -20,7 +20,6 @@ class PrefetchService {
   List<NotificationModel>? get cachedNotifications => _cachedNotifications;
   List<Activity>? get cachedActivities => _cachedActivities;
 
-  /// Start prefetching all backend text and translations
   Future<void> startPrefetch() async {
     if (_isPrefetching || _isPrefetchComplete) return;
 
@@ -46,7 +45,6 @@ class PrefetchService {
     }
   }
 
-  /// Prefetch and translate notifications
   Future<void> _prefetchNotifications() async {
     try {
       developer.log('📥 Prefetching notifications...', name: 'PrefetchService');
@@ -63,7 +61,6 @@ class PrefetchService {
     }
   }
 
-  /// Prefetch and translate activities/behaviors
   Future<void> _prefetchActivities() async {
     try {
       developer.log('📥 Prefetching activities...', name: 'PrefetchService');
@@ -82,7 +79,6 @@ class PrefetchService {
     }
   }
 
-  /// Clear all cached data
   void clearCache() {
     _cachedNotifications = null;
     _cachedActivities = null;
@@ -90,7 +86,6 @@ class PrefetchService {
     developer.log('🗑️ Cache cleared', name: 'PrefetchService');
   }
 
-  /// Refresh cached data
   Future<void> refresh() async {
     clearCache();
     await startPrefetch();

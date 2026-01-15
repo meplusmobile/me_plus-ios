@@ -130,7 +130,6 @@ class _StoreScreenState extends State<StoreScreen> {
       listen: false,
     );
 
-    // Load profile first if not loaded
     if (!profileProvider.hasProfile) {
       await profileProvider.loadProfile();
     }
@@ -189,7 +188,6 @@ class _StoreScreenState extends State<StoreScreen> {
       listen: false,
     );
 
-    // Show confirmation dialog always
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
@@ -208,7 +206,6 @@ class _StoreScreenState extends State<StoreScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Loading animation
                 SizedBox(
                   width: 200,
                   height: 80,
@@ -376,7 +373,6 @@ class _StoreScreenState extends State<StoreScreen> {
       },
     );
 
-    // If user cancelled or doesn't have enough credits, return
     if (confirmed != true) return;
 
     if (profileProvider.schoolId == null ||

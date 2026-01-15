@@ -145,22 +145,18 @@ class AuthService {
     }
   }
 
-  // Logout
   Future<void> logout() async {
     await _tokenStorage.clearAuthData();
   }
 
-  // Check if user is logged in
   Future<bool> isLoggedIn() async {
     return await _tokenStorage.isLoggedIn();
   }
 
-  // Get current user role
   Future<String?> getUserRole() async {
     return await _tokenStorage.getUserRole();
   }
 
-  // Get is first time user
   Future<bool> isFirstTimeUser() async {
     return await _tokenStorage.isFirstTimeUser();
   }
@@ -315,7 +311,6 @@ class AuthService {
     }
   }
 
-  // Get Schools (no token required)
   Future<List<School>> getSchools() async {
     try {
       final response = await _dio.get(ApiConstants.schools);
@@ -350,7 +345,6 @@ class AuthService {
     }
   }
 
-  // Get Classes by School ID (can work with or without token)
   Future<List<ClassModel>> getClassesBySchool(int schoolId) async {
     try {
       // Try to get token, but don't fail if not available
@@ -445,7 +439,6 @@ class AuthService {
     }
   }
 
-  // Get User Profile
   Future<UserProfile> getProfile() async {
     try {
       final response = await _dio.get(ApiConstants.profile);
@@ -617,7 +610,6 @@ class AuthService {
     }
   }
 
-  // Check Token
   Future<bool> checkToken() async {
     try {
       final response = await _dio.get(ApiConstants.checkToken);

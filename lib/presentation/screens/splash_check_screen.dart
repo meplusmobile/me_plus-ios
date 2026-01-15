@@ -4,7 +4,6 @@ import 'package:me_plus/data/services/token_storage_service.dart';
 import 'package:me_plus/core/constants/app_colors.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-/// Splash screen that checks for existing auth and redirects accordingly
 class SplashCheckScreen extends StatefulWidget {
   const SplashCheckScreen({super.key});
 
@@ -29,7 +28,6 @@ class _SplashCheckScreenState extends State<SplashCheckScreen>
       vsync: this,
     );
 
-    // Slide from top to center animation
     _slideAnimation = Tween<double>(
       begin: -200.0,
       end: 0.0,
@@ -51,7 +49,6 @@ class _SplashCheckScreenState extends State<SplashCheckScreen>
       ),
     );
 
-    // Start animation
     _controller.forward();
 
     // Loop pulse animation after initial slide
@@ -76,7 +73,6 @@ class _SplashCheckScreenState extends State<SplashCheckScreen>
 
     if (!mounted) return;
 
-    // Check if user is logged in
     final isLoggedIn = await _tokenStorage.isLoggedIn();
 
     if (isLoggedIn) {

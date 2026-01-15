@@ -1,4 +1,3 @@
-/// Application-wide constants
 class AppConstants {
   // API Configuration
   static const String apiTimeout = 'API_TIMEOUT';

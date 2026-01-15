@@ -1,4 +1,3 @@
-/// Request model for Google Signup
 class GoogleSignupRequest {
   final String accessToken;
   final String birthDate;

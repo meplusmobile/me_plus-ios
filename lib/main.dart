@@ -15,21 +15,26 @@ import 'package:me_plus/presentation/providers/parent_profile_provider.dart';
 import 'package:me_plus/presentation/providers/children_provider.dart';
 import 'package:me_plus/routes/app_router.dart';
 
+/// Main entry point of the application
 void main() async {
+  // Ensure Flutter binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Set preferred orientations
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
-  // Load .env config
+  // Load environment variables
   try {
     await dotenv.load(fileName: '.env');
   } catch (e) {
     debugPrint('Failed to load .env file: $e');
+    // Continue with default values
   }
 
+  // Set up error handlers
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
     debugPrint('Flutter Error: ${details.exception}');

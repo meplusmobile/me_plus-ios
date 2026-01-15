@@ -52,8 +52,6 @@ class _ParentScreenSignUpState extends State<ParentScreenSignUp>
     try {
       final signupData = context.read<SignupData>();
 
-      // Check if user already signed up (via Google)
-      // If firstName is null, it means they came from Google signup
       final isGoogleSignup = signupData.firstName == null;
 
       if (!isGoogleSignup) {
@@ -72,7 +70,6 @@ class _ParentScreenSignUpState extends State<ParentScreenSignUp>
           password: signupData.password!,
         );
 
-        // Call signup API
         await _authService.signup(request);
       } else {
         // Token already exists from Google OAuth
@@ -86,7 +83,6 @@ class _ParentScreenSignUpState extends State<ParentScreenSignUp>
           _isLoading = false;
         });
 
-        // Show verification overlay
         VerificationOverlay.show(
           context,
           onComplete: () {
@@ -152,7 +148,6 @@ class _ParentScreenSignUpState extends State<ParentScreenSignUp>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Background blur image
           Positioned(
             top: -180,
             left: 0,
@@ -177,7 +172,6 @@ class _ParentScreenSignUpState extends State<ParentScreenSignUp>
             ),
           ),
 
-          // Bottom decoration
           Positioned(
             left: 0,
             right: 0,
@@ -189,7 +183,6 @@ class _ParentScreenSignUpState extends State<ParentScreenSignUp>
             ),
           ),
 
-          // Top left logo (with IgnorePointer to allow clicks through)
           Positioned(
             top: 40,
             left: 12,

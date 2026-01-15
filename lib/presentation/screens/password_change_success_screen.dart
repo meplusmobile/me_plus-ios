@@ -30,7 +30,6 @@ class _PasswordChangeSuccessScreenState
       duration: const Duration(milliseconds: 2500),
     );
 
-    // Background color transition from beige to white
     _bgColorAnimation =
         ColorTween(begin: const Color(0xFFFEEED7), end: Colors.white).animate(
           CurvedAnimation(
@@ -47,7 +46,6 @@ class _PasswordChangeSuccessScreenState
       ),
     );
 
-    // Checkmark animation
     _checkmarkAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
@@ -55,7 +53,6 @@ class _PasswordChangeSuccessScreenState
       ),
     );
 
-    // Content fade in (text and button)
     _contentFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
@@ -90,7 +87,6 @@ class _PasswordChangeSuccessScreenState
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Animated success icon
                     ScaleTransition(
                       scale: _circleScaleAnimation,
                       child: Container(

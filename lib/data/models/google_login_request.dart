@@ -1,4 +1,3 @@
-/// Request model for Google Login
 class GoogleLoginRequest {
   final String accessToken;
 

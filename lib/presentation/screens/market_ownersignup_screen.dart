@@ -96,7 +96,6 @@ class _MarketOwnerScreenSignUpState extends State<MarketOwnerScreenSignUp>
       final signupData = context.read<SignupData>();
       final googleProvider = context.read<GoogleSignupProvider>();
 
-      // Check if this is Google signup
       final isGoogleSignup =
           googleProvider.hasGoogleAuth && googleProvider.hasBasicInfo;
 
@@ -123,11 +122,9 @@ class _MarketOwnerScreenSignUpState extends State<MarketOwnerScreenSignUp>
           firstName: encodedFirstName,
         );
 
-        // Call Google signup API
         final response = await _authService.googleSignup(request);
 
         // WORKAROUND: Explicitly update profile with encoded first name
-        // The backend might ignore firstName in googleSignup, so we update it manually
         try {
           await _authService.updateProfile({'FirstName': encodedFirstName});
         } catch (e) {
@@ -139,11 +136,9 @@ class _MarketOwnerScreenSignUpState extends State<MarketOwnerScreenSignUp>
             _isLoading = false;
           });
 
-          // Show verification overlay
           VerificationOverlay.show(
             context,
             onComplete: () {
-              // Navigate based on isFirstTimeUser
               if (response.isFirstTimeUser) {
                 context.go('/onboarding/market-owner');
               } else {
@@ -177,7 +172,6 @@ class _MarketOwnerScreenSignUpState extends State<MarketOwnerScreenSignUp>
           address: signupData.marketAddress!,
         );
 
-        // Call API
         final response = await _authService.signup(request);
 
         if (mounted) {
@@ -185,11 +179,9 @@ class _MarketOwnerScreenSignUpState extends State<MarketOwnerScreenSignUp>
             _isLoading = false;
           });
 
-          // Show verification overlay
           VerificationOverlay.show(
             context,
             onComplete: () {
-              // Navigate based on isFirstTimeUser
               if (response.isFirstTimeUser) {
                 context.go('/onboarding/market-owner');
               } else {
@@ -223,7 +215,6 @@ class _MarketOwnerScreenSignUpState extends State<MarketOwnerScreenSignUp>
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Background blur image
           Positioned(
             top: -180,
             left: 0,
@@ -248,7 +239,6 @@ class _MarketOwnerScreenSignUpState extends State<MarketOwnerScreenSignUp>
             ),
           ),
 
-          // Bottom decoration
           Positioned(
             left: 0,
             right: 0,
@@ -260,7 +250,6 @@ class _MarketOwnerScreenSignUpState extends State<MarketOwnerScreenSignUp>
             ),
           ),
 
-          // Top left logo (with IgnorePointer to allow clicks through)
           Positioned(
             top: 40,
             left: 12,
@@ -289,7 +278,6 @@ class _MarketOwnerScreenSignUpState extends State<MarketOwnerScreenSignUp>
                   children: [
                     const SizedBox(height: 158),
 
-                    // Header
                     FadeTransition(
                       opacity: _fadeAnimation,
                       child: SlideTransition(

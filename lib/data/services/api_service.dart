@@ -120,6 +120,7 @@ class ApiService {
 
   Dio get dio => _dio;
 
+  // GET request
   Future<Response> get(
     String path, {
     Map<String, dynamic>? queryParameters,
@@ -131,6 +132,7 @@ class ApiService {
     }
   }
 
+  // POST request
   Future<Response> post(
     String path, {
     dynamic data,
@@ -147,6 +149,7 @@ class ApiService {
     }
   }
 
+  // PUT request
   Future<Response> put(
     String path, {
     dynamic data,
@@ -167,6 +170,7 @@ class ApiService {
     }
   }
 
+  // PATCH request
   Future<Response> patch(
     String path, {
     dynamic data,
@@ -183,6 +187,7 @@ class ApiService {
     }
   }
 
+  // DELETE request
   Future<Response> delete(
     String path, {
     Map<String, dynamic>? queryParameters,

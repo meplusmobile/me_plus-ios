@@ -1,6 +1,5 @@
 import 'package:flutter/animation.dart';
 
-/// App-wide dimension constants
 class AppDimensions {
   // Padding
   static const double paddingXSmall = 4.0;
@@ -34,7 +33,6 @@ class AppDimensions {
   static const double avatarLarge = 100.0;
 }
 
-/// App-wide text size constants
 class AppTextSizes {
   static const double tiny = 10.0;
   static const double small = 12.0;
@@ -47,7 +45,6 @@ class AppTextSizes {
   static const double display = 32.0;
 }
 
-/// App-wide duration constants
 class AppDurations {
   static const Duration fast = Duration(milliseconds: 200);
   static const Duration normal = Duration(milliseconds: 300);
@@ -55,7 +52,6 @@ class AppDurations {
   static const Duration verySlow = Duration(milliseconds: 1000);
 }
 
-/// App-wide animation curve constants
 class AppCurves {
   static const ease = Curves.ease;
   static const easeIn = Curves.easeIn;

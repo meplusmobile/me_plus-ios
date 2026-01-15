@@ -117,7 +117,6 @@ class ParentRepository {
         }
       }
 
-      // Filter to get only last 4 days (excluding today, days: -1, -2, -3, -4)
       final lastFourDays = allDates.where((behaviorDate) {
         final daysDifference = now.difference(behaviorDate.date).inDays;
         return daysDifference >= 1 && daysDifference <= 4;
@@ -160,7 +159,6 @@ class ParentRepository {
         activities = data.map((item) => Activity.fromJson(item)).toList();
       }
 
-      // Auto-translate activities
       final translatedActivities = <Activity>[];
       for (var activity in activities) {
         translatedActivities.add(await _autoTranslateActivity(activity));
@@ -309,7 +307,6 @@ class ParentRepository {
           .map((notification) => NotificationModel.fromJson(notification))
           .toList();
 
-      // Auto-translate notifications but preserve names
       final translatedNotifications = <NotificationModel>[];
       for (var notification in notifications) {
         translatedNotifications.add(
@@ -490,7 +487,13 @@ class ParentRepository {
     await _apiService.delete('/api/notifications/$notificationId');
   }
 
+  // Mocked method for child purchases
   Future<List<Purchase>> getChildPurchases({required int studentId}) async {
+    // In a real implementation, this would call an API endpoint like:
+    // final response = await _apiService.get('/parent/child/$studentId/purchases');
+    // return (response.data as List).map((p) => Purchase.fromJson(p)).toList();
+
+    // Mock data for now
     await Future.delayed(const Duration(seconds: 1));
     return [
       Purchase(

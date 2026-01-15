@@ -12,7 +12,6 @@ class ProfileStorageService {
     await prefs.setString(_profileKey, profileJson);
   }
 
-  // Get profile
   Future<StudentProfile?> getProfile() async {
     final prefs = await SharedPreferences.getInstance();
     final profileJson = prefs.getString(_profileKey);
@@ -33,13 +32,11 @@ class ProfileStorageService {
     await prefs.remove(_profileKey);
   }
 
-  // Check if profile exists
   Future<bool> hasProfile() async {
     final profile = await getProfile();
     return profile != null;
   }
 
-  // Get specific IDs
   Future<int?> getStudentId() async {
     final profile = await getProfile();
     return profile?.id;

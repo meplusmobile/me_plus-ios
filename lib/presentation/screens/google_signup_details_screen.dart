@@ -14,7 +14,6 @@ import 'package:me_plus/data/services/auth_service.dart';
 import 'package:me_plus/data/models/google_signup_request.dart';
 import 'package:me_plus/core/localization/app_localizations.dart';
 
-/// Screen for collecting additional information after Google Sign-In
 class GoogleSignupDetailsScreen extends StatefulWidget {
   const GoogleSignupDetailsScreen({super.key});
 
@@ -51,7 +50,6 @@ class _GoogleSignupDetailsScreenState extends State<GoogleSignupDetailsScreen>
   void initState() {
     super.initState();
 
-    // Check if we have Google auth data
     final googleProvider = context.read<GoogleSignupProvider>();
     if (!googleProvider.hasGoogleAuth) {
       // No Google auth data, redirect back
@@ -184,13 +182,11 @@ class _GoogleSignupDetailsScreenState extends State<GoogleSignupDetailsScreen>
         password: _passwordController.text,
       );
 
-      // Send to backend
       await _authService.googleSignup(request);
 
       if (mounted) {
         setState(() => _isLoading = false);
 
-        // Navigate based on role
         if (_selectedRole == 'Student') {
           // For students, go to school selection
           context.go('/signup/student/school-selection');
@@ -222,7 +218,6 @@ class _GoogleSignupDetailsScreenState extends State<GoogleSignupDetailsScreen>
       body: SafeArea(
         child: Stack(
           children: [
-            // Background blur
             Positioned(
               top: -180,
               left: 0,
@@ -247,7 +242,6 @@ class _GoogleSignupDetailsScreenState extends State<GoogleSignupDetailsScreen>
               ),
             ),
 
-            // Bottom decoration
             Positioned(
               left: 0,
               right: 0,
@@ -269,7 +263,6 @@ class _GoogleSignupDetailsScreenState extends State<GoogleSignupDetailsScreen>
                     children: [
                       const SizedBox(height: 40),
 
-                      // Logo and Language Switcher
                       FadeTransition(
                         opacity: _fadeAnimations[0],
                         child: Row(
@@ -287,7 +280,6 @@ class _GoogleSignupDetailsScreenState extends State<GoogleSignupDetailsScreen>
 
                       const SizedBox(height: 40),
 
-                      // Header
                       FadeTransition(
                         opacity: _fadeAnimations[0],
                         child: Column(
@@ -371,9 +363,7 @@ class _GoogleSignupDetailsScreenState extends State<GoogleSignupDetailsScreen>
                                           ),
                                         ),
                                         value: role['id']!,
-                                        // ignore: deprecated_member_use
                                         groupValue: _selectedRole,
-                                        // ignore: deprecated_member_use
                                         onChanged: (value) {
                                           setState(() => _selectedRole = value);
                                         },

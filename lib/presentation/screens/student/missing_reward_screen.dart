@@ -39,7 +39,6 @@ class _MissingRewardScreenState extends State<MissingRewardScreen> {
       listen: false,
     );
 
-    // Load profile first if not loaded
     if (!profileProvider.hasProfile) {
       await profileProvider.loadProfile();
     }

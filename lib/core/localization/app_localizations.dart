@@ -313,7 +313,6 @@ class AppLocalizations {
       'error_loading_store': 'Error loading store',
       'no_items_found': 'No items found',
 
-      // Top 10 Screen
       'top_10': 'Top 10',
       'honor_list': 'Honor List',
       'name': 'Name',
@@ -460,7 +459,6 @@ class AppLocalizations {
       'snacks': 'Snacks',
       'most_popular': 'Most popular',
 
-      // Filters
       'filters': 'Filters',
       'reset': 'Reset',
       'cost': 'Cost',
@@ -766,7 +764,6 @@ class AppLocalizations {
       'error_loading_store': 'خطأ في تحميل المتجر',
       'no_items_found': 'لم يتم العثور على عناصر',
 
-      // Top 10 Screen
       'top_10': 'أفضل 10',
       'honor_list': 'قائمة الشرف',
       'name': 'الاسم',
@@ -914,7 +911,6 @@ class AppLocalizations {
       'snacks': 'وجبات خفيفة',
       'most_popular': 'الأكثر شعبية',
 
-      // Filters
       'filters': 'تصفية',
       'reset': 'إعادة تعيين',
       'cost': 'التكلفة',
@@ -935,7 +931,6 @@ class AppLocalizations {
   // Helper method for easier access
   String t(String key) => translate(key);
 
-  // Translate month name
   String translateMonth(String monthName) {
     final monthKey = monthName.toLowerCase();
     return translate(monthKey);

@@ -70,7 +70,6 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   );
                 }
 
-                // Filter only IN PROGRESS orders
                 final inProgressOrders = provider.thisMonthOrders
                     .where(
                       (order) => order.status.toUpperCase() == 'IN PROGRESS',

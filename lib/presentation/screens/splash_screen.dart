@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-/// Splash screen - first screen shown when app launches
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -16,7 +15,6 @@ class _SplashScreenState extends State<SplashScreen> {
     _navigateToNext();
   }
 
-  /// Navigate to appropriate screen after splash
   void _navigateToNext() {
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
