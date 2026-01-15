@@ -43,8 +43,15 @@ workflows:
     artifacts:
       - build/ios/ipa/*.ipa
 
-    publishing:
-      app_store_connect:
-        issuer_id: bc99df75-7e2d-4458-902e-470d647f425a
-        key_id: 68Y9MFMUVZ
-        private_key: $APP_STORE_CONNECT_PRIVATE_KEY
+publishing:
+  app_store_connect:
+    issuer_id: bc99df75-7e2d-4458-902e-470d647f425a
+    key_id: 68Y9MFMUVZ
+    private_key: |
+      -----BEGIN PRIVATE KEY-----
+      MIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQgwRmRRsNZ4NpKQs7W
+      ApulKTQHsqABL1wqqGnk0ukgXjagCgYIKoZIzj0DAQehRANCAAR+xQVAEsP0Ul01
+      6P3ihC1MtDkaVWP2Vg64lgrya29zkyFbVZDMzzqpWHzAxqgVxAWJdW5+uK23AXC2
+      0htvPgE8
+      -----END PRIVATE KEY-----
+
