@@ -1,46 +1,47 @@
 workflows:
   ios-release:
-    name: iOS Release (Personal Account)
+    name: iOS Release Build
     max_build_duration: 60
     instance_type: mac_mini_m1
-
     environment:
       flutter: stable
       xcode: latest
       cocoapods: default
-
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: meplusapp
-
-      vars:
-        # This must exist in Codemagic UI as a Secure Environment Variable
-        APP_STORE_CONNECT_PRIVATE_KEY: $APP_STORE_CONNECT_PRIVATE_KEY
-
     scripts:
-      - name: Flutter clean & pub get
+      - name: Get Flutter packages
         script: |
-          flutter clean
           flutter pub get
-
-      - name: Install CocoaPods
+      - name: Install CocoaPods dependencies
         script: |
-          cd ios
-          pod install
-          cd ..
-
-      - name: Build Flutter iOS (Release, no codesign)
+          cd ios && pod install
+      - name: Build iOS Release
         script: |
           flutter build ios --release --no-codesign
-
-      - name: Build signed IPA (App Store)
+      - name: Verify Release Build
         script: |
-          xcode-project use-profiles
-          xcode-project build-ipa \
-            --workspace ios/Runner.xcworkspace \
-            --scheme Runner
-
+          if [ -d "build/ios/Release-iphoneos/Runner.app" ]; then
+            echo "✅ Release build found!"
+          else
+            echo "❌ ERROR: Release build not found!"
+            exit 1
+          fi
+      - name: Create unsigned Release IPA
+        script: |
+          cd build/ios/Release-iphoneos
+          mkdir -p Payload
+          cp -r Runner.app Payload/
+          zip -r ../../../Runner-Release.ipa Payload/
+          cd ../../..
+          echo "📦 IPA created: Runner-Release.ipa"
+          ls -lh Runner-Release.ipa
     artifacts:
-      - build/ios/ipa/*.ipa
+      - Runner-Release.ipa
+    publishing:
+      email:
+        recipients:
+          - fadihamad40984@gmail.com
+        notify:
+          success: true
+          failure: true
 
 
