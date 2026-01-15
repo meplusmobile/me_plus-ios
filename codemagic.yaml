@@ -14,20 +14,30 @@ workflows:
       - name: Install CocoaPods dependencies
         script: |
           cd ios && pod install
-      - name: Build iOS Release (No Code Sign)
+      - name: Build iOS Release
         script: |
           flutter build ios --release --no-codesign
-      - name: Create unsigned IPA
+          echo "✅ Built in RELEASE mode"
+      - name: Verify Release Build
         script: |
-          cd build/ios/iphoneos
+          if [ -d "build/ios/Release-iphoneos/Runner.app" ]; then
+            echo "✅ Release build found!"
+          else
+            echo "❌ ERROR: Release build not found!"
+            exit 1
+          fi
+      - name: Create Release IPA
+        script: |
+          cd build/ios/Release-iphoneos
           mkdir -p Payload
           cp -r Runner.app Payload/
-          zip -r ../../../Runner-unsigned.ipa Payload/
+          zip -r ../../../Runner-Release.ipa Payload/
           cd ../../..
-          ls -lh Runner-unsigned.ipa
+          echo "📦 IPA created: Runner-Release.ipa"
+          ls -lh Runner-Release.ipa
     artifacts:
-      - Runner-unsigned.ipa
-      - build/ios/iphoneos/Runner.app
+      - Runner-Release.ipa
+      - build/ios/Release-iphoneos/Runner.app
     publishing:
       email:
         recipients:
