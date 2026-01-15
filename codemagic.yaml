@@ -3,47 +3,41 @@ workflows:
     name: iOS Release Build
     max_build_duration: 60
     instance_type: mac_mini_m1
+
     environment:
       flutter: stable
       xcode: latest
       cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: meplusapp   # عدل إذا لزم
+
     scripts:
-      - name: Get Flutter packages
+      - name: Flutter clean & get packages
         script: |
+          flutter clean
           flutter pub get
-      - name: Install CocoaPods dependencies
+
+      - name: Install CocoaPods
         script: |
-          cd ios && pod install
-      - name: Build iOS Release
+          cd ios
+          pod install
+          cd ..
+
+      - name: Build Flutter iOS (Release)
         script: |
           flutter build ios --release --no-codesign
-          echo "✅ Built in RELEASE mode"
-      - name: Verify Release Build
+
+      - name: Build signed IPA for App Store
         script: |
-          if [ -d "build/ios/Release-iphoneos/Runner.app" ]; then
-            echo "✅ Release build found!"
-          else
-            echo "❌ ERROR: Release build not found!"
-            exit 1
-          fi
-      - name: Create Release IPA
-        script: |
-          cd build/ios/Release-iphoneos
-          mkdir -p Payload
-          cp -r Runner.app Payload/
-          zip -r ../../../Runner-Release.ipa Payload/
-          cd ../../..
-          echo "📦 IPA created: Runner-Release.ipa"
-          ls -lh Runner-Release.ipa
+          xcode-project use-profiles
+          xcode-project build-ipa \
+            --workspace ios/Runner.xcworkspace \
+            --scheme Runner
+
     artifacts:
-      - Runner-Release.ipa
-      - build/ios/Release-iphoneos/Runner.app
+      - build/ios/ipa/*.ipa
+
     publishing:
-      email:
-        recipients:
-          - fadihamad40984@gmail.com
-        notify:
-          success: true
-          failure: true
-
-
+      app_store_connect:
+        api_key: AppStoreConnectAPIKey
