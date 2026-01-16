@@ -93,6 +93,25 @@
 		<string>http</string>
 	</array>
 	
+	<!-- App Transport Security Settings -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>israelcentral-01.azurewebsites.net</key>
+			<dict>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+				<key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSTemporaryExceptionMinimumTLSVersion</key>
+				<string>TLSv1.2</string>
+			</dict>
+		</dict>
+	</dict>
+	
 	<!-- Camera and Photo Library Permissions -->
 	<key>NSCameraUsageDescription</key>
 	<string>نحتاج الوصول للكاميرا لالتقاط صور المكافآت والمنتجات</string>
