@@ -112,6 +112,15 @@
 		</dict>
 	</dict>
 	
+	<!-- Local Network Usage for iOS 14+ -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>نحتاج الوصول للشبكة المحلية للاتصال بالخادم</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_http._tcp</string>
+		<string>_https._tcp</string>
+	</array>
+	
 	<!-- Camera and Photo Library Permissions -->
 	<key>NSCameraUsageDescription</key>
 	<string>نحتاج الوصول للكاميرا لالتقاط صور المكافآت والمنتجات</string>
