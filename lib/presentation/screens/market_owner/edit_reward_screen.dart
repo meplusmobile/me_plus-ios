@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
 import 'package:me_plus/presentation/providers/market_owner_provider.dart';
 import 'package:me_plus/core/localization/app_localizations.dart';
 import 'package:me_plus/data/models/store_model.dart';
@@ -76,7 +75,8 @@ class _EditRewardScreenState extends State<EditRewardScreen> {
     try {
       final response = await http.get(Uri.parse(imageUrl));
       if (response.statusCode == 200) {
-        final tempDir = await getTemporaryDirectory();
+        // Use app's temporary directory instead of path_provider
+        final tempDir = Directory.systemTemp;
         final fileName = imageUrl.split('/').last;
         final file = File('${tempDir.path}/$fileName');
         await file.writeAsBytes(response.bodyBytes);
