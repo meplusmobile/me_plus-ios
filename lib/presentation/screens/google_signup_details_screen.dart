@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -304,7 +303,7 @@ class _GoogleSignupDetailsScreenState extends State<GoogleSignupDetailsScreen>
                             if (googleProvider.email != null)
                               Text(
                                 googleProvider.email!,
-                                style: GoogleFonts.poppins(
+                                style: const TextStyle(fontFamily: 'Poppins', 
                                   fontSize: 14,
                                   color: AppColors.textSecondary,
                                 ),
@@ -323,7 +322,7 @@ class _GoogleSignupDetailsScreenState extends State<GoogleSignupDetailsScreen>
                           children: [
                             Text(
                               AppLocalizations.of(context)!.t('select_role'),
-                              style: GoogleFonts.poppins(
+                              style: const TextStyle(fontFamily: 'Poppins', 
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
                                 color: AppColors.textSecondary,
@@ -356,7 +355,7 @@ class _GoogleSignupDetailsScreenState extends State<GoogleSignupDetailsScreen>
                                           AppLocalizations.of(
                                             context,
                                           )!.t(role['labelKey']!),
-                                          style: GoogleFonts.poppins(
+                                          style: const TextStyle(fontFamily: 'Poppins', 
                                             fontSize: 14,
                                             fontWeight: FontWeight.w500,
                                             color: AppColors.textPrimary,
@@ -523,7 +522,7 @@ class _GoogleSignupDetailsScreenState extends State<GoogleSignupDetailsScreen>
                                   )
                                 : Text(
                                     AppLocalizations.of(context)!.t('continue'),
-                                    style: GoogleFonts.poppins(
+                                    style: const TextStyle(fontFamily: 'Poppins', 
                                       fontSize: 18,
                                       fontWeight: FontWeight.w600,
                                     ),

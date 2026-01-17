@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:me_plus/presentation/theme/app_colors.dart';
 
 class CustomSelectField extends StatelessWidget {
@@ -30,7 +29,8 @@ class CustomSelectField extends StatelessWidget {
       children: [
         Text(
           label,
-          style: GoogleFonts.poppins(
+          style: const TextStyle(
+            fontFamily: 'Poppins',
             fontSize: 12,
             fontWeight: FontWeight.w500,
             color: AppColors.disabled,
@@ -59,7 +59,8 @@ class CustomSelectField extends StatelessWidget {
                 value: value,
                 hint: Text(
                   enabled ? 'Select $label' : 'Select school first',
-                  style: GoogleFonts.inter(
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
                     fontSize: 14,
                     color: AppColors.disabled,
                   ),
@@ -70,7 +71,8 @@ class CustomSelectField extends StatelessWidget {
                   color: enabled ? AppColors.textPrimary : AppColors.disabled,
                   size: 20,
                 ),
-                style: GoogleFonts.inter(
+                style: const TextStyle(
+                  fontFamily: 'Inter',
                   fontSize: 14,
                   color: AppColors.textPrimary,
                 ),

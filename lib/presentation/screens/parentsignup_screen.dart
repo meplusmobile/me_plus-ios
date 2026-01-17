@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -267,7 +266,7 @@ class _ParentScreenSignUpState extends State<ParentScreenSignUp>
         Text(
           localizations.t('almost_there_add_child_email'),
           textAlign: TextAlign.center,
-          style: GoogleFonts.inter(
+          style: const TextStyle(fontFamily: 'Inter', 
             fontSize: 12,
             fontWeight: FontWeight.w500,
             color: AppColors.disabled,

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:me_plus/presentation/theme/app_colors.dart';
 import 'package:me_plus/core/localization/app_localizations.dart';
@@ -123,7 +122,7 @@ class _PasswordChangeSuccessScreenState
                           final localizations = AppLocalizations.of(context)!;
                           return Text(
                             localizations.t('successful'),
-                            style: GoogleFonts.poppins(
+                            style: const TextStyle(fontFamily: 'Poppins', 
                               fontSize: 28,
                               fontWeight: FontWeight.w600,
                               color: Colors.black,
@@ -144,7 +143,7 @@ class _PasswordChangeSuccessScreenState
                           return Text(
                             localizations.t('congratulations_password_changed'),
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.inter(
+                            style: const TextStyle(fontFamily: 'Inter', 
                               fontSize: 14,
                               fontWeight: FontWeight.w400,
                               color: const Color(0xFF9E9E9E),
@@ -178,7 +177,7 @@ class _PasswordChangeSuccessScreenState
                               ),
                               child: Text(
                                 localizations.t('login'),
-                                style: GoogleFonts.poppins(
+                                style: const TextStyle(fontFamily: 'Poppins', 
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,
                                 ),

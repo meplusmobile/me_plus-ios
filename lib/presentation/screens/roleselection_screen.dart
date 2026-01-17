@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -181,7 +180,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                 const SizedBox(height: 8),
                 Text(
                   localizations.t('select_role_to_continue'),
-                  style: GoogleFonts.inter(
+                  style: const TextStyle(fontFamily: 'Inter', 
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: AppColors.textSecondary,
@@ -213,7 +212,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
               children: [
                 Text(
                   localizations.t('select_role_to_continue'),
-                  style: GoogleFonts.poppins(
+                  style: const TextStyle(fontFamily: 'Poppins', 
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: AppColors.textSecondary,
@@ -341,7 +340,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                       final localizations = AppLocalizations.of(context)!;
                       return Text(
                         localizations.t('next'),
-                        style: GoogleFonts.poppins(
+                        style: const TextStyle(fontFamily: 'Poppins', 
                           fontSize: 20,
                           fontWeight: FontWeight.w600,
                         ),

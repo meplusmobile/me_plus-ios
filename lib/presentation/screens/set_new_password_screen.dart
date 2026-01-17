@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:me_plus/presentation/theme/app_colors.dart';
 import 'package:me_plus/presentation/widgets/custom_text_field_signin.dart';
@@ -192,7 +191,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen>
                             final localizations = AppLocalizations.of(context)!;
                             return Text(
                               localizations.t('set_a_new_password'),
-                              style: GoogleFonts.poppins(
+                              style: const TextStyle(fontFamily: 'Poppins', 
                                 fontSize: 32,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.textPrimary,
@@ -219,7 +218,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen>
                             final localizations = AppLocalizations.of(context)!;
                             return Text(
                               localizations.t('create_new_password_security'),
-                              style: GoogleFonts.inter(
+                              style: const TextStyle(fontFamily: 'Inter', 
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
                                 color: AppColors.disabled,
@@ -248,7 +247,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen>
                               children: [
                                 Text(
                                   localizations.t('set_password'),
-                                  style: GoogleFonts.poppins(
+                                  style: const TextStyle(fontFamily: 'Poppins', 
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
                                     color: AppColors.disabled,
@@ -300,7 +299,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen>
                               children: [
                                 Text(
                                   localizations.t('confirm_password'),
-                                  style: GoogleFonts.poppins(
+                                  style: const TextStyle(fontFamily: 'Poppins', 
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
                                     color: AppColors.disabled,

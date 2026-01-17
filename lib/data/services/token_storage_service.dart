@@ -21,88 +21,48 @@ class TokenStorageService {
     required String role,
     required bool isFirstTimeUser,
   }) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_tokenKey, token);
-      await prefs.setString(_refreshTokenKey, refreshToken);
-      await prefs.setString(_userIdKey, userId);
-      await prefs.setString(_userEmailKey, email);
-      await prefs.setString(_userRoleKey, role);
-      await prefs.setBool(_isFirstTimeUserKey, isFirstTimeUser);
-    } catch (e) {
-      debugPrint('Error saving auth data: $e');
-      rethrow;
-    }
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_tokenKey, token);
+    await prefs.setString(_refreshTokenKey, refreshToken);
+    await prefs.setString(_userIdKey, userId);
+    await prefs.setString(_userEmailKey, email);
+    await prefs.setString(_userRoleKey, role);
+    await prefs.setBool(_isFirstTimeUserKey, isFirstTimeUser);
   }
 
   Future<String?> getToken() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(_tokenKey);
-    } catch (e) {
-      debugPrint('Error getting token: $e');
-      return null;
-    }
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_tokenKey);
   }
 
   Future<String?> getRefreshToken() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(_refreshTokenKey);
-    } catch (e) {
-      debugPrint('Error getting refresh token: $e');
-      return null;
-    }
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_refreshTokenKey);
   }
 
   Future<String?> getUserId() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(_userIdKey);
-    } catch (e) {
-      debugPrint('Error getting user ID: $e');
-      return null;
-    }
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_userIdKey);
   }
 
   Future<String?> getUserEmail() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(_userEmailKey);
-    } catch (e) {
-      debugPrint('Error getting user email: $e');
-      return null;
-    }
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_userEmailKey);
   }
 
   Future<String?> getUserRole() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(_userRoleKey);
-    } catch (e) {
-      debugPrint('Error getting user role: $e');
-      return null;
-    }
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_userRoleKey);
   }
 
   Future<bool> isFirstTimeUser() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getBool(_isFirstTimeUserKey) ?? true;
-    } catch (e) {
-      debugPrint('Error checking first time user: $e');
-      return true;
-    }
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_isFirstTimeUserKey) ?? true;
   }
 
   Future<bool> isLoggedIn() async {
-    try {
-      final token = await getToken();
-      return token != null && token.isNotEmpty;
-    } catch (e) {
-      debugPrint('Error checking logged in status: $e');
-      return false;
-    }
+    final token = await getToken();
+    return token != null && token.isNotEmpty;
   }
 
   // Clear all authentication data (logout)
@@ -143,32 +103,17 @@ class TokenStorageService {
   }
 
   Future<bool> getRememberMe() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getBool(_rememberMeKey) ?? false;
-    } catch (e) {
-      debugPrint('Error getting remember me: $e');
-      return false;
-    }
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_rememberMeKey) ?? false;
   }
 
   Future<String?> getSavedEmail() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(_savedEmailKey);
-    } catch (e) {
-      debugPrint('Error getting saved email: $e');
-      return null;
-    }
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_savedEmailKey);
   }
 
   Future<String?> getSavedPassword() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString(_savedPasswordKey);
-    } catch (e) {
-      debugPrint('Error getting saved password: $e');
-      return null;
-    }
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_savedPasswordKey);
   }
 }

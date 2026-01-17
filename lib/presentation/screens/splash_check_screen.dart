@@ -22,7 +22,6 @@ class _SplashCheckScreenState extends State<SplashCheckScreen>
   void initState() {
     super.initState();
 
-    // Setup animation controller
     _controller = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
@@ -38,7 +37,6 @@ class _SplashCheckScreenState extends State<SplashCheckScreen>
       ),
     );
 
-    // Pulse animation (repeating)
     _pulseAnimation = Tween<double>(
       begin: 1.0,
       end: 1.1,
@@ -51,14 +49,15 @@ class _SplashCheckScreenState extends State<SplashCheckScreen>
 
     _controller.forward();
 
-    // Loop pulse animation after initial slide
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         _controller.repeat(reverse: true);
       }
     });
 
-    _checkAuthAndRedirect();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAuthAndRedirect();
+    });
   }
 
   @override
@@ -68,36 +67,38 @@ class _SplashCheckScreenState extends State<SplashCheckScreen>
   }
 
   Future<void> _checkAuthAndRedirect() async {
-    // Delay for splash animation
     await Future.delayed(const Duration(milliseconds: 2500));
 
     if (!mounted) return;
 
-    final isLoggedIn = await _tokenStorage.isLoggedIn();
+    try {
+      final isLoggedIn = await _tokenStorage.isLoggedIn();
 
-    if (isLoggedIn) {
-      // User is logged in, get their role and redirect
-      final role = await _tokenStorage.getUserRole();
+      if (isLoggedIn) {
+        final role = await _tokenStorage.getUserRole();
 
-      if (!mounted) return;
+        if (!mounted) return;
 
-      switch (role?.toLowerCase()) {
-        case 'student':
-          context.go('/student/home');
-          break;
-        case 'marketowner':
-        case 'market_owner':
-          context.go('/market-owner/home');
-          break;
-        case 'parent':
-          context.go('/parent/home');
-          break;
-        default:
-          // Unknown role, go to login
-          context.go('/login');
+        switch (role?.toLowerCase()) {
+          case 'student':
+            context.go('/student/home');
+            break;
+          case 'marketowner':
+          case 'market_owner':
+            context.go('/market-owner/home');
+            break;
+          case 'parent':
+            context.go('/parent/home');
+            break;
+          default:
+            context.go('/login');
+        }
+      } else {
+        if (!mounted) return;
+        context.go('/login');
       }
-    } else {
-      // User is not logged in, go to login
+    } catch (e) {
+      debugPrint('Error during auth check: $e');
       if (!mounted) return;
       context.go('/login');
     }

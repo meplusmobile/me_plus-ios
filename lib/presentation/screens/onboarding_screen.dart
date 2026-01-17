@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:me_plus/presentation/theme/app_colors.dart';
@@ -150,7 +149,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     onPressed: _skip,
                     child: Text(
                       localizations.t('skip'),
-                      style: GoogleFonts.poppins(
+                      style: const TextStyle(fontFamily: 'Poppins', 
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                         color: AppColors.textPrimary,
@@ -241,7 +240,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Text(
             page.title,
             textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(
+            style: const TextStyle(fontFamily: 'Poppins', 
               fontSize: 24,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
@@ -254,7 +253,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Text(
             page.description,
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
+            style: const TextStyle(fontFamily: 'Inter', 
               fontSize: 14,
               fontWeight: FontWeight.w400,
               color: AppColors.textSecondary,
@@ -324,7 +323,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         child: Center(
           child: Text(
             text,
-            style: GoogleFonts.poppins(
+            style: const TextStyle(fontFamily: 'Poppins', 
               fontSize: 20,
               fontWeight: FontWeight.w600,
               color: Colors.white,

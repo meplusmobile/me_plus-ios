@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:me_plus/presentation/theme/app_colors.dart';
 import 'package:me_plus/core/localization/app_localizations.dart';
 
@@ -137,7 +136,8 @@ class _VerificationOverlayState extends State<VerificationOverlay>
                               Text(
                                 localizations.t('were_verifying_your_info'),
                                 textAlign: TextAlign.center,
-                                style: GoogleFonts.poppins(
+                                style: const TextStyle(
+                                  fontFamily: 'Poppins',
                                   fontSize: 20,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.primary,
@@ -148,7 +148,8 @@ class _VerificationOverlayState extends State<VerificationOverlay>
                               Text(
                                 localizations.t('this_wont_take_long'),
                                 textAlign: TextAlign.center,
-                                style: GoogleFonts.poppins(
+                                style: const TextStyle(
+                                  fontFamily: 'Poppins',
                                   fontSize: 20,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.primary,

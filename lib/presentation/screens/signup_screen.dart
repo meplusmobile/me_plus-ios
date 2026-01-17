@@ -8,7 +8,6 @@ import 'package:me_plus/presentation/widgets/custom_text_field_signup.dart';
 import 'package:me_plus/presentation/widgets/phone_input_field.dart';
 import 'package:me_plus/presentation/widgets/gradient_text.dart';
 import 'package:me_plus/presentation/widgets/language_switcher_button.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:me_plus/presentation/providers/signup_provider.dart';
 import 'package:me_plus/core/localization/app_localizations.dart';
 
@@ -257,7 +256,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                                   children: [
                                     Text(
                                       localizations.t('already_have_account'),
-                                      style: GoogleFonts.inter(
+                                      style: const TextStyle(fontFamily: 'Inter', 
                                         fontSize: 12,
                                         fontWeight: FontWeight.w500,
                                         color: AppColors.disabled,
@@ -276,7 +275,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                                       ),
                                       child: Text(
                                         localizations.t('sign_in'),
-                                        style: GoogleFonts.poppins(
+                                        style: const TextStyle(fontFamily: 'Poppins', 
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
                                           color: AppColors.primary,

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -138,7 +137,7 @@ class _LoginScreenState extends State<LoginScreen>
                     const SizedBox(width: 12),
                     Text(
                       AppLocalizations.of(context)!.t('pending_approval'),
-                      style: GoogleFonts.poppins(
+                      style: const TextStyle(fontFamily: 'Poppins', 
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
                         color: AppColors.primary,
@@ -154,7 +153,7 @@ class _LoginScreenState extends State<LoginScreen>
                       AppLocalizations.of(
                         context,
                       )!.t('request_waiting_for_school_approval'),
-                      style: GoogleFonts.poppins(
+                      style: const TextStyle(fontFamily: 'Poppins', 
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                         color: AppColors.textPrimary,
@@ -163,7 +162,7 @@ class _LoginScreenState extends State<LoginScreen>
                     const SizedBox(height: 12),
                     Text(
                       AppLocalizations.of(context)!.t('notify_when_approved'),
-                      style: GoogleFonts.poppins(
+                      style: const TextStyle(fontFamily: 'Poppins', 
                         fontSize: 12,
                         color: AppColors.textSecondary,
                       ),
@@ -187,7 +186,7 @@ class _LoginScreenState extends State<LoginScreen>
                     ),
                     child: Text(
                       AppLocalizations.of(context)!.t('ok'),
-                      style: GoogleFonts.poppins(
+                      style: const TextStyle(fontFamily: 'Poppins', 
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
@@ -244,7 +243,7 @@ class _LoginScreenState extends State<LoginScreen>
                 Expanded(
                   child: Text(
                     AppLocalizations.of(context)!.t('login_failed'),
-                    style: GoogleFonts.poppins(
+                    style: const TextStyle(fontFamily: 'Poppins', 
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
@@ -259,7 +258,7 @@ class _LoginScreenState extends State<LoginScreen>
               children: [
                 Text(
                   _getErrorMessage(e.toString()),
-                  style: GoogleFonts.poppins(
+                  style: const TextStyle(fontFamily: 'Poppins', 
                     fontSize: 14,
                     color: AppColors.textSecondary,
                     height: 1.5,
@@ -282,7 +281,7 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
                 child: Text(
                   AppLocalizations.of(context)!.t('ok'),
-                  style: GoogleFonts.poppins(
+                  style: const TextStyle(fontFamily: 'Poppins', 
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: Colors.white,
@@ -362,7 +361,7 @@ class _LoginScreenState extends State<LoginScreen>
                     const SizedBox(width: 12),
                     Text(
                       AppLocalizations.of(context)!.t('pending_approval'),
-                      style: GoogleFonts.poppins(
+                      style: const TextStyle(fontFamily: 'Poppins', 
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
                         color: AppColors.primary,
@@ -378,7 +377,7 @@ class _LoginScreenState extends State<LoginScreen>
                       AppLocalizations.of(
                         context,
                       )!.t('request_waiting_for_school_approval'),
-                      style: GoogleFonts.poppins(
+                      style: const TextStyle(fontFamily: 'Poppins', 
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                         color: AppColors.textPrimary,
@@ -387,7 +386,7 @@ class _LoginScreenState extends State<LoginScreen>
                     const SizedBox(height: 12),
                     Text(
                       AppLocalizations.of(context)!.t('notify_when_approved'),
-                      style: GoogleFonts.poppins(
+                      style: const TextStyle(fontFamily: 'Poppins', 
                         fontSize: 12,
                         color: AppColors.textSecondary,
                       ),
@@ -411,7 +410,7 @@ class _LoginScreenState extends State<LoginScreen>
                     ),
                     child: Text(
                       AppLocalizations.of(context)!.t('ok'),
-                      style: GoogleFonts.poppins(
+                      style: const TextStyle(fontFamily: 'Poppins', 
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
@@ -530,7 +529,7 @@ class _LoginScreenState extends State<LoginScreen>
                     Expanded(
                       child: Text(
                         AppLocalizations.of(context)!.t('login_failed'),
-                        style: GoogleFonts.poppins(
+                        style: const TextStyle(fontFamily: 'Poppins', 
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
@@ -545,7 +544,7 @@ class _LoginScreenState extends State<LoginScreen>
                   children: [
                     Text(
                       _getErrorMessage(errorMessage),
-                      style: GoogleFonts.poppins(
+                      style: const TextStyle(fontFamily: 'Poppins', 
                         fontSize: 14,
                         color: AppColors.textSecondary,
                         height: 1.5,
@@ -568,7 +567,7 @@ class _LoginScreenState extends State<LoginScreen>
                     ),
                     child: Text(
                       AppLocalizations.of(context)!.t('ok'),
-                      style: GoogleFonts.poppins(
+                      style: const TextStyle(fontFamily: 'Poppins', 
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
@@ -697,7 +696,7 @@ class _LoginScreenState extends State<LoginScreen>
                                   localizations.t(
                                     'enter_email_password_to_sign_in',
                                   ),
-                                  style: GoogleFonts.poppins(
+                                  style: const TextStyle(fontFamily: 'Poppins', 
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
                                     color: AppColors.textSecondary,
@@ -729,7 +728,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 // Email field
                                 Text(
                                   localizations.t('email'),
-                                  style: GoogleFonts.poppins(
+                                  style: const TextStyle(fontFamily: 'Poppins', 
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
                                     color: AppColors.textSecondary,
@@ -748,7 +747,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 // Password field
                                 Text(
                                   localizations.t('password'),
-                                  style: GoogleFonts.poppins(
+                                  style: const TextStyle(fontFamily: 'Poppins', 
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
                                     color: AppColors.textSecondary,
@@ -803,7 +802,7 @@ class _LoginScreenState extends State<LoginScreen>
                                         const SizedBox(width: 5),
                                         Text(
                                           localizations.t('remember_me'),
-                                          style: GoogleFonts.poppins(
+                                          style: const TextStyle(fontFamily: 'Poppins', 
                                             fontSize: 12,
                                             fontWeight: FontWeight.w500,
                                             color: AppColors.textSecondary,
@@ -823,7 +822,7 @@ class _LoginScreenState extends State<LoginScreen>
                                       ),
                                       child: Text(
                                         localizations.t('forgot_password'),
-                                        style: GoogleFonts.poppins(
+                                        style: const TextStyle(fontFamily: 'Poppins', 
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
                                           color: AppColors.primary,
@@ -874,7 +873,7 @@ class _LoginScreenState extends State<LoginScreen>
                                       ),
                                       child: Text(
                                         localizations.t('or_sign_in_with'),
-                                        style: GoogleFonts.poppins(
+                                        style: const TextStyle(fontFamily: 'Poppins', 
                                           fontSize: 12,
                                           color: AppColors.textSecondary,
                                           letterSpacing: -0.12,
@@ -942,7 +941,7 @@ class _LoginScreenState extends State<LoginScreen>
                                   children: [
                                     Text(
                                       localizations.t('dont_have_account'),
-                                      style: GoogleFonts.inter(
+                                      style: const TextStyle(fontFamily: 'Inter', 
                                         fontSize: 12,
                                         fontWeight: FontWeight.w500,
                                         color: AppColors.disabled,
@@ -961,7 +960,7 @@ class _LoginScreenState extends State<LoginScreen>
                                       ),
                                       child: Text(
                                         localizations.t('sign_up'),
-                                        style: GoogleFonts.poppins(
+                                        style: const TextStyle(fontFamily: 'Poppins', 
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
                                           color: AppColors.primary,

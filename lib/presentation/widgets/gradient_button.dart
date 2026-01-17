@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:me_plus/presentation/theme/app_colors.dart';
 
 class GradientButton extends StatefulWidget {
@@ -85,7 +84,8 @@ class _GradientButtonState extends State<GradientButton> {
                       )
                     : Text(
                         widget.text,
-                        style: GoogleFonts.poppins(
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
                           fontSize: 20,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,

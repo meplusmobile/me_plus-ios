@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:me_plus/presentation/theme/app_colors.dart';
 import 'package:me_plus/presentation/widgets/gradient_button.dart';
@@ -215,7 +214,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen>
                             final localizations = AppLocalizations.of(context)!;
                             return Text(
                               localizations.t('verify_code'),
-                              style: GoogleFonts.poppins(
+                              style: const TextStyle(fontFamily: 'Poppins', 
                                 fontSize: 32,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.textPrimary,
@@ -242,7 +241,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen>
                             final localizations = AppLocalizations.of(context)!;
                             return Text(
                               localizations.t('enter_4_digit_code'),
-                              style: GoogleFonts.inter(
+                              style: const TextStyle(fontFamily: 'Inter', 
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
                                 color: AppColors.disabled,
@@ -267,7 +266,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen>
                             final localizations = AppLocalizations.of(context)!;
                             return Text(
                               localizations.t('enter_code'),
-                              style: GoogleFonts.poppins(
+                              style: const TextStyle(fontFamily: 'Poppins', 
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
                                 color: AppColors.disabled,
@@ -351,7 +350,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen>
                                 ),
                                 child: Text(
                                   localizations.t('resend_email'),
-                                  style: GoogleFonts.poppins(
+                                  style: const TextStyle(fontFamily: 'Poppins', 
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.primary,
@@ -420,7 +419,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen>
         textAlign: TextAlign.center,
         keyboardType: TextInputType.number,
         maxLength: 1,
-        style: GoogleFonts.poppins(
+        style: const TextStyle(fontFamily: 'Poppins', 
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
