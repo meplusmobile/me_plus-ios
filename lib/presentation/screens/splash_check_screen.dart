@@ -69,9 +69,12 @@ class _SplashCheckScreenState extends State<SplashCheckScreen>
   }
 
   Future<void> _initializeApp() async {
-    // Initialize locale provider first (safe after first frame)
+    // Initialize all providers that need SharedPreferences (safe after first frame)
     if (mounted) {
-      await context.read<LocaleProvider>().loadSavedLocale();
+      await Future.wait([
+        context.read<LocaleProvider>().loadSavedLocale(),
+        context.read<ProfileProvider>().initialize(),
+      ]);
     }
     
     // Then check auth and redirect

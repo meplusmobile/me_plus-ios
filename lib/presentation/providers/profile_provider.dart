@@ -10,6 +10,7 @@ class ProfileProvider with ChangeNotifier {
   StudentProfile? _profile;
   bool _isLoading = false;
   String? _error;
+  bool _isInitialized = false;
 
   StudentProfile? get profile => _profile;
   bool get isLoading => _isLoading;
@@ -23,19 +24,23 @@ class ProfileProvider with ChangeNotifier {
   int get credits => _profile?.credits ?? 0;
   String get studentName => _profile?.name ?? 'Student';
 
-  ProfileProvider() {
-    _loadProfileFromStorage();
-  }
+  // ✅ Constructor بدون استدعاءات plugin
+  ProfileProvider();
 
-  Future<void> _loadProfileFromStorage() async {
+  // ✅ Explicit initialization بعد first frame
+  Future<void> initialize() async {
+    if (_isInitialized) return;
+    
     try {
       final savedProfile = await _storage.getProfile();
       if (savedProfile != null) {
         _profile = savedProfile;
+        _isInitialized = true;
         notifyListeners();
       }
     } catch (e) {
-      // Error loading profile from storage
+      // Error loading profile from storage - safe to continue
+      _isInitialized = true;
     }
   }
 
