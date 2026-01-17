@@ -6,9 +6,11 @@ class ApiService {
       'https://meplus3-hjfehnfpfyg2gyau.israelcentral-01.azurewebsites.net';
 
   late final Dio _dio;
-  final TokenStorageService _tokenStorage = TokenStorageService();
+  late final TokenStorageService _tokenStorage;
 
   ApiService() {
+    _tokenStorage = TokenStorageService();
+    
     _dio = Dio(
       BaseOptions(
         baseUrl: baseUrl,
