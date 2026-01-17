@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:me_plus/data/services/token_storage_service.dart';
+import 'package:me_plus/presentation/providers/locale_provider.dart';
 import 'package:me_plus/core/constants/app_colors.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -56,7 +58,7 @@ class _SplashCheckScreenState extends State<SplashCheckScreen>
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkAuthAndRedirect();
+      _initializeApp();
     });
   }
 
@@ -64,6 +66,16 @@ class _SplashCheckScreenState extends State<SplashCheckScreen>
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  Future<void> _initializeApp() async {
+    // Initialize locale provider first (safe after first frame)
+    if (mounted) {
+      await context.read<LocaleProvider>().loadSavedLocale();
+    }
+    
+    // Then check auth and redirect
+    await _checkAuthAndRedirect();
   }
 
   Future<void> _checkAuthAndRedirect() async {
