@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:me_plus/data/services/token_storage_service.dart';
 import 'package:me_plus/presentation/providers/locale_provider.dart';
+import 'package:me_plus/presentation/providers/profile_provider.dart';
 import 'package:me_plus/core/constants/app_colors.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
