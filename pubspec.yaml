@@ -76,7 +76,6 @@ dependencies:
   # Google Sign-In for Android
   google_sign_in: ^6.2.1
 
-  path_provider: any
 dev_dependencies:
   flutter_test:
     sdk: flutter

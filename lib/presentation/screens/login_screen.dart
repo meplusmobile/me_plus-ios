@@ -39,7 +39,12 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void initState() {
     super.initState();
-    _loadSavedCredentials();
+    
+    // Defer SharedPreferences call until after first frame (iOS requirement)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadSavedCredentials();
+    });
+    
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
