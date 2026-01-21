@@ -80,15 +80,10 @@
 		<string>http</string>
 	</array>
 	
-	<!-- App Transport Security Settings -->
+	<!-- App Transport Security Settings - Production Ready -->
 	<key>NSAppTransportSecurity</key>
 	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<true/>
-		<key>NSAllowsArbitraryLoadsForMedia</key>
-		<true/>
-		<key>NSAllowsArbitraryLoadsInWebContent</key>
-		<true/>
+		<!-- Domain-specific exception for Azure backend -->
 		<key>NSExceptionDomains</key>
 		<dict>
 			<key>meplus3-hjfehnfpfyg2gyau.israelcentral-01.azurewebsites.net</key>
@@ -96,11 +91,22 @@
 				<key>NSIncludesSubdomains</key>
 				<true/>
 				<key>NSExceptionAllowsInsecureHTTPLoads</key>
-				<true/>
-				<key>NSExceptionMinimumTLSVersion</key>
-				<string>TLSv1.0</string>
-				<key>NSExceptionRequiresForwardSecrecy</key>
 				<false/>
+				<key>NSExceptionMinimumTLSVersion</key>
+				<string>TLSv1.2</string>
+				<key>NSExceptionRequiresForwardSecrecy</key>
+				<true/>
+			</dict>
+			<key>israelcentral-01.azurewebsites.net</key>
+			<dict>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<false/>
+				<key>NSExceptionMinimumTLSVersion</key>
+				<string>TLSv1.2</string>
+				<key>NSExceptionRequiresForwardSecrecy</key>
+				<true/>
 			</dict>
 			<key>translate.googleapis.com</key>
 			<dict>

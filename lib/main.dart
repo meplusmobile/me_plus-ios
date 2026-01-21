@@ -60,6 +60,11 @@ class MyApp extends StatelessWidget {
       ],
       child: Consumer<LocaleProvider>(
         builder: (context, localeProvider, child) {
+          // iOS fix: Load locale after first frame
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            localeProvider.loadSavedLocale();
+          });
+          
           return MaterialApp.router(
             title: dotenv.env['APP_NAME'] ?? 'Me Plus',
             debugShowCheckedModeBanner: false,
