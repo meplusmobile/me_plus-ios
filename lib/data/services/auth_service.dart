@@ -28,6 +28,12 @@ class AuthService {
     _dio.options.headers = {
       'Content-Type': ApiConstants.contentType,
       'Accept': 'application/json',
+      'User-Agent': 'MePlus/1.0.0',
+    };
+
+    // Proper validation settings
+    _dio.options.validateStatus = (status) {
+      return status != null && status < 500;
     };
 
     // Enable following redirects for web
@@ -48,12 +54,18 @@ class AuthService {
             }
           }
 
+          // Debug logging for iOS network issues
+          print('🌐 [Network] ${options.method} ${options.uri}');
+
           return handler.next(options);
         },
         onResponse: (response, handler) {
+          print('✅ [Network] Status ${response.statusCode}');
           return handler.next(response);
         },
         onError: (DioException e, handler) {
+          print('❌ [Network Error] ${e.type}: ${e.message}');
+          print('📍 Response: ${e.response?.statusCode} - ${e.response?.data}');
           return handler.next(e);
         },
       ),
@@ -164,10 +176,15 @@ class AuthService {
   // Login
   Future<AuthResponse> login(LoginRequest request) async {
     try {
+      print('🔐 [Auth] Attempting login for: ${request.email}');
+      print('🔐 [Auth] Using base URL: ${ApiConstants.baseUrl}');
+      
       final response = await _dio.post(
         ApiConstants.login,
         data: request.toJson(),
       );
+
+      print('🔐 [Auth] Login response status: ${response.statusCode}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final authResponse = AuthResponse.fromJson(response.data);
@@ -182,11 +199,17 @@ class AuthService {
           isFirstTimeUser: authResponse.isFirstTimeUser,
         );
 
+        print('✅ [Auth] Login successful!');
         return authResponse;
       } else {
         throw Exception('Login failed with status: ${response.statusCode}');
       }
     } on DioException catch (e) {
+      print('❌ [Auth] DioException: ${e.type}');
+      print('❌ [Auth] Message: ${e.message}');
+      print('❌ [Auth] Status: ${e.response?.statusCode}');
+      print('❌ [Auth] Response: ${e.response?.data}');
+      
       if (e.response != null) {
         final responseData = e.response?.data;
         String errorMessage = 'Login failed';
@@ -203,10 +226,17 @@ class AuthService {
         }
 
         throw Exception(errorMessage);
+      } else if (e.type == DioExceptionType.connectionTimeout) {
+        throw Exception('Connection timeout. Server is not responding. Check your network and SSL settings.');
+      } else if (e.type == DioExceptionType.receiveTimeout) {
+        throw Exception('Server took too long to respond. Try again.');
+      } else if (e.type == DioExceptionType.connectionError) {
+        throw Exception('Failed to connect to server. Check SSL certificate and network.');
       } else {
-        throw Exception('Network error. Please check your connection.');
+        throw Exception('Network error: ${e.message}');
       }
     } catch (e) {
+      print('❌ [Auth] Unexpected error: $e');
       throw Exception('An unexpected error occurred: $e');
     }
   }

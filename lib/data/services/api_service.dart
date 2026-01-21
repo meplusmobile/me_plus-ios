@@ -14,11 +14,13 @@ class ApiService {
     _dio = Dio(
       BaseOptions(
         baseUrl: baseUrl,
-        connectTimeout: const Duration(seconds: 60),
-        receiveTimeout: const Duration(seconds: 60),
+        connectTimeout: const Duration(seconds: 90), // Increased for iOS
+        receiveTimeout: const Duration(seconds: 90),
+        sendTimeout: const Duration(seconds: 90),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'User-Agent': 'MePlus/1.0.0',
         },
         validateStatus: (status) {
           // Accept all status codes to handle them manually
@@ -33,8 +35,9 @@ class ApiService {
         requestBody: true,
         responseBody: true,
         error: true,
-        requestHeader: false,
+        requestHeader: true,
         responseHeader: false,
+        compact: false,
       ),
     );
 
@@ -202,23 +205,47 @@ class ApiService {
   }
 
   String _handleError(DioException error) {
+    String errorMsg = '';
+    
+    // Log detailed error info for iOS debugging
+    print('🔴 DioException Type: ${error.type}');
+    print('🔴 Message: ${error.message}');
+    print('🔴 Status Code: ${error.response?.statusCode}');
+    print('🔴 Response Data: ${error.response?.data}');
+    
     switch (error.type) {
       case DioExceptionType.connectionTimeout:
+        errorMsg = 'Connection timeout - server not responding. Check your network.';
+        break;
       case DioExceptionType.sendTimeout:
+        errorMsg = 'Request timeout - taking too long to send.';
+        break;
       case DioExceptionType.receiveTimeout:
-        return 'Connection timeout. Please try again.';
+        errorMsg = 'Server timeout - not responding in time.';
+        break;
       case DioExceptionType.badResponse:
         final data = error.response?.data;
         if (data is Map<String, dynamic>) {
-          return data['message'] ?? 'Server error occurred';
+          errorMsg = data['message'] ?? data['error'] ?? 'Server error occurred';
         } else if (data is String) {
-          return data;
+          errorMsg = data;
+        } else {
+          errorMsg = 'Server error (${error.response?.statusCode})';
         }
-        return 'Server error occurred';
+        break;
       case DioExceptionType.cancel:
-        return 'Request cancelled';
+        errorMsg = 'Request cancelled';
+        break;
+      case DioExceptionType.connectionError:
+        errorMsg = 'Connection failed - check internet and SSL certificates';
+        break;
+      case DioExceptionType.unknown:
+        errorMsg = 'Unknown network error: ${error.message}';
+        break;
       default:
-        return 'Network error. Please check your connection.';
+        errorMsg = 'Network error. Please check your connection.';
     }
+    
+    return errorMsg;
   }
 }

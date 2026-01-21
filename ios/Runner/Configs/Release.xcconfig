@@ -1,0 +1,2 @@
+// This is part of Flutter's standard config
+#include "../../Flutter/Release.xcconfig"
