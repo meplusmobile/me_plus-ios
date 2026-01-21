@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -21,10 +22,10 @@ class LocaleProvider with ChangeNotifier {
       _locale = Locale(languageCode);
       _isInitialized = true;
       
-      print('✅ [LocaleProvider] Loaded locale: $languageCode');
+      debugPrint('✅ [LocaleProvider] Loaded locale: $languageCode');
       notifyListeners();
     } catch (e) {
-      print('❌ [LocaleProvider] Failed to load locale: $e');
+      debugPrint('❌ [LocaleProvider] Failed to load locale: $e');
       // If SharedPreferences fails, use default locale
       _locale = const Locale('en');
       _isInitialized = true;
@@ -33,10 +34,10 @@ class LocaleProvider with ChangeNotifier {
   }
 
   Future<void> setLocale(String languageCode) async {
-    print('🌐 [LocaleProvider] Setting locale to: $languageCode');
+    debugPrint('🌐 [LocaleProvider] Setting locale to: $languageCode');
     
     if (_locale.languageCode == languageCode) {
-      print('⚠️ [LocaleProvider] Locale already set to: $languageCode');
+      debugPrint('⚠️ [LocaleProvider] Locale already set to: $languageCode');
       return;
     }
 
@@ -56,12 +57,12 @@ class LocaleProvider with ChangeNotifier {
       // Force commit on iOS
       await prefs.reload();
       
-      print('✅ [LocaleProvider] Locale changed to: $languageCode');
+      debugPrint('✅ [LocaleProvider] Locale changed to: $languageCode');
       
       // Notify listeners again to ensure UI updates
       notifyListeners();
     } catch (e) {
-      print('❌ [LocaleProvider] Failed to save locale: $e');
+      debugPrint('❌ [LocaleProvider] Failed to save locale: $e');
       // Revert locale change if save failed
       _locale = Locale(languageCode == 'ar' ? 'en' : 'ar');
       notifyListeners();

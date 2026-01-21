@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 /// iOS-specific network utilities for handling ATS and connectivity issues
 class IOSNetworkHelper {
@@ -122,7 +123,7 @@ class IOSNetworkHelper {
 
         // Calculate delay before retry
         final delay = getRetryDelay(attempt);
-        print('🔄 [IOSNetworkHelper] Retry attempt $attempt/$maxRetries after ${delay.inSeconds}s');
+        debugPrint('🔄 [IOSNetworkHelper] Retry attempt $attempt/$maxRetries after ${delay.inSeconds}s');
         await Future.delayed(delay);
       }
     }
@@ -132,9 +133,9 @@ class IOSNetworkHelper {
 
   /// Debug network configuration
   static void logNetworkConfig() {
-    print('📱 [IOSNetworkHelper] iOS Network Configuration:');
-    print('   Platform: ${Platform.operatingSystem}');
-    print('   Version: ${Platform.operatingSystemVersion}');
-    print('   Locale: ${Platform.localeName}');
+    debugPrint('📱 [IOSNetworkHelper] iOS Network Configuration:');
+    debugPrint('   Platform: ${Platform.operatingSystem}');
+    debugPrint('   Version: ${Platform.operatingSystemVersion}');
+    debugPrint('   Locale: ${Platform.localeName}');
   }
 }

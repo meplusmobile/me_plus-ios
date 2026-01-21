@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:me_plus/core/constants/api_constants.dart';
 import 'package:me_plus/data/models/auth_response.dart';
 import 'package:me_plus/data/models/signup_request.dart';
@@ -70,17 +71,17 @@ class AuthService {
           }
 
           // Debug logging for iOS network issues
-          print('🌐 [Network] ${options.method} ${options.uri}');
+          debugPrint('🌐 [Network] ${options.method} ${options.uri}');
 
           return handler.next(options);
         },
         onResponse: (response, handler) {
-          print('✅ [Network] Status ${response.statusCode}');
+          debugPrint('✅ [Network] Status ${response.statusCode}');
           return handler.next(response);
         },
         onError: (DioException e, handler) {
-          print('❌ [Network Error] ${e.type}: ${e.message}');
-          print('📍 Response: ${e.response?.statusCode} - ${e.response?.data}');
+          debugPrint('❌ [Network Error] ${e.type}: ${e.message}');
+          debugPrint('📍 Response: ${e.response?.statusCode} - ${e.response?.data}');
           return handler.next(e);
         },
       ),
@@ -181,11 +182,18 @@ class AuthService {
   }
 
   Future<String?> getUserRole() async {
-    return awaitiOS-optimized retry logic
+    return await _tokenStorage.getUserRole();
+  }
+
+  Future<bool> isFirstTimeUser() async {
+    return await _tokenStorage.isFirstTimeUser();
+  }
+
+  // Login with iOS-optimized retry logic
   Future<AuthResponse> login(LoginRequest request) async {
-    print('🔐 [Auth] Login attempt for: ${request.email}');
-    print('🔐 [Auth] Base URL: ${ApiConstants.baseUrl}');
-    print('🔐 [Auth] Platform: ${Platform.operatingSystem}');
+    debugPrint('🔐 [Auth] Login attempt for: ${request.email}');
+    debugPrint('🔐 [Auth] Base URL: ${ApiConstants.baseUrl}');
+    debugPrint('🔐 [Auth] Platform: ${Platform.operatingSystem}');
 
     try {
       // Use iOS network helper for smart retry
@@ -197,7 +205,7 @@ class AuthService {
             data: request.toJson(),
           );
 
-          print('✅ [Auth] Response status: ${response.statusCode}');
+          debugPrint('✅ [Auth] Response status: ${response.statusCode}');
 
           if (response.statusCode == 200 || response.statusCode == 201) {
             final authResponse = AuthResponse.fromJson(response.data);
@@ -212,7 +220,7 @@ class AuthService {
               isFirstTimeUser: authResponse.isFirstTimeUser,
             );
 
-            print('✅ [Auth] Login successful!');
+            debugPrint('✅ [Auth] Login successful!');
             return authResponse;
           } else {
             throw Exception('Login failed with status: ${response.statusCode}');
@@ -220,9 +228,9 @@ class AuthService {
         },
       );
     } on DioException catch (e) {
-      print('❌ [Auth] DioException: ${e.type}');
-      print('❌ [Auth] Error details: ${e.error}');
-      print('❌ [Auth] Response: ${e.response?.data}');
+      debugPrint('❌ [Auth] DioException: ${e.type}');
+      debugPrint('❌ [Auth] Error details: ${e.error}');
+      debugPrint('❌ [Auth] Response: ${e.response?.data}');
       
       // Check for non-retryable errors (4xx)
       if (e.response != null) {
@@ -248,19 +256,12 @@ class AuthService {
       final errorMessage = IOSNetworkHelper.getIOSErrorMessage(e);
       throw Exception(errorMessage);
     } catch (e) {
-      print('❌ [Auth] Unexpected error: $e');
+      debugPrint('❌ [Auth] Unexpected error: $e');
       if (e is Exception) {
         rethrow;
       }
       throw Exception('An unexpected error occurred. Please try again.');
     }
-          rethrow;
-        }
-        throw Exception('An unexpected error occurred. Please try again.');
-      }
-    }
-    
-    throw Exception('Unable to connect to server after multiple attempts.');
   }
 
   Future<List<School>> getSchools() async {
