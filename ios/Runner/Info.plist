@@ -73,19 +73,6 @@
 		</dict>
 	</array>
 	
-	<!-- Google Sign-In Configuration -->
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>com.googleusercontent.apps.676918546872-cogu1q96g22sju22k323458bmdggbip8</string>
-			</array>
-		</dict>
-	</array>
-	
 	<!-- Required for iOS 9+ to open external URLs -->
 	<key>LSApplicationQueriesSchemes</key>
 	<array>

@@ -3,8 +3,6 @@ import 'package:me_plus/core/constants/api_constants.dart';
 import 'package:me_plus/data/models/auth_response.dart';
 import 'package:me_plus/data/models/signup_request.dart';
 import 'package:me_plus/data/models/login_request.dart';
-import 'package:me_plus/data/models/google_login_request.dart';
-import 'package:me_plus/data/models/google_signup_request.dart';
 import 'package:me_plus/data/models/user_profile.dart';
 import 'package:me_plus/data/models/school.dart';
 import 'package:me_plus/data/models/class_model.dart';
@@ -237,106 +235,6 @@ class AuthService {
       }
     } catch (e) {
       print('❌ [Auth] Unexpected error: $e');
-      throw Exception('An unexpected error occurred: $e');
-    }
-  }
-
-  // Google Login
-  Future<AuthResponse> googleLogin(GoogleLoginRequest request) async {
-    try {
-      final response = await _dio.post(
-        ApiConstants.googleLogin,
-        data: request.toJson(),
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final authResponse = AuthResponse.fromJson(response.data);
-
-        // Save authentication data
-        await _tokenStorage.saveAuthData(
-          token: authResponse.token,
-          refreshToken: authResponse.refreshToken,
-          userId: authResponse.id.toString(),
-          email: authResponse.email,
-          role: authResponse.role,
-          isFirstTimeUser: authResponse.isFirstTimeUser,
-        );
-
-        return authResponse;
-      } else {
-        throw Exception(
-          'Google login failed with status: ${response.statusCode}',
-        );
-      }
-    } on DioException catch (e) {
-      if (e.response != null) {
-        final responseData = e.response?.data;
-        String errorMessage = 'Google login failed';
-
-        if (responseData is String) {
-          errorMessage = responseData;
-        } else if (responseData is Map) {
-          errorMessage =
-              responseData['message'] ??
-              responseData['error'] ??
-              'Google login failed';
-        }
-
-        throw Exception(errorMessage);
-      } else {
-        throw Exception('Network error. Please check your connection.');
-      }
-    } catch (e) {
-      throw Exception('An unexpected error occurred: $e');
-    }
-  }
-
-  // Google Signup
-  Future<AuthResponse> googleSignup(GoogleSignupRequest request) async {
-    try {
-      final response = await _dio.post(
-        ApiConstants.googleSignup,
-        data: request.toJson(),
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final authResponse = AuthResponse.fromJson(response.data);
-
-        // Save authentication data
-        await _tokenStorage.saveAuthData(
-          token: authResponse.token,
-          refreshToken: authResponse.refreshToken,
-          userId: authResponse.id.toString(),
-          email: authResponse.email,
-          role: authResponse.role,
-          isFirstTimeUser: authResponse.isFirstTimeUser,
-        );
-
-        return authResponse;
-      } else {
-        throw Exception(
-          'Google signup failed with status: ${response.statusCode}',
-        );
-      }
-    } on DioException catch (e) {
-      if (e.response != null) {
-        final responseData = e.response?.data;
-        String errorMessage = 'Google signup failed';
-
-        if (responseData is String) {
-          errorMessage = responseData;
-        } else if (responseData is Map) {
-          errorMessage =
-              responseData['message'] ??
-              responseData['error'] ??
-              'Google signup failed';
-        }
-
-        throw Exception(errorMessage);
-      } else {
-        throw Exception('Network error. Please check your connection.');
-      }
-    } catch (e) {
       throw Exception('An unexpected error occurred: $e');
     }
   }

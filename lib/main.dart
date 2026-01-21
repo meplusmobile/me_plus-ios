@@ -8,7 +8,6 @@ import 'package:me_plus/core/localization/app_localizations.dart';
 import 'package:me_plus/presentation/providers/signup_provider.dart';
 import 'package:me_plus/presentation/providers/profile_provider.dart';
 import 'package:me_plus/presentation/providers/locale_provider.dart';
-import 'package:me_plus/presentation/providers/google_signup_provider.dart';
 import 'package:me_plus/presentation/providers/market_owner_provider.dart';
 import 'package:me_plus/presentation/providers/market_profile_provider.dart';
 import 'package:me_plus/presentation/providers/parent_profile_provider.dart';
@@ -54,7 +53,6 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => SignupData()),
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
-        ChangeNotifierProvider(create: (_) => GoogleSignupProvider()),
         ChangeNotifierProvider(create: (_) => MarketOwnerProvider()),
         ChangeNotifierProvider(create: (_) => MarketProfileProvider()),
         ChangeNotifierProvider(create: (_) => ParentProfileProvider()),
