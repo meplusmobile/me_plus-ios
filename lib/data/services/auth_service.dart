@@ -180,6 +180,15 @@ class AuthService {
       final response = await _dio.post(
         ApiConstants.login,
         data: request.toJson(),
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          throw DioException(
+            requestOptions: RequestOptions(path: ApiConstants.login),
+            type: DioExceptionType.connectionTimeout,
+            message: 'Connection timeout - server took too long to respond',
+          );
+        },
       );
 
       print('🔐 [Auth] Login response status: ${response.statusCode}');
@@ -235,6 +244,9 @@ class AuthService {
       }
     } catch (e) {
       print('❌ [Auth] Unexpected error: $e');
+      if (e is Exception) {
+        rethrow;
+      }
       throw Exception('An unexpected error occurred: $e');
     }
   }

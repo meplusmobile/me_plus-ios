@@ -93,6 +93,8 @@ class _LoginScreenState extends State<LoginScreen>
       return;
     }
 
+    if (!mounted) return;
+
     setState(() {
       _isLoading = true;
     });
@@ -105,6 +107,8 @@ class _LoginScreenState extends State<LoginScreen>
 
       final response = await _authService.login(request);
 
+      if (!mounted) return;
+
       // Save Remember Me credentials
       final tokenStorage = TokenStorageService();
       await tokenStorage.saveRememberMe(
@@ -113,184 +117,182 @@ class _LoginScreenState extends State<LoginScreen>
         password: _rememberMe ? _passwordController.text : null,
       );
 
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+      if (!mounted) return;
 
-        if (response.role == 'Student') {
-          if (response.schoolId == null) {
-            showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (context) => AlertDialog(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                title: Row(
-                  children: [
-                    const Icon(
-                      Icons.hourglass_empty,
+      if (response.role == 'Student') {
+        if (response.schoolId == null) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              title: Row(
+                children: [
+                  const Icon(
+                    Icons.hourglass_empty,
+                    color: AppColors.primary,
+                    size: 28,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    AppLocalizations.of(context)!.t('pending_approval'),
+                    style: const TextStyle(fontFamily: 'Poppins', 
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
                       color: AppColors.primary,
-                      size: 28,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      AppLocalizations.of(context)!.t('pending_approval'),
-                      style: const TextStyle(fontFamily: 'Poppins', 
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      AppLocalizations.of(
-                        context,
-                      )!.t('request_waiting_for_school_approval'),
-                      style: const TextStyle(fontFamily: 'Poppins', 
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      AppLocalizations.of(context)!.t('notify_when_approved'),
-                      style: const TextStyle(fontFamily: 'Poppins', 
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop(); // Close dialog only
-                    },
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
-                      backgroundColor: AppColors.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: Text(
-                      AppLocalizations.of(context)!.t('ok'),
-                      style: const TextStyle(fontFamily: 'Poppins', 
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
                     ),
                   ),
                 ],
               ),
-            );
-          } else {
-            final profileProvider = context.read<ProfileProvider>();
-            profileProvider.loadProfile(forceRefresh: true).catchError((error) {
-              // Failed to load profile
-            });
-
-            context.go('/student/home');
-          }
-        } else if (response.role == 'Market') {
-          context.go('/market-owner/home');
-        } else if (response.role == 'Parent') {
-          context.go('/parent/home');
-        } else {
-          // For other roles, navigate to a default home or placeholder
-          context.go('/');
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            title: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.error_outline,
-                    color: Colors.red,
-                    size: 28,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    AppLocalizations.of(context)!.t('login_failed'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppLocalizations.of(
+                      context,
+                    )!.t('request_waiting_for_school_approval'),
                     style: const TextStyle(fontFamily: 'Poppins', 
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
                       color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    AppLocalizations.of(context)!.t('notify_when_approved'),
+                    style: const TextStyle(fontFamily: 'Poppins', 
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close dialog only
+                  },
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: Text(
+                    AppLocalizations.of(context)!.t('ok'),
+                    style: const TextStyle(fontFamily: 'Poppins', 
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
                     ),
                   ),
                 ),
               ],
             ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _getErrorMessage(e.toString()),
-                  style: const TextStyle(fontFamily: 'Poppins', 
-                    fontSize: 14,
-                    color: AppColors.textSecondary,
-                    height: 1.5,
-                  ),
+          );
+        } else {
+          final profileProvider = context.read<ProfileProvider>();
+          profileProvider.loadProfile(forceRefresh: true).catchError((error) {
+            // Failed to load profile
+          });
+
+          context.go('/student/home');
+        }
+      } else if (response.role == 'Market') {
+        context.go('/market-owner/home');
+      } else if (response.role == 'Parent') {
+        context.go('/parent/home');
+      } else {
+        // For other roles, navigate to a default home or placeholder
+        context.go('/');
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
                 ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
-                  backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+                child: const Icon(
+                  Icons.error_outline,
+                  color: Colors.red,
+                  size: 28,
                 ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
                 child: Text(
-                  AppLocalizations.of(context)!.t('ok'),
+                  AppLocalizations.of(context)!.t('login_failed'),
                   style: const TextStyle(fontFamily: 'Poppins', 
-                    fontSize: 14,
+                    fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ),
             ],
           ),
-        );
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _getErrorMessage(e.toString()),
+                style: const TextStyle(fontFamily: 'Poppins', 
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+                backgroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: Text(
+                AppLocalizations.of(context)!.t('ok'),
+                style: const TextStyle(fontFamily: 'Poppins', 
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
   }
