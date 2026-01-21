@@ -23,10 +23,12 @@ class AuthService {
     _dio.options.baseUrl = ApiConstants.baseUrl;
     _dio.options.connectTimeout = ApiConstants.connectTimeout;
     _dio.options.receiveTimeout = ApiConstants.receiveTimeout;
+    _dio.options.sendTimeout = const Duration(seconds: 30);
     _dio.options.headers = {
       'Content-Type': ApiConstants.contentType,
       'Accept': 'application/json',
-      'User-Agent': 'MePlus/1.0.0',
+      'User-Agent': 'MePlus-iOS/2.0.0',
+      'Cache-Control': 'no-cache',
     };
 
     // Proper validation settings
@@ -34,9 +36,13 @@ class AuthService {
       return status != null && status < 500;
     };
 
-    // Enable following redirects for web
+    // Enable following redirects
     _dio.options.followRedirects = true;
     _dio.options.maxRedirects = 5;
+    
+    // iOS-specific settings for better connectivity
+    _dio.options.persistentConnection = true;
+    _dio.options.receiveDataWhenStatusError = true;
 
     // Add interceptor for token and logging
     _dio.interceptors.add(
@@ -171,84 +177,105 @@ class AuthService {
     return await _tokenStorage.isFirstTimeUser();
   }
 
-  // Login
+  // Login with retry logic
   Future<AuthResponse> login(LoginRequest request) async {
-    try {
-      print('🔐 [Auth] Attempting login for: ${request.email}');
-      print('🔐 [Auth] Using base URL: ${ApiConstants.baseUrl}');
-      
-      final response = await _dio.post(
-        ApiConstants.login,
-        data: request.toJson(),
-      ).timeout(
-        const Duration(seconds: 30),
-        onTimeout: () {
-          throw DioException(
-            requestOptions: RequestOptions(path: ApiConstants.login),
-            type: DioExceptionType.connectionTimeout,
-            message: 'Connection timeout - server took too long to respond',
-          );
-        },
-      );
-
-      print('🔐 [Auth] Login response status: ${response.statusCode}');
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final authResponse = AuthResponse.fromJson(response.data);
-
-        // Save authentication data
-        await _tokenStorage.saveAuthData(
-          token: authResponse.token,
-          refreshToken: authResponse.refreshToken,
-          userId: authResponse.id.toString(),
-          email: authResponse.email,
-          role: authResponse.role,
-          isFirstTimeUser: authResponse.isFirstTimeUser,
+    int retryCount = 0;
+    const maxRetries = 2;
+    
+    while (retryCount <= maxRetries) {
+      try {
+        print('🔐 [Auth] Attempting login (attempt ${retryCount + 1}/${maxRetries + 1}) for: ${request.email}');
+        print('🔐 [Auth] Using base URL: ${ApiConstants.baseUrl}');
+        
+        final response = await _dio.post(
+          ApiConstants.login,
+          data: request.toJson(),
+        ).timeout(
+          const Duration(seconds: 30),
+          onTimeout: () {
+            throw DioException(
+              requestOptions: RequestOptions(path: ApiConstants.login),
+              type: DioExceptionType.connectionTimeout,
+              message: 'Connection timeout - server took too long to respond',
+            );
+          },
         );
 
-        print('✅ [Auth] Login successful!');
-        return authResponse;
-      } else {
-        throw Exception('Login failed with status: ${response.statusCode}');
-      }
-    } on DioException catch (e) {
-      print('❌ [Auth] DioException: ${e.type}');
-      print('❌ [Auth] Message: ${e.message}');
-      print('❌ [Auth] Status: ${e.response?.statusCode}');
-      print('❌ [Auth] Response: ${e.response?.data}');
-      
-      if (e.response != null) {
-        final responseData = e.response?.data;
-        String errorMessage = 'Login failed';
+        print('🔐 [Auth] Login response status: ${response.statusCode}');
 
-        if (responseData is String) {
-          // API returned error as string
-          errorMessage = responseData;
-        } else if (responseData is Map) {
-          // API returned error as object
-          errorMessage =
-              responseData['message'] ??
-              responseData['error'] ??
-              'Login failed';
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          final authResponse = AuthResponse.fromJson(response.data);
+
+          // Save authentication data
+          await _tokenStorage.saveAuthData(
+            token: authResponse.token,
+            refreshToken: authResponse.refreshToken,
+            userId: authResponse.id.toString(),
+            email: authResponse.email,
+            role: authResponse.role,
+            isFirstTimeUser: authResponse.isFirstTimeUser,
+          );
+
+          print('✅ [Auth] Login successful!');
+          return authResponse;
+        } else {
+          throw Exception('Login failed with status: ${response.statusCode}');
         }
+      } on DioException catch (e) {
+        print('❌ [Auth] DioException (attempt ${retryCount + 1}): ${e.type}');
+        print('❌ [Auth] Message: ${e.message}');
+        print('❌ [Auth] Status: ${e.response?.statusCode}');
+        print('❌ [Auth] Response: ${e.response?.data}');
+        
+        // If we have response data, don't retry
+        if (e.response != null) {
+          final responseData = e.response?.data;
+          String errorMessage = 'Login failed';
 
-        throw Exception(errorMessage);
-      } else if (e.type == DioExceptionType.connectionTimeout) {
-        throw Exception('Connection timeout. Server is not responding. Check your network and SSL settings.');
-      } else if (e.type == DioExceptionType.receiveTimeout) {
-        throw Exception('Server took too long to respond. Try again.');
-      } else if (e.type == DioExceptionType.connectionError) {
-        throw Exception('Failed to connect to server. Check SSL certificate and network.');
-      } else {
-        throw Exception('Network error: ${e.message}');
+          if (responseData is String) {
+            errorMessage = responseData;
+          } else if (responseData is Map) {
+            errorMessage =
+                responseData['message'] ??
+                responseData['error'] ??
+                'Login failed';
+          }
+
+          throw Exception(errorMessage);
+        }
+        
+        // For network errors, retry
+        if (retryCount < maxRetries) {
+          retryCount++;
+          print('🔄 [Auth] Retrying in 2 seconds...');
+          await Future.delayed(const Duration(seconds: 2));
+          continue;
+        }
+        
+        // Final attempt failed
+        if (e.type == DioExceptionType.connectionTimeout) {
+          throw Exception('Unable to connect to server. Please check your internet connection and try again.');
+        } else if (e.type == DioExceptionType.receiveTimeout) {
+          throw Exception('Server is not responding. Please try again later.');
+        } else if (e.type == DioExceptionType.connectionError) {
+          throw Exception('Connection failed. Please check your internet connection.');
+        } else if (e.type == DioExceptionType.badCertificate) {
+          throw Exception('Security certificate error. Please contact support.');
+        } else if (e.type == DioExceptionType.unknown) {
+          throw Exception('Unable to connect to server. Please check your internet connection and try again.');
+        } else {
+          throw Exception('Network error. Please check your connection and try again.');
+        }
+      } catch (e) {
+        print('❌ [Auth] Unexpected error: $e');
+        if (e is Exception) {
+          rethrow;
+        }
+        throw Exception('An unexpected error occurred. Please try again.');
       }
-    } catch (e) {
-      print('❌ [Auth] Unexpected error: $e');
-      if (e is Exception) {
-        rethrow;
-      }
-      throw Exception('An unexpected error occurred: $e');
     }
+    
+    throw Exception('Unable to connect to server after multiple attempts.');
   }
 
   Future<List<School>> getSchools() async {

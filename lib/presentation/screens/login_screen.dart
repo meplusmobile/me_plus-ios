@@ -585,10 +585,9 @@ class _LoginScreenState extends State<LoginScreen>
                               children: [
                                 GradientButton(
                                   onPressed: _isLoading ? null : _handleLogin,
-                                  text: _isLoading
-                                      ? localizations.t('signing_in')
-                                      : localizations.t('sign_in'),
+                                  text: localizations.t('sign_in'),
                                   enabled: !_isLoading,
+                                  isLoading: _isLoading,
                                 ),
 
                                 const SizedBox(height: 32),
