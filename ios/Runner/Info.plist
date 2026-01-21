@@ -104,7 +104,6 @@
 		<true/>
 		<key>NSExceptionDomains</key>
 		<dict>
-			<!-- Azure Backend - السماح بـ HTTPS -->
 			<key>meplus3-hjfehnfpfyg2gyau.israelcentral-01.azurewebsites.net</key>
 			<dict>
 				<key>NSIncludesSubdomains</key>
@@ -116,7 +115,6 @@
 				<key>NSExceptionRequiresForwardSecrecy</key>
 				<true/>
 			</dict>
-			<!-- Google Translate API -->
 			<key>translate.googleapis.com</key>
 			<dict>
 				<key>NSIncludesSubdomains</key>
@@ -126,7 +124,6 @@
 				<key>NSExceptionMinimumTLSVersion</key>
 				<string>TLSv1.2</string/>
 			</dict>
-			<!-- Azure Blob Storage for Images -->
 			<key>meplus2.blob.core.windows.net</key>
 			<dict>
 				<key>NSIncludesSubdomains</key>
