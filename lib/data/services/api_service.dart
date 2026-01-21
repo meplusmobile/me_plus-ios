@@ -37,7 +37,6 @@ class ApiService {
         error: true,
         requestHeader: true,
         responseHeader: false,
-        compact: false,
       ),
     );
 
