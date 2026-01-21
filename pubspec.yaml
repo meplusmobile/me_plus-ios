@@ -73,8 +73,8 @@ dependencies:
   # URL launcher for OAuth
   url_launcher: ^6.2.3
   
-  # Google Sign-In for Android
-  google_sign_in: ^7.2.0
+  # Google Sign-In - stable version
+  google_sign_in: ^6.2.1
 
 dev_dependencies:
   flutter_test:

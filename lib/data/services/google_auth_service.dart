@@ -2,27 +2,13 @@ import 'dart:io';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class GoogleAuthService {
-  // Initialize GoogleSignIn with platform-specific configuration
-  late final GoogleSignIn _googleSignIn;
+  // Initialize GoogleSignIn
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email', 'profile'],
+  );
 
   GoogleAuthService() {
-    // Use different client IDs for iOS and Android
-    if (Platform.isIOS) {
-      // For iOS, use the iOS Client ID from Google Cloud Console
-      _googleSignIn = GoogleSignIn(
-        // iOS URL Scheme Client ID
-        clientId:
-            '676918546872-cogu1q96g22sju22k323458bmdggbip8.apps.googleusercontent.com',
-        scopes: ['email', 'profile'],
-      );
-    } else {
-      // For Android, use the Web OAuth Client ID
-      _googleSignIn = GoogleSignIn(
-        clientId:
-            '676918546872-cogu1q96g22sju22k323458bmdggbip8.apps.googleusercontent.com',
-        scopes: ['email', 'profile'],
-      );
-    }
+    // GoogleSignIn is initialized above
   }
 
   Future<GoogleSignInAccount?> signInWithGoogle() async {

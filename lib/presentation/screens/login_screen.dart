@@ -333,7 +333,7 @@ class _LoginScreenState extends State<LoginScreen>
       }
 
       final googleAuth = await googleUser.authentication;
-      final accessToken = googleAuth.accessToken;
+      final accessToken = googleAuth.idToken;
 
       if (accessToken == null) {
         throw Exception('Failed to get access token');
@@ -461,7 +461,7 @@ class _LoginScreenState extends State<LoginScreen>
 
           if (googleUser != null) {
             final googleAuth = await googleUser.authentication;
-            final accessToken = googleAuth.accessToken;
+            final accessToken = googleAuth.idToken;
 
             if (accessToken != null) {
               // Extract names
@@ -891,53 +891,53 @@ class _LoginScreenState extends State<LoginScreen>
 
                                 const SizedBox(height: 16),
 
-                                // Google sign in button
-                                Container(
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: AppColors.secondaryLight,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppColors.secondaryLight
-                                            .withValues(alpha: 0.6),
-                                        blurRadius: 6,
-                                        offset: const Offset(0, -3),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      onTap: _isGoogleLoading || _isLoading
-                                          ? null
-                                          : _handleGoogleSignIn,
-                                      borderRadius: BorderRadius.circular(10),
-                                      child: Center(
-                                        child: _isGoogleLoading
-                                            ? const SizedBox(
-                                                width: 18,
-                                                height: 18,
-                                                child: CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                  valueColor:
-                                                      AlwaysStoppedAnimation<
-                                                        Color
-                                                      >(AppColors.primary),
-                                                ),
-                                              )
-                                            : SvgPicture.asset(
-                                                'assets/images/Google__G__logo.svg',
-                                                width: 18,
-                                                height: 18,
-                                              ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
+                                // DISABLED: Google sign in button - DISABLED
+                                // Container(
+                                //   height: 48,
+                                //   decoration: BoxDecoration(
+                                //     color: Colors.white,
+                                //     borderRadius: BorderRadius.circular(10),
+                                //     border: Border.all(
+                                //       color: AppColors.secondaryLight,
+                                //     ),
+                                //     boxShadow: [
+                                //       BoxShadow(
+                                //         color: AppColors.secondaryLight
+                                //             .withValues(alpha: 0.6),
+                                //         blurRadius: 6,
+                                //         offset: const Offset(0, -3),
+                                //       ),
+                                //     ],
+                                //   ),
+                                //   child: Material(
+                                //     color: Colors.transparent,
+                                //     child: InkWell(
+                                //       onTap: _isGoogleLoading || _isLoading
+                                //           ? null
+                                //           : _handleGoogleSignIn,
+                                //       borderRadius: BorderRadius.circular(10),
+                                //       child: Center(
+                                //         child: _isGoogleLoading
+                                //             ? const SizedBox(
+                                //                 width: 18,
+                                //                 height: 18,
+                                //                 child: CircularProgressIndicator(
+                                //                   strokeWidth: 2,
+                                //                   valueColor:
+                                //                       AlwaysStoppedAnimation<
+                                //                         Color
+                                //                       >(AppColors.primary),
+                                //                 ),
+                                //               )
+                                //             : SvgPicture.asset(
+                                //                 'assets/images/Google__G__logo.svg',
+                                //                 width: 18,
+                                //                 height: 18,
+                                //               ),
+                                //       ),
+                                //     ),
+                                //   ),
+                                // ),
                                 const SizedBox(height: 24),
 
                                 // Sign up link
