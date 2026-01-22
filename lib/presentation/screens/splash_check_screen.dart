@@ -69,12 +69,26 @@ class _SplashCheckScreenState extends State<SplashCheckScreen>
   }
 
   Future<void> _initializeApp() async {
-    // Initialize all providers that need SharedPreferences (safe after first frame)
+    debugPrint('🚀 Starting app initialization...');
+    
+    // Initialize providers with timeout to prevent infinite loading
     if (mounted) {
-      await Future.wait([
-        context.read<LocaleProvider>().loadSavedLocale(),
-        context.read<ProfileProvider>().initialize(),
-      ]);
+      try {
+        await Future.wait([
+          context.read<LocaleProvider>().loadSavedLocale(),
+          context.read<ProfileProvider>().initialize(),
+        ]).timeout(
+          const Duration(seconds: 5),
+          onTimeout: () {
+            debugPrint('⚠️ Provider initialization timed out, continuing...');
+            return [];
+          },
+        );
+        debugPrint('✅ Providers initialized');
+      } catch (e) {
+        debugPrint('❌ Provider init error: $e');
+        // Continue anyway
+      }
     }
     
     // Then check auth and redirect

@@ -20,8 +20,14 @@ void main() async {
   // Ensure Flutter binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Hive storage (before anything else)
-  await StorageService.init();
+  // Initialize Hive storage (with error handling)
+  try {
+    await StorageService.init();
+    debugPrint('✅ StorageService initialized');
+  } catch (e) {
+    debugPrint('❌ StorageService init failed: $e');
+    // Continue without storage - app will use defaults
+  }
 
   // Set preferred orientations
   await SystemChrome.setPreferredOrientations([
