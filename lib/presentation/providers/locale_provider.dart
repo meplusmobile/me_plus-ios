@@ -1,10 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:me_plus/data/services/storage_service.dart';
 
 class LocaleProvider with ChangeNotifier {
   Locale _locale = const Locale('en');
   bool _isInitialized = false;
+  final _storage = StorageService();
 
   Locale get locale => _locale;
 
@@ -14,11 +15,7 @@ class LocaleProvider with ChangeNotifier {
     if (_isInitialized) return; // Prevent multiple calls
     
     try {
-      // Add delay for iOS to ensure SharedPreferences is ready
-      await Future.delayed(const Duration(milliseconds: 100));
-      
-      final prefs = await SharedPreferences.getInstance();
-      final languageCode = prefs.getString('language_code') ?? 'en';
+      final languageCode = await _storage.getString('language_code') ?? 'en';
       _locale = Locale(languageCode);
       _isInitialized = true;
       
@@ -26,7 +23,7 @@ class LocaleProvider with ChangeNotifier {
       notifyListeners();
     } catch (e) {
       debugPrint('❌ [LocaleProvider] Failed to load locale: $e');
-      // If SharedPreferences fails, use default locale
+      // If storage fails, use default locale
       _locale = const Locale('en');
       _isInitialized = true;
       notifyListeners();
@@ -46,16 +43,12 @@ class LocaleProvider with ChangeNotifier {
       _locale = Locale(languageCode);
       notifyListeners();
 
-      // Save to SharedPreferences
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('language_code', languageCode);
-      await prefs.setString(
+      // Save to secure storage
+      await _storage.saveString('language_code', languageCode);
+      await _storage.saveString(
         'language',
         languageCode == 'ar' ? 'Arabic' : 'English',
       );
-      
-      // Force commit on iOS
-      await prefs.reload();
       
       debugPrint('✅ [LocaleProvider] Locale changed to: $languageCode');
       

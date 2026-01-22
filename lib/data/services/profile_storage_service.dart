@@ -1,20 +1,20 @@
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:me_plus/data/models/student_profile.dart';
+import 'package:me_plus/data/services/storage_service.dart';
 
 class ProfileStorageService {
   static const String _profileKey = 'student_profile';
+  
+  final _storage = StorageService();
 
   // Save profile
   Future<void> saveProfile(StudentProfile profile) async {
-    final prefs = await SharedPreferences.getInstance();
     final profileJson = json.encode(profile.toJson());
-    await prefs.setString(_profileKey, profileJson);
+    await _storage.saveString(_profileKey, profileJson);
   }
 
   Future<StudentProfile?> getProfile() async {
-    final prefs = await SharedPreferences.getInstance();
-    final profileJson = prefs.getString(_profileKey);
+    final profileJson = await _storage.getString(_profileKey);
 
     if (profileJson == null) return null;
 
@@ -28,8 +28,7 @@ class ProfileStorageService {
 
   // Clear profile
   Future<void> clearProfile() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_profileKey);
+    await _storage.remove(_profileKey);
   }
 
   Future<bool> hasProfile() async {

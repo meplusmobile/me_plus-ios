@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:me_plus/data/services/storage_service.dart';
 
 class TokenStorageService {
   static const String _tokenKey = 'auth_token';
@@ -12,6 +12,8 @@ class TokenStorageService {
   static const String _savedEmailKey = 'saved_email';
   static const String _savedPasswordKey = 'saved_password';
 
+  final _storage = StorageService();
+
   // Save authentication data
   Future<void> saveAuthData({
     required String token,
@@ -21,43 +23,36 @@ class TokenStorageService {
     required String role,
     required bool isFirstTimeUser,
   }) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_tokenKey, token);
-    await prefs.setString(_refreshTokenKey, refreshToken);
-    await prefs.setString(_userIdKey, userId);
-    await prefs.setString(_userEmailKey, email);
-    await prefs.setString(_userRoleKey, role);
-    await prefs.setBool(_isFirstTimeUserKey, isFirstTimeUser);
+    await _storage.saveString(_tokenKey, token);
+    await _storage.saveString(_refreshTokenKey, refreshToken);
+    await _storage.saveString(_userIdKey, userId);
+    await _storage.saveString(_userEmailKey, email);
+    await _storage.saveString(_userRoleKey, role);
+    await _storage.saveBool(_isFirstTimeUserKey, isFirstTimeUser);
   }
 
   Future<String?> getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_tokenKey);
+    return await _storage.getString(_tokenKey);
   }
 
   Future<String?> getRefreshToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_refreshTokenKey);
+    return await _storage.getString(_refreshTokenKey);
   }
 
   Future<String?> getUserId() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_userIdKey);
+    return await _storage.getString(_userIdKey);
   }
 
   Future<String?> getUserEmail() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_userEmailKey);
+    return await _storage.getString(_userEmailKey);
   }
 
   Future<String?> getUserRole() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_userRoleKey);
+    return await _storage.getString(_userRoleKey);
   }
 
   Future<bool> isFirstTimeUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_isFirstTimeUserKey) ?? true;
+    return await _storage.getBool(_isFirstTimeUserKey);
   }
 
   Future<bool> isLoggedIn() async {
@@ -68,13 +63,12 @@ class TokenStorageService {
   // Clear all authentication data (logout)
   Future<void> clearAuthData() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_tokenKey);
-      await prefs.remove(_refreshTokenKey);
-      await prefs.remove(_userIdKey);
-      await prefs.remove(_userEmailKey);
-      await prefs.remove(_userRoleKey);
-      await prefs.remove(_isFirstTimeUserKey);
+      await _storage.remove(_tokenKey);
+      await _storage.remove(_refreshTokenKey);
+      await _storage.remove(_userIdKey);
+      await _storage.remove(_userEmailKey);
+      await _storage.remove(_userRoleKey);
+      await _storage.remove(_isFirstTimeUserKey);
     } catch (e) {
       debugPrint('Error clearing auth data: $e');
     }
@@ -87,15 +81,14 @@ class TokenStorageService {
     String? password,
   }) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_rememberMeKey, rememberMe);
+      await _storage.saveBool(_rememberMeKey, rememberMe);
       
       if (rememberMe && email != null && password != null) {
-        await prefs.setString(_savedEmailKey, email);
-        await prefs.setString(_savedPasswordKey, password);
+        await _storage.saveString(_savedEmailKey, email);
+        await _storage.saveString(_savedPasswordKey, password);
       } else {
-        await prefs.remove(_savedEmailKey);
-        await prefs.remove(_savedPasswordKey);
+        await _storage.remove(_savedEmailKey);
+        await _storage.remove(_savedPasswordKey);
       }
     } catch (e) {
       debugPrint('Error saving remember me: $e');
@@ -103,17 +96,14 @@ class TokenStorageService {
   }
 
   Future<bool> getRememberMe() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_rememberMeKey) ?? false;
+    return await _storage.getBool(_rememberMeKey);
   }
 
   Future<String?> getSavedEmail() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_savedEmailKey);
+    return await _storage.getString(_savedEmailKey);
   }
 
   Future<String?> getSavedPassword() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_savedPasswordKey);
+    return await _storage.getString(_savedPasswordKey);
   }
 }
