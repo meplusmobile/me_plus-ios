@@ -11,6 +11,7 @@ import 'package:me_plus/data/models/class_model.dart';
 import 'package:me_plus/data/models/forgot_password_request.dart';
 import 'package:me_plus/data/services/token_storage_service.dart';
 import 'package:me_plus/core/utils/ios_network_helper.dart';
+import 'package:me_plus/core/utils/dio_ios_adapter.dart';
 
 class AuthService {
   final Dio _dio;
@@ -51,9 +52,11 @@ class AuthService {
     _dio.options.persistentConnection = true;
     _dio.options.receiveDataWhenStatusError = true;
     
-    // Log iOS network configuration
+    // Apply iOS-specific adapter
     if (Platform.isIOS) {
+      DioIOSAdapter.configureDio(_dio);
       IOSNetworkHelper.logNetworkConfig();
+      debugPrint('✅ [Auth] iOS adapter configured');
     }
 
     // Add interceptor for token and logging
