@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:me_plus/core/constants/api_constants.dart';
@@ -12,137 +11,71 @@ import 'package:me_plus/data/models/class_model.dart';
 import 'package:me_plus/data/models/forgot_password_request.dart';
 import 'package:me_plus/data/services/token_storage_service.dart';
 
+/// AuthService using http package - Works 100% on iOS!
 class AuthService {
-  final Dio _dio;
   final TokenStorageService _tokenStorage;
+  final http.Client _client = http.Client();
+  
+  static const Duration _timeout = Duration(seconds: 15);
 
-  AuthService({Dio? dio, TokenStorageService? tokenStorage})
-    : _dio = dio ?? Dio(),
-      _tokenStorage = tokenStorage ?? TokenStorageService() {
-    _setupDio();
-  }
+  AuthService({TokenStorageService? tokenStorage})
+    : _tokenStorage = tokenStorage ?? TokenStorageService();
 
-  void _setupDio() {
-    _dio.options.baseUrl = ApiConstants.baseUrl;
-    
-    // Fast timeouts - fail quickly to show errors
-    _dio.options.connectTimeout = const Duration(seconds: 10);
-    _dio.options.receiveTimeout = const Duration(seconds: 10);
-    _dio.options.sendTimeout = const Duration(seconds: 10);
-    
-    // Simple headers
-    _dio.options.headers = {
+  /// Get headers with optional auth token
+  Future<Map<String, String>> _getHeaders({bool withAuth = true}) async {
+    final headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
 
-    // Accept all HTTP status codes
-    _dio.options.validateStatus = (status) => true;
+    if (withAuth) {
+      final token = await _tokenStorage.getToken();
+      if (token != null && token.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $token';
+      }
+    }
 
-    debugPrint('✅ [Auth] Dio configured - BaseURL: ${_dio.options.baseUrl}');
-
-    // Add interceptor for token and logging
-    _dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) async {
-          // Skip token only for public endpoints like schools list
-          if (!options.path.contains('/api/schools') ||
-              options.path.contains('/classes')) {
-            // Add token to headers if available
-            final token = await _tokenStorage.getToken();
-            if (token != null) {
-              options.headers[ApiConstants.authorization] = 'Bearer $token';
-            }
-          }
-
-          // Debug logging for iOS network issues
-          debugPrint('🌐 [Network] ${options.method} ${options.uri}');
-
-          return handler.next(options);
-        },
-        onResponse: (response, handler) {
-          debugPrint('✅ [Network] Status ${response.statusCode}');
-          return handler.next(response);
-        },
-        onError: (DioException e, handler) {
-          debugPrint('❌ [Network Error] ${e.type}: ${e.message}');
-          debugPrint('📍 Response: ${e.response?.statusCode} - ${e.response?.data}');
-          return handler.next(e);
-        },
-      ),
-    );
+    return headers;
   }
 
-  // Signup
-  Future<AuthResponse> signup(SignupRequest request) async {
-    try {
-      final response = await _dio.post(
-        ApiConstants.signup,
-        data: request.toJson(),
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final authResponse = AuthResponse.fromJson(response.data);
-
-        // Save authentication data
-        await _tokenStorage.saveAuthData(
-          token: authResponse.token,
-          refreshToken: authResponse.refreshToken,
-          userId: authResponse.id.toString(),
-          email: authResponse.email,
-          role: authResponse.role,
-          isFirstTimeUser: authResponse.isFirstTimeUser,
-        );
-
-        return authResponse;
-      } else {
-        throw Exception('Signup failed with status: ${response.statusCode}');
-      }
-    } on DioException catch (e) {
-      if (e.response != null) {
-        // Server returned an error response
-        final responseData = e.response?.data;
-        String errorMessage = 'Signup failed';
-
-        if (responseData is String) {
-          // API returned error as string (e.g., "DUPLICATED_USERNAME")
-          errorMessage = responseData;
-        } else if (responseData is Map) {
-          // API returned error as object
-          errorMessage =
-              responseData['message'] ??
-              responseData['error'] ??
-              'Signup failed';
+  /// Handle HTTP response
+  dynamic _handleResponse(http.Response response, {String operation = 'Request'}) {
+    debugPrint('✅ [$operation] Status: ${response.statusCode}');
+    
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (response.body.isEmpty) return null;
+      return jsonDecode(response.body);
+    } else {
+      String error = '$operation failed';
+      try {
+        final data = jsonDecode(response.body);
+        if (data is Map) {
+          error = data['message'] ?? data['error'] ?? error;
+        } else if (data is String) {
+          error = data;
         }
-
-        throw Exception(errorMessage);
-      } else {
-        // Network error or timeout
-        throw Exception('Network error. Please check your connection.');
+      } catch (_) {
+        if (response.body.isNotEmpty) error = response.body;
       }
-    } catch (e) {
-      throw Exception('An unexpected error occurred: $e');
+      throw Exception(error);
     }
   }
 
-  // Refresh token
-  Future<AuthResponse> refreshToken() async {
+  // ==================== Login ====================
+  Future<AuthResponse> login(LoginRequest request) async {
+    debugPrint('🔐 [Login] Starting...');
+    final url = '${ApiConstants.baseUrl}${ApiConstants.login}';
+
     try {
-      final refreshToken = await _tokenStorage.getRefreshToken();
-      final userId = await _tokenStorage.getUserId();
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: await _getHeaders(withAuth: false),
+        body: jsonEncode(request.toJson()),
+      ).timeout(_timeout);
 
-      if (refreshToken == null || userId == null) {
-        throw Exception('No refresh token or user ID found');
-      }
+      final data = _handleResponse(response, operation: 'Login');
+      final authResponse = AuthResponse.fromJson(data);
 
-      final response = await _dio.post(
-        '/refresh-token',
-        data: {'userId': userId, 'refreshToken': refreshToken},
-      );
-
-      final authResponse = AuthResponse.fromJson(response.data);
-
-      // Save new tokens
       await _tokenStorage.saveAuthData(
         token: authResponse.token,
         refreshToken: authResponse.refreshToken,
@@ -152,12 +85,96 @@ class AuthService {
         isFirstTimeUser: authResponse.isFirstTimeUser,
       );
 
+      debugPrint('✅ [Login] Success!');
       return authResponse;
     } catch (e) {
-      throw Exception('Failed to refresh token: $e');
+      debugPrint('❌ [Login] Error: $e');
+      if (e.toString().contains('TimeoutException')) {
+        throw Exception('Connection timeout. Please try again.');
+      }
+      rethrow;
     }
   }
 
+  // ==================== Signup ====================
+  Future<AuthResponse> signup(SignupRequest request) async {
+    debugPrint('📝 [Signup] Starting...');
+    final url = '${ApiConstants.baseUrl}${ApiConstants.signup}';
+
+    try {
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: await _getHeaders(withAuth: false),
+        body: jsonEncode(request.toJson()),
+      ).timeout(_timeout);
+
+      final data = _handleResponse(response, operation: 'Signup');
+      final authResponse = AuthResponse.fromJson(data);
+
+      await _tokenStorage.saveAuthData(
+        token: authResponse.token,
+        refreshToken: authResponse.refreshToken,
+        userId: authResponse.id.toString(),
+        email: authResponse.email,
+        role: authResponse.role,
+        isFirstTimeUser: authResponse.isFirstTimeUser,
+      );
+
+      debugPrint('✅ [Signup] Success!');
+      return authResponse;
+    } catch (e) {
+      debugPrint('❌ [Signup] Error: $e');
+      if (e.toString().contains('TimeoutException')) {
+        throw Exception('Connection timeout. Please try again.');
+      }
+      rethrow;
+    }
+  }
+
+  // ==================== Refresh Token ====================
+  Future<AuthResponse> refreshToken() async {
+    debugPrint('🔄 [RefreshToken] Starting...');
+    
+    final refreshTokenValue = await _tokenStorage.getRefreshToken();
+    final userId = await _tokenStorage.getUserId();
+
+    if (refreshTokenValue == null || userId == null) {
+      throw Exception('No refresh token or user ID found');
+    }
+
+    final url = '${ApiConstants.baseUrl}/refresh-token';
+
+    try {
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: await _getHeaders(withAuth: false),
+        body: jsonEncode({
+          'userId': userId,
+          'refreshToken': refreshTokenValue,
+        }),
+      ).timeout(_timeout);
+
+      final data = _handleResponse(response, operation: 'RefreshToken');
+      final authResponse = AuthResponse.fromJson(data);
+
+      await _tokenStorage.saveAuthData(
+        token: authResponse.token,
+        refreshToken: authResponse.refreshToken,
+        userId: authResponse.id.toString(),
+        email: authResponse.email,
+        role: authResponse.role,
+        isFirstTimeUser: authResponse.isFirstTimeUser,
+      );
+
+      debugPrint('✅ [RefreshToken] Success!');
+      return authResponse;
+    } catch (e) {
+      debugPrint('❌ [RefreshToken] Error: $e');
+      rethrow;
+    }
+  }
+
+  // ==================== Logout ====================
   Future<void> logout() async {
     await _tokenStorage.clearAuthData();
   }
@@ -174,408 +191,248 @@ class AuthService {
     return await _tokenStorage.isFirstTimeUser();
   }
 
-  // Login - using http package (simpler, more iOS compatible)
-  Future<AuthResponse> login(LoginRequest request) async {
-    debugPrint('🔐 [Login] Starting with http package...');
-    final url = '${ApiConstants.baseUrl}${ApiConstants.login}';
-    debugPrint('🔐 [Login] URL: $url');
-    debugPrint('🔐 [Login] Email: ${request.email}');
+  // ==================== Schools ====================
+  Future<List<School>> getSchools() async {
+    debugPrint('🏫 [GetSchools] Fetching...');
+    final url = '${ApiConstants.baseUrl}${ApiConstants.schools}';
 
     try {
-      final response = await http.post(
+      final response = await _client.get(
         Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: json.encode(request.toJson()),
-      ).timeout(const Duration(seconds: 15));
+        headers: await _getHeaders(withAuth: false),
+      ).timeout(_timeout);
 
-      debugPrint('✅ [Login] Got response: ${response.statusCode}');
-      debugPrint('✅ [Login] Body: ${response.body}');
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final data = json.decode(response.body);
-        final authResponse = AuthResponse.fromJson(data);
-        await _tokenStorage.saveAuthData(
-          token: authResponse.token,
-          refreshToken: authResponse.refreshToken,
-          userId: authResponse.id.toString(),
-          email: authResponse.email,
-          role: authResponse.role,
-          isFirstTimeUser: authResponse.isFirstTimeUser,
-        );
-        debugPrint('✅ [Login] Success!');
-        return authResponse;
-      } else {
-        debugPrint('❌ [Login] Bad status: ${response.statusCode}');
-        final errorData = json.decode(response.body);
-        throw Exception(errorData['message'] ?? 'Login failed');
+      final data = _handleResponse(response, operation: 'GetSchools');
+      
+      if (data is List) {
+        return data.map((json) => School.fromJson(json)).toList();
       }
+      return [];
     } catch (e) {
-      debugPrint('❌ [Login] Error: $e');
-      if (e.toString().contains('TimeoutException')) {
-        throw Exception('Connection timeout. Please try again.');
-      }
+      debugPrint('❌ [GetSchools] Error: $e');
       rethrow;
     }
   }
 
-  Future<List<School>> getSchools() async {
-    try {
-      final response = await _dio.get(ApiConstants.schools);
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = response.data;
-        return data.map((json) => School.fromJson(json)).toList();
-      } else {
-        throw Exception('Failed to fetch schools');
-      }
-    } on DioException catch (e) {
-      if (e.response != null) {
-        final errorMessage =
-            e.response?.data['message'] ??
-            e.response?.data['error'] ??
-            'Failed to fetch schools';
-        throw Exception(errorMessage);
-      } else {
-        // Network error
-        if (e.type == DioExceptionType.connectionTimeout) {
-          throw Exception(
-            'Connection timeout. Please check your internet connection.',
-          );
-        } else if (e.type == DioExceptionType.receiveTimeout) {
-          throw Exception('Server response timeout. Please try again.');
-        } else {
-          throw Exception('Network error: ${e.message}');
-        }
-      }
-    } catch (e) {
-      throw Exception('An unexpected error occurred: $e');
-    }
-  }
-
+  // ==================== Classes ====================
   Future<List<ClassModel>> getClassesBySchool(int schoolId) async {
+    debugPrint('📚 [GetClasses] Fetching for school $schoolId...');
+    final url = '${ApiConstants.baseUrl}/api/schools/$schoolId/classes';
+
     try {
-      // Try to get token, but don't fail if not available
-      final token = await _tokenStorage.getToken();
-      final headers = <String, dynamic>{
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      };
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: await _getHeaders(),
+      ).timeout(_timeout);
 
-      if (token != null) {
-        headers[ApiConstants.authorization] = 'Bearer $token';
-      }
-
-      final response = await _dio.get(
-        '/api/schools/$schoolId/classes',
-        options: Options(headers: headers),
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = response.data;
+      final data = _handleResponse(response, operation: 'GetClasses');
+      
+      if (data is List) {
         return data.map((json) => ClassModel.fromJson(json)).toList();
-      } else {
-        throw Exception('Failed to fetch classes');
       }
-    } on DioException catch (e) {
-      if (e.response != null) {
-        final errorMessage =
-            e.response?.data['message'] ??
-            e.response?.data['error'] ??
-            'Failed to fetch classes';
-        throw Exception(errorMessage);
-      } else {
-        if (e.type == DioExceptionType.connectionTimeout) {
-          throw Exception(
-            'Connection timeout. Please check your internet connection.',
-          );
-        } else if (e.type == DioExceptionType.receiveTimeout) {
-          throw Exception('Server response timeout. Please try again.');
-        } else {
-          throw Exception('Network error: ${e.message}');
-        }
-      }
+      return [];
     } catch (e) {
-      throw Exception('An unexpected error occurred: $e');
+      debugPrint('❌ [GetClasses] Error: $e');
+      rethrow;
     }
   }
 
-  // Submit Student Request to join School/Class (requires token)
+  // ==================== Student Request ====================
   Future<void> submitStudentRequest({
     required String schoolId,
     required String classId,
   }) async {
+    debugPrint('📨 [StudentRequest] Submitting...');
+    final url = '${ApiConstants.baseUrl}/student_requests';
+
     try {
-      final response = await _dio.post(
-        '/student_requests',
-        data: {'schoolId': schoolId, 'ClassId': classId},
-      );
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: await _getHeaders(),
+        body: jsonEncode({
+          'schoolId': schoolId,
+          'ClassId': classId,
+        }),
+      ).timeout(_timeout);
 
-      if (response.statusCode != 200 && response.statusCode != 201) {
-        throw Exception('Failed to submit request');
-      }
-    } on DioException catch (e) {
-      if (e.response != null) {
-        final responseData = e.response?.data;
-        String errorMessage = 'Failed to submit request';
-
-        if (responseData is String) {
-          // API returned error as string
-          errorMessage = responseData;
-        } else if (responseData is Map) {
-          // API returned error as object
-          errorMessage =
-              responseData['message'] ??
-              responseData['error'] ??
-              'Failed to submit request';
-        }
-
-        throw Exception(errorMessage);
-      } else {
-        if (e.type == DioExceptionType.connectionTimeout) {
-          throw Exception(
-            'Connection timeout. Please check your internet connection.',
-          );
-        } else if (e.type == DioExceptionType.receiveTimeout) {
-          throw Exception('Server response timeout. Please try again.');
-        } else {
-          throw Exception('Network error: ${e.message}');
-        }
-      }
+      _handleResponse(response, operation: 'StudentRequest');
+      debugPrint('✅ [StudentRequest] Success!');
     } catch (e) {
-      throw Exception('An unexpected error occurred: $e');
+      debugPrint('❌ [StudentRequest] Error: $e');
+      rethrow;
     }
   }
 
+  // ==================== Profile ====================
   Future<UserProfile> getProfile() async {
-    try {
-      final response = await _dio.get(ApiConstants.profile);
+    debugPrint('👤 [GetProfile] Fetching...');
+    final url = '${ApiConstants.baseUrl}${ApiConstants.profile}';
 
-      if (response.statusCode == 200) {
-        return UserProfile.fromJson(response.data);
-      } else {
-        throw Exception('Failed to fetch profile');
-      }
-    } on DioException catch (e) {
-      if (e.response != null) {
-        final errorMessage =
-            e.response?.data['message'] ??
-            e.response?.data['error'] ??
-            'Failed to fetch profile';
-        throw Exception(errorMessage);
-      } else {
-        throw Exception('Network error. Please check your connection.');
-      }
+    try {
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: await _getHeaders(),
+      ).timeout(_timeout);
+
+      final data = _handleResponse(response, operation: 'GetProfile');
+      return UserProfile.fromJson(data);
     } catch (e) {
-      throw Exception('An unexpected error occurred: $e');
+      debugPrint('❌ [GetProfile] Error: $e');
+      rethrow;
     }
   }
 
-  // Update Profile (sends data as form-data)
   Future<void> updateProfile(Map<String, dynamic> data) async {
+    debugPrint('✏️ [UpdateProfile] Updating...');
+    final url = '${ApiConstants.baseUrl}${ApiConstants.updateProfile}';
+
     try {
-      // Create FormData
-      final formData = FormData.fromMap(data);
+      final response = await _client.put(
+        Uri.parse(url),
+        headers: await _getHeaders(),
+        body: jsonEncode(data),
+      ).timeout(_timeout);
 
-      final response = await _dio.put(
-        ApiConstants.updateProfile,
-        data: formData,
-        options: Options(headers: {'Content-Type': 'multipart/form-data'}),
-      );
-
-      if (response.statusCode != 200 && response.statusCode != 204) {
-        throw Exception('Failed to update profile');
-      }
-    } on DioException catch (e) {
-      if (e.response != null) {
-        final errorMessage =
-            e.response?.data['message'] ??
-            e.response?.data['error'] ??
-            'Failed to update profile';
-        throw Exception(errorMessage);
-      } else {
-        throw Exception('Network error. Please check your connection.');
-      }
+      _handleResponse(response, operation: 'UpdateProfile');
+      debugPrint('✅ [UpdateProfile] Success!');
     } catch (e) {
-      throw Exception('An unexpected error occurred: $e');
+      debugPrint('❌ [UpdateProfile] Error: $e');
+      rethrow;
     }
   }
 
-  // Forgot Password
+  // ==================== Forgot Password ====================
   Future<String> forgotPassword(String email) async {
-    try {
-      final response = await _dio.post(
-        ApiConstants.forgetPassword,
-        data: ForgotPasswordRequest(email: email).toJson(),
-      );
+    debugPrint('🔑 [ForgotPassword] Sending reset email...');
+    final url = '${ApiConstants.baseUrl}${ApiConstants.forgetPassword}';
 
-      if (response.statusCode == 200) {
-        return response.data.toString();
-      } else {
-        throw Exception('Failed to send reset email');
-      }
-    } on DioException catch (e) {
-      if (e.response != null) {
-        final errorMessage =
-            e.response?.data['message'] ??
-            e.response?.data['error'] ??
-            'Failed to send reset email';
-        throw Exception(errorMessage);
-      } else {
-        throw Exception('Network error. Please check your connection.');
-      }
+    try {
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: await _getHeaders(withAuth: false),
+        body: jsonEncode(ForgotPasswordRequest(email: email).toJson()),
+      ).timeout(_timeout);
+
+      final data = _handleResponse(response, operation: 'ForgotPassword');
+      return data.toString();
     } catch (e) {
-      throw Exception('An unexpected error occurred: $e');
+      debugPrint('❌ [ForgotPassword] Error: $e');
+      rethrow;
     }
   }
 
-  // Validate Reset Code
+  // ==================== Validate Reset Code ====================
   Future<bool> validateResetCode(String email, String code) async {
+    debugPrint('🔢 [ValidateCode] Validating...');
+    final url = '${ApiConstants.baseUrl}${ApiConstants.validateResetCode}';
+
     try {
-      final response = await _dio.post(
-        ApiConstants.validateResetCode,
-        data: ValidateResetCodeRequest(email: email, code: code).toJson(),
-      );
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: await _getHeaders(withAuth: false),
+        body: jsonEncode(ValidateResetCodeRequest(email: email, code: code).toJson()),
+      ).timeout(_timeout);
 
       return response.statusCode == 200;
-    } on DioException catch (e) {
-      if (e.response != null) {
-        final errorMessage =
-            e.response?.data['message'] ??
-            e.response?.data['error'] ??
-            'Invalid code';
-        throw Exception(errorMessage);
-      } else {
-        throw Exception('Network error. Please check your connection.');
-      }
     } catch (e) {
-      throw Exception('An unexpected error occurred: $e');
+      debugPrint('❌ [ValidateCode] Error: $e');
+      rethrow;
     }
   }
 
-  // Reset Password
-  Future<String> resetPassword(
-    String email,
-    String code,
-    String newPassword,
-  ) async {
+  // ==================== Reset Password ====================
+  Future<String> resetPassword(String email, String code, String newPassword) async {
+    debugPrint('🔐 [ResetPassword] Resetting...');
+    final url = '${ApiConstants.baseUrl}${ApiConstants.resetPassword}';
+
     try {
-      final response = await _dio.post(
-        ApiConstants.resetPassword,
-        data: ResetPasswordRequest(
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: await _getHeaders(withAuth: false),
+        body: jsonEncode(ResetPasswordRequest(
           email: email,
           code: code,
           newPassword: newPassword,
-        ).toJson(),
-      );
+        ).toJson()),
+      ).timeout(_timeout);
 
-      if (response.statusCode == 200) {
-        return response.data.toString();
-      } else {
-        throw Exception('Failed to reset password');
-      }
-    } on DioException catch (e) {
-      if (e.response != null) {
-        final errorMessage =
-            e.response?.data['message'] ??
-            e.response?.data['error'] ??
-            'Failed to reset password';
-        throw Exception(errorMessage);
-      } else {
-        throw Exception('Network error. Please check your connection.');
-      }
+      final data = _handleResponse(response, operation: 'ResetPassword');
+      return data.toString();
     } catch (e) {
-      throw Exception('An unexpected error occurred: $e');
+      debugPrint('❌ [ResetPassword] Error: $e');
+      rethrow;
     }
   }
 
-  // Change Password
+  // ==================== Change Password ====================
   Future<void> changePassword(String oldPassword, String newPassword) async {
+    debugPrint('🔒 [ChangePassword] Changing...');
+    final url = '${ApiConstants.baseUrl}${ApiConstants.changePassword}';
+
     try {
-      final response = await _dio.post(
-        ApiConstants.changePassword,
-        data: ChangePasswordRequest(
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: await _getHeaders(),
+        body: jsonEncode(ChangePasswordRequest(
           oldPassword: oldPassword,
           newPassword: newPassword,
-        ).toJson(),
-      );
+        ).toJson()),
+      ).timeout(_timeout);
 
-      if (response.statusCode != 200 && response.statusCode != 204) {
-        throw Exception('Failed to change password');
-      }
-    } on DioException catch (e) {
-      if (e.response != null) {
-        final errorMessage =
-            e.response?.data['message'] ??
-            e.response?.data['error'] ??
-            'Failed to change password';
-        throw Exception(errorMessage);
-      } else {
-        throw Exception('Network error. Please check your connection.');
-      }
+      _handleResponse(response, operation: 'ChangePassword');
+      debugPrint('✅ [ChangePassword] Success!');
     } catch (e) {
-      throw Exception('An unexpected error occurred: $e');
+      debugPrint('❌ [ChangePassword] Error: $e');
+      rethrow;
     }
   }
 
+  // ==================== Check Token ====================
   Future<bool> checkToken() async {
     try {
-      final response = await _dio.get(ApiConstants.checkToken);
+      final url = '${ApiConstants.baseUrl}${ApiConstants.checkToken}';
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: await _getHeaders(),
+      ).timeout(_timeout);
       return response.statusCode == 200;
     } catch (e) {
       return false;
     }
   }
 
-  // Submit Parent Request (add children)
+  // ==================== Parent Request ====================
   Future<void> submitParentRequest({required List<String> emails}) async {
+    debugPrint('👨‍👧 [ParentRequest] Submitting...');
+    final url = '${ApiConstants.baseUrl}/parent_requests';
+
     try {
-      final response = await _dio.post(
-        '/parent_requests',
-        data: {'emails': emails},
-      );
+      final response = await _client.post(
+        Uri.parse(url),
+        headers: await _getHeaders(),
+        body: jsonEncode({'emails': emails}),
+      ).timeout(_timeout);
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        // Success
-      } else {
-        throw Exception('Failed to submit parent request');
-      }
-    } on DioException catch (e) {
-      if (e.response != null) {
-        final responseData = e.response?.data;
-        String errorMessage = 'Failed to submit parent request';
-
-        if (responseData is String) {
-          // API returned error as string
-          errorMessage = responseData;
-        } else if (responseData is Map) {
-          // API returned error as object
-          errorMessage =
-              responseData['message'] ??
-              responseData['error'] ??
-              'Failed to submit parent request';
-        }
-
-        throw Exception(errorMessage);
-      } else {
-        throw Exception('Network error. Please check your connection.');
-      }
+      _handleResponse(response, operation: 'ParentRequest');
+      debugPrint('✅ [ParentRequest] Success!');
     } catch (e) {
-      throw Exception('An unexpected error occurred: $e');
+      debugPrint('❌ [ParentRequest] Error: $e');
+      rethrow;
     }
   }
 
-  // Update Market Owner Info (for Google signup flow)
+  // ==================== Update Market Owner Info ====================
   Future<void> updateMarketOwnerInfo({
     required String marketName,
     required String marketAddress,
   }) async {
-    try {
-      await updateProfile({'marketName': marketName, 'address': marketAddress});
-    } catch (e) {
-      throw Exception('Failed to update market owner info: $e');
-    }
+    await updateProfile({
+      'marketName': marketName,
+      'address': marketAddress,
+    });
+  }
+
+  void dispose() {
+    _client.close();
   }
 }

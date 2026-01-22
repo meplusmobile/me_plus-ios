@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:me_plus/data/services/api_service.dart';
 import 'package:me_plus/data/models/user_profile.dart';
 import 'package:me_plus/data/models/activity_model.dart';
@@ -6,7 +7,6 @@ import 'package:me_plus/data/models/child_model.dart';
 import 'package:me_plus/data/models/behavior_model.dart';
 import 'package:me_plus/data/models/child_reward_model.dart';
 import 'package:me_plus/core/services/translation_service.dart';
-import 'package:dio/dio.dart';
 
 class ParentRepository {
   final ApiService _apiService = ApiService();
@@ -14,36 +14,36 @@ class ParentRepository {
 
   // Get all children for the parent
   Future<List<Child>> getChildren() async {
-    try {
-      final response = await _apiService.get('/parent/children');
-
-      if (response.data is List) {
-        return (response.data as List)
-            .map((child) => Child.fromJson(child))
-            .toList();
-      }
-
+    final response = await _apiService.get('/parent/children');
+    
+    if (!response.success) {
+      debugPrint('Failed to get children: ${response.error}');
       return [];
-    } catch (e) {
-      throw Exception('Error fetching children: $e');
     }
+
+    if (response.data is List) {
+      return (response.data as List)
+          .map((child) => Child.fromJson(child))
+          .toList();
+    }
+    return [];
   }
 
   // Get waiting children (pending approval)
   Future<List<Child>> getWaitingChildren() async {
-    try {
-      final response = await _apiService.get('/parent/waiting-children');
-
-      if (response.data is List) {
-        return (response.data as List)
-            .map((child) => Child.fromJson(child))
-            .toList();
-      }
-
+    final response = await _apiService.get('/parent/waiting-children');
+    
+    if (!response.success) {
+      debugPrint('Failed to get waiting children: ${response.error}');
       return [];
-    } catch (e) {
-      throw Exception('Error fetching waiting children: $e');
     }
+
+    if (response.data is List) {
+      return (response.data as List)
+          .map((child) => Child.fromJson(child))
+          .toList();
+    }
+    return [];
   }
 
   // Get child activity for a specific month (calendar markers)
@@ -53,21 +53,21 @@ class ParentRepository {
     required String childId,
     required String date, // Format: "YYYY-MM"
   }) async {
-    try {
-      final response = await _apiService.get(
-        '/api/schools/$schoolId/classes/$classId/childs/$childId/activity?date=$date',
-      );
+    final response = await _apiService.get(
+      '/api/schools/$schoolId/classes/$classId/childs/$childId/activity?date=$date',
+    );
 
-      if (response.data != null && response.data['dates'] is List) {
-        return (response.data['dates'] as List)
-            .map((dateItem) => BehaviorDate.fromJson(dateItem))
-            .toList();
-      }
-
+    if (!response.success) {
+      debugPrint('Failed to get child activity: ${response.error}');
       return [];
-    } catch (e) {
-      throw Exception('Error fetching child activity: $e');
     }
+
+    if (response.data != null && response.data['dates'] is List) {
+      return (response.data['dates'] as List)
+          .map((dateItem) => BehaviorDate.fromJson(dateItem))
+          .toList();
+    }
+    return [];
   }
 
   // Get last 4 days activities for a child
@@ -79,8 +79,6 @@ class ParentRepository {
     try {
       final now = DateTime.now();
       final fourDaysAgo = now.subtract(const Duration(days: 4));
-
-      // Check if we need to fetch from previous month as well
       final needsPreviousMonth = fourDaysAgo.month != now.month;
 
       final List<BehaviorDate> allDates = [];
@@ -91,7 +89,7 @@ class ParentRepository {
         '/api/schools/$schoolId/classes/$classId/childs/$childId/activity?date=$currentMonthStr',
       );
 
-      if (currentResponse.data != null &&
+      if (currentResponse.success && currentResponse.data != null &&
           currentResponse.data['dates'] is List) {
         allDates.addAll(
           (currentResponse.data['dates'] as List)
@@ -107,7 +105,7 @@ class ParentRepository {
           '/api/schools/$schoolId/classes/$classId/childs/$childId/activity?date=$previousMonthStr',
         );
 
-        if (previousResponse.data != null &&
+        if (previousResponse.success && previousResponse.data != null &&
             previousResponse.data['dates'] is List) {
           allDates.addAll(
             (previousResponse.data['dates'] as List)
@@ -122,11 +120,10 @@ class ParentRepository {
         return daysDifference >= 1 && daysDifference <= 4;
       }).toList();
 
-      // Sort by date ascending (oldest first for display left-to-right)
       lastFourDays.sort((a, b) => a.date.compareTo(b.date));
-
       return lastFourDays;
     } catch (e) {
+      debugPrint('Error getting last week activities: $e');
       return [];
     }
   }
@@ -138,36 +135,37 @@ class ParentRepository {
     required String childId,
     required String date, // Format: "YYYY-M-D"
   }) async {
-    try {
-      final response = await _apiService.get(
-        '/api/schools/$schoolId/classes/$classId/childs/$childId/behaviors',
-        queryParameters: {'date': date},
-      );
+    final response = await _apiService.get(
+      '/api/schools/$schoolId/classes/$classId/childs/$childId/behaviors',
+      queryParameters: {'date': date},
+    );
 
-      final data = response.data;
-      List<Activity> activities = [];
-
-      if (data is Map && data.containsKey('items')) {
-        activities = (data['items'] as List)
-            .map((item) => Activity.fromJson(item))
-            .toList();
-      } else if (data is Map && data.containsKey('data')) {
-        activities = (data['data'] as List)
-            .map((item) => Activity.fromJson(item))
-            .toList();
-      } else if (data is List) {
-        activities = data.map((item) => Activity.fromJson(item)).toList();
-      }
-
-      final translatedActivities = <Activity>[];
-      for (var activity in activities) {
-        translatedActivities.add(await _autoTranslateActivity(activity));
-      }
-
-      return translatedActivities;
-    } catch (e) {
-      throw Exception('Error fetching child behaviors by day: $e');
+    if (!response.success) {
+      debugPrint('Failed to get child behaviors: ${response.error}');
+      return [];
     }
+
+    final data = response.data;
+    List<Activity> activities = [];
+
+    if (data is Map && data.containsKey('items')) {
+      activities = (data['items'] as List)
+          .map((item) => Activity.fromJson(item))
+          .toList();
+    } else if (data is Map && data.containsKey('data')) {
+      activities = (data['data'] as List)
+          .map((item) => Activity.fromJson(item))
+          .toList();
+    } else if (data is List) {
+      activities = data.map((item) => Activity.fromJson(item)).toList();
+    }
+
+    final translatedActivities = <Activity>[];
+    for (var activity in activities) {
+      translatedActivities.add(await _autoTranslateActivity(activity));
+    }
+
+    return translatedActivities;
   }
 
   Future<Activity> _autoTranslateActivity(Activity activity) async {
@@ -232,21 +230,21 @@ class ParentRepository {
     required int classId,
     required String childId,
   }) async {
-    try {
-      final response = await _apiService.get(
-        '/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/this-month',
-      );
+    final response = await _apiService.get(
+      '/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/this-month',
+    );
 
-      if (response.data is List) {
-        return (response.data as List)
-            .map((behavior) => BehaviorRecord.fromJson(behavior))
-            .toList();
-      }
-
+    if (!response.success) {
+      debugPrint('Failed to get child behavior this month: ${response.error}');
       return [];
-    } catch (e) {
-      throw Exception('Error fetching child behavior: $e');
     }
+
+    if (response.data is List) {
+      return (response.data as List)
+          .map((behavior) => BehaviorRecord.fromJson(behavior))
+          .toList();
+    }
+    return [];
   }
 
   // Get child behavior for last month
@@ -255,52 +253,47 @@ class ParentRepository {
     required int classId,
     required String childId,
   }) async {
-    try {
-      final response = await _apiService.get(
-        '/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/last-month',
-      );
+    final response = await _apiService.get(
+      '/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/last-month',
+    );
 
-      if (response.data is List) {
-        return (response.data as List)
-            .map((behavior) => BehaviorRecord.fromJson(behavior))
-            .toList();
-      }
-
+    if (!response.success) {
+      debugPrint('Failed to get child behavior last month: ${response.error}');
       return [];
-    } catch (e) {
-      throw Exception('Error fetching child behavior: $e');
     }
+
+    if (response.data is List) {
+      return (response.data as List)
+          .map((behavior) => BehaviorRecord.fromJson(behavior))
+          .toList();
+    }
+    return [];
   }
 
   Future<UserProfile> getParentProfile() async {
-    try {
-      // Assuming /parent/profile exists, or we might use /api/me
-      final response = await _apiService.get('/parent/profile');
-      return UserProfile.fromJson(response.data);
-    } catch (e) {
-      // Fallback to /api/me if /parent/profile fails?
-      // Or maybe the user meant "exactly same" backend means same endpoints?
-      // But /market/profile implies role specific.
-      // I will try /parent/profile first.
-      throw Exception('Error fetching parent profile: $e');
+    final response = await _apiService.get('/parent/profile');
+    if (!response.success) {
+      throw Exception(response.error ?? 'Error fetching parent profile');
     }
+    return UserProfile.fromJson(response.data);
   }
 
   Future<UserProfile> updateParentProfile(Map<String, dynamic> data) async {
-    try {
-      final formData = FormData.fromMap(data);
-
-      await _apiService.put('/api/me', data: formData, isFormData: true);
-
-      return await getParentProfile();
-    } catch (e) {
-      throw Exception('Error updating parent profile: $e');
+    final response = await _apiService.put('/api/me', data: data);
+    if (!response.success) {
+      throw Exception(response.error ?? 'Error updating parent profile');
     }
+    return await getParentProfile();
   }
 
-  // Notification methods (Same as MarketRepository)
+  // Notification methods
   Future<List<NotificationModel>> getNotifications() async {
     final response = await _apiService.get('/api/notifications');
+
+    if (!response.success) {
+      debugPrint('Failed to get notifications: ${response.error}');
+      return [];
+    }
 
     if (response.data is List) {
       final notifications = (response.data as List)
@@ -316,7 +309,6 @@ class ParentRepository {
 
       return translatedNotifications;
     }
-
     return [];
   }
 
@@ -396,7 +388,6 @@ class ParentRepository {
     String fromLang,
     String toLang,
   ) async {
-    // Pattern 1: "ItemName has been ordered from StudentName"
     final orderPattern = RegExp(r'^(.+?)\s+has been ordered from\s+(.+)$');
     final orderMatch = orderPattern.firstMatch(message);
 
@@ -409,7 +400,6 @@ class ParentRepository {
       }
     }
 
-    // Pattern 2: "You requested a ItemName, Did you receive it?"
     final requestPattern = RegExp(
       r'You requested a\s+(.+?),\s*Did you receive it\??',
       caseSensitive: false,
@@ -424,7 +414,6 @@ class ParentRepository {
       }
     }
 
-    // Pattern 3: "A new behavior has been assigned to your child StudentName by teacher TeacherName"
     final behaviorPattern = RegExp(
       r'A new behavior has been assigned to your child\s+(.+?)\s+by teacher\s+(.+)$',
       caseSensitive: false,
@@ -440,7 +429,6 @@ class ParentRepository {
       }
     }
 
-    // Pattern 4: Arabic "لقد تم طلب ItemName من قبل StudentName"
     final arabicOrderPattern = RegExp(r'لقد تم طلب\s+(.+?)\s+من قبل\s+(.+)$');
     final arabicOrderMatch = arabicOrderPattern.firstMatch(message);
 
@@ -450,7 +438,6 @@ class ParentRepository {
       return '$itemName has been ordered from $studentName';
     }
 
-    // Pattern 5: Arabic "لقد طلبت ItemName، هل استلمتها؟"
     final arabicRequestPattern = RegExp(r'لقد طلبت\s+(.+?)،\s*هل استلمتها؟');
     final arabicRequestMatch = arabicRequestPattern.firstMatch(message);
 
@@ -459,7 +446,6 @@ class ParentRepository {
       return 'You requested a $itemName, Did you receive it?';
     }
 
-    // Pattern 6: Arabic behavior notification
     final arabicBehaviorPattern = RegExp(
       r'تم تعيين سلوك جديد لطفلك\s+(.+?)\s+من قبل المعلم\s+(.+)$',
     );
@@ -471,7 +457,6 @@ class ParentRepository {
       return 'A new behavior has been assigned to your child $studentName by teacher $teacherName';
     }
 
-    // If no pattern matches, use regular translation
     if (toLang == 'ar') {
       return await _translationService.translateToArabic(message);
     } else {
@@ -480,20 +465,21 @@ class ParentRepository {
   }
 
   Future<void> markNotificationAsRead(int notificationId) async {
-    await _apiService.post('/api/notifications/mark-as-read/$notificationId');
+    final response = await _apiService.post('/api/notifications/mark-as-read/$notificationId');
+    if (!response.success) {
+      debugPrint('Failed to mark notification as read: ${response.error}');
+    }
   }
 
   Future<void> deleteNotification(int notificationId) async {
-    await _apiService.delete('/api/notifications/$notificationId');
+    final response = await _apiService.delete('/api/notifications/$notificationId');
+    if (!response.success) {
+      debugPrint('Failed to delete notification: ${response.error}');
+    }
   }
 
   // Mocked method for child purchases
   Future<List<Purchase>> getChildPurchases({required int studentId}) async {
-    // In a real implementation, this would call an API endpoint like:
-    // final response = await _apiService.get('/parent/child/$studentId/purchases');
-    // return (response.data as List).map((p) => Purchase.fromJson(p)).toList();
-
-    // Mock data for now
     await Future.delayed(const Duration(seconds: 1));
     return [
       Purchase(
@@ -537,140 +523,137 @@ class ParentRepository {
 
   // ==================== Child Report APIs ====================
 
-  // Get total points exchanged by child
   Future<double> getChildTotalPointsExchanged({
     required int schoolId,
     required int classId,
     required String childId,
-    required String date, // Format: "YYYY-MM"
+    required String date,
   }) async {
-    try {
-      final response = await _apiService.get(
-        '/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/total-points-exchanged',
-        queryParameters: {'date': date},
-      );
+    final response = await _apiService.get(
+      '/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/total-points-exchanged',
+      queryParameters: {'date': date},
+    );
 
-      final value = response.data['totalPointsExchanged'];
-      return value != null
-          ? (value is double ? value : (value as num).toDouble())
-          : 0.0;
-    } catch (e) {
-      throw Exception('Error fetching total points exchanged: $e');
+    if (!response.success) {
+      debugPrint('Failed to get total points exchanged: ${response.error}');
+      return 0.0;
     }
+
+    final value = response.data['totalPointsExchanged'];
+    return value != null
+        ? (value is double ? value : (value as num).toDouble())
+        : 0.0;
   }
 
-  // Get total credits exchanged by child
   Future<double> getChildTotalCreditsExchanged({
     required int schoolId,
     required int classId,
     required String childId,
-    required String date, // Format: "YYYY-MM"
+    required String date,
   }) async {
-    try {
-      final response = await _apiService.get(
-        '/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/total-credits-exchanged',
-        queryParameters: {'date': date},
-      );
+    final response = await _apiService.get(
+      '/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/total-credits-exchanged',
+      queryParameters: {'date': date},
+    );
 
-      final value = response.data['totalCreditsExchanged'];
-      return value != null
-          ? (value is double ? value : (value as num).toDouble())
-          : 0.0;
-    } catch (e) {
-      throw Exception('Error fetching total credits exchanged: $e');
+    if (!response.success) {
+      debugPrint('Failed to get total credits exchanged: ${response.error}');
+      return 0.0;
     }
+
+    final value = response.data['totalCreditsExchanged'];
+    return value != null
+        ? (value is double ? value : (value as num).toDouble())
+        : 0.0;
   }
 
-  // Get total points given to child for specified month
   Future<int> getChildTotalPointsGiven({
     required int schoolId,
     required int classId,
     required String childId,
-    required String date, // Format: "YYYY-MM"
+    required String date,
   }) async {
-    try {
-      final response = await _apiService.get(
-        '/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/total-points-given',
-        queryParameters: {'date': date},
-      );
+    final response = await _apiService.get(
+      '/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/total-points-given',
+      queryParameters: {'date': date},
+    );
 
-      final value = response.data['totalPointsGiven'];
-      return value != null
-          ? (value is int ? value : (value as num).toInt())
-          : 0;
-    } catch (e) {
-      throw Exception('Error fetching total points given: $e');
+    if (!response.success) {
+      debugPrint('Failed to get total points given: ${response.error}');
+      return 0;
     }
+
+    final value = response.data['totalPointsGiven'];
+    return value != null
+        ? (value is int ? value : (value as num).toInt())
+        : 0;
   }
 
-  // Get total credits given to child for specified month
   Future<int> getChildTotalCreditsGiven({
     required int schoolId,
     required int classId,
     required String childId,
-    required String date, // Format: "YYYY-MM"
+    required String date,
   }) async {
-    try {
-      final response = await _apiService.get(
-        '/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/total-credits-given',
-        queryParameters: {'date': date},
-      );
+    final response = await _apiService.get(
+      '/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/total-credits-given',
+      queryParameters: {'date': date},
+    );
 
-      final value = response.data['totalCreditsGiven'];
-      return value != null
-          ? (value is int ? value : (value as num).toInt())
-          : 0;
-    } catch (e) {
-      throw Exception('Error fetching total credits given: $e');
+    if (!response.success) {
+      debugPrint('Failed to get total credits given: ${response.error}');
+      return 0;
     }
+
+    final value = response.data['totalCreditsGiven'];
+    return value != null
+        ? (value is int ? value : (value as num).toInt())
+        : 0;
   }
 
-  // Get child behavior counts (positive and negative)
-  // date parameter can be "YYYY-MM" for month or "YYYY-MM-DD" for day
   Future<Map<String, int>> getChildBehaviorCounts({
     required int schoolId,
     required int classId,
     required String childId,
-    required String date, // Format: "YYYY-MM" for month or "YYYY-MM-DD" for day
+    required String date,
   }) async {
-    try {
-      final response = await _apiService.get(
-        '/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/counts',
-        queryParameters: {'date': date},
-      );
+    final response = await _apiService.get(
+      '/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/counts',
+      queryParameters: {'date': date},
+    );
 
-      return {
-        'positiveCount': response.data['positiveCount'] ?? 0,
-        'negativeCount': response.data['negativeCount'] ?? 0,
-      };
-    } catch (e) {
-      throw Exception('Error fetching behavior counts: $e');
+    if (!response.success) {
+      debugPrint('Failed to get behavior counts: ${response.error}');
+      return {'positiveCount': 0, 'negativeCount': 0};
     }
+
+    return {
+      'positiveCount': response.data['positiveCount'] ?? 0,
+      'negativeCount': response.data['negativeCount'] ?? 0,
+    };
   }
 
-  // Get child purchased rewards info with images
-  // date parameter format: "YYYY-M" (e.g., "2025-7")
   Future<List<ChildReward>> getChildRewardInfo({
     required int schoolId,
     required int classId,
     required String childId,
-    required String date, // Format: "YYYY-M"
+    required String date,
   }) async {
-    try {
-      final response = await _apiService.get(
-        '/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/reward-info',
-        queryParameters: {'date': date},
-      );
+    final response = await _apiService.get(
+      '/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/reward-info',
+      queryParameters: {'date': date},
+    );
 
-      if (response.data != null && response.data['rewardImages'] is List) {
-        return (response.data['rewardImages'] as List)
-            .map((rewardItem) => ChildReward.fromJson(rewardItem))
-            .toList();
-      }
-
+    if (!response.success) {
+      debugPrint('Failed to get reward info: ${response.error}');
       return [];
-    } catch (e) {
-      throw Exception('Error fetching reward info: $e');
     }
+
+    if (response.data != null && response.data['rewardImages'] is List) {
+      return (response.data['rewardImages'] as List)
+          .map((rewardItem) => ChildReward.fromJson(rewardItem))
+          .toList();
+    }
+    return [];
   }
 }

@@ -1,4 +1,4 @@
-import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:me_plus/data/services/api_service.dart';
 import 'package:me_plus/data/models/student_profile.dart';
 import 'package:me_plus/data/models/behavior_model.dart';
@@ -14,38 +14,50 @@ class StudentRepository {
   // ==================== Profile ====================
   Future<StudentProfile> getProfile() async {
     final response = await _apiService.get('/student/profile');
+    if (!response.success) {
+      throw Exception(response.error ?? 'Failed to get profile');
+    }
     return StudentProfile.fromJson(response.data);
   }
 
-  // Update profile (sends as form-data)
+  // Update profile
   Future<StudentProfile> updateProfile(Map<String, dynamic> data) async {
-    // Create FormData
-    final formData = FormData.fromMap(data);
-
-    await _apiService.put('/api/me', data: formData, isFormData: true);
+    final response = await _apiService.put('/api/me', data: data);
+    if (!response.success) {
+      throw Exception(response.error ?? 'Failed to update profile');
+    }
 
     // Fetch full profile data from /student/profile endpoint
     final profileResponse = await _apiService.get('/student/profile');
+    if (!profileResponse.success) {
+      throw Exception(profileResponse.error ?? 'Failed to get updated profile');
+    }
     return StudentProfile.fromJson(profileResponse.data);
   }
 
   // ==================== Behavior ====================
   Future<BehaviorStreakResponse> getBehaviorStreak() async {
     final response = await _apiService.get('/api/behavior-streak');
+    if (!response.success) {
+      throw Exception(response.error ?? 'Failed to get behavior streak');
+    }
     return BehaviorStreakResponse.fromJson(response.data);
   }
 
   Future<Map<String, dynamic>> claimBehaviorReward() async {
-    final response = await _apiService.post(
-      '/api/behavior-streak/claim-reward',
-    );
+    final response = await _apiService.post('/api/behavior-streak/claim-reward');
+    if (!response.success) {
+      throw Exception(response.error ?? 'Failed to claim reward');
+    }
     return response.data as Map<String, dynamic>;
   }
 
   Future<List<WeekDetailBehavior>> getWeekDetails(int weekNumber) async {
-    final response = await _apiService.get(
-      '/api/behavior-streak/weeks/$weekNumber',
-    );
+    final response = await _apiService.get('/api/behavior-streak/weeks/$weekNumber');
+    if (!response.success) {
+      debugPrint('Failed to get week details: ${response.error}');
+      return [];
+    }
     return (response.data as List)
         .map((item) => WeekDetailBehavior.fromJson(item))
         .toList();
@@ -62,6 +74,11 @@ class StudentRepository {
       '/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/this-month',
       queryParameters: {'pageSize': pageSize, 'pageNumber': pageNumber},
     );
+
+    if (!response.success) {
+      debugPrint('Failed to get behavior this month: ${response.error}');
+      return [];
+    }
 
     final data = response.data;
     if (data is Map && data.containsKey('data')) {
@@ -84,6 +101,9 @@ class StudentRepository {
       '/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/report',
       queryParameters: {'date': '${date.year}-${date.month}-${date.day}'},
     );
+    if (!response.success) {
+      throw Exception(response.error ?? 'Failed to get behavior report');
+    }
     return BehaviorReport.fromJson(response.data);
   }
 
@@ -96,11 +116,14 @@ class StudentRepository {
       '/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/start-of-weeks',
     );
 
-    final dates =
-        (response.data as List?)
-            ?.map((date) => DateTime.parse(date.toString()))
-            .toList() ??
-        [];
+    if (!response.success) {
+      debugPrint('Failed to get start of weeks: ${response.error}');
+      return [];
+    }
+
+    final dates = (response.data as List?)
+        ?.map((date) => DateTime.parse(date.toString()))
+        .toList() ?? [];
 
     return dates;
   }
@@ -112,6 +135,11 @@ class StudentRepository {
       '/api/behaviors',
       queryParameters: {'date': '${date.year}-${date.month}-${date.day}'},
     );
+
+    if (!response.success) {
+      debugPrint('Failed to get behavior by day: ${response.error}');
+      return [];
+    }
 
     if (response.data is List) {
       return (response.data as List)
@@ -132,6 +160,11 @@ class StudentRepository {
       '/api/schools/$schoolId/classes/$classId/store',
       queryParameters: {'pageSize': pageSize, 'pageNumber': pageNumber},
     );
+
+    if (!response.success) {
+      debugPrint('Failed to get store rewards: ${response.error}');
+      return [];
+    }
 
     final data = response.data;
     if (data is Map && data.containsKey('items')) {
@@ -157,18 +190,24 @@ class StudentRepository {
     required int studentId,
     required int rewardId,
   }) async {
-    await _apiService.post(
+    final response = await _apiService.post(
       '/api/schools/$schoolId/classes/$classId/students/$studentId/store/$rewardId/purchase',
     );
+    if (!response.success) {
+      throw Exception(response.error ?? 'Failed to purchase reward');
+    }
   }
 
   Future<void> confirmPurchaseReceived({
     required int studentId,
     required int purchaseId,
   }) async {
-    await _apiService.post(
+    final response = await _apiService.post(
       '/api/students/$studentId/purchases/$purchaseId/confirmation',
     );
+    if (!response.success) {
+      throw Exception(response.error ?? 'Failed to confirm purchase');
+    }
   }
 
   Future<List<Purchase>> getStudentPurchases({
@@ -179,6 +218,11 @@ class StudentRepository {
     final response = await _apiService.get(
       '/api/schools/$schoolId/classes/$classId/students/$studentId/purchases',
     );
+
+    if (!response.success) {
+      debugPrint('Failed to get student purchases: ${response.error}');
+      return [];
+    }
 
     if (response.data is List) {
       return (response.data as List)
@@ -200,6 +244,11 @@ class StudentRepository {
       queryParameters: {'pageSize': pageSize, 'pageNumber': pageNumber},
     );
 
+    if (!response.success) {
+      debugPrint('Failed to get purchases this month: ${response.error}');
+      return [];
+    }
+
     final data = response.data;
     if (data is Map && data.containsKey('data')) {
       return (data['data'] as List)
@@ -219,6 +268,11 @@ class StudentRepository {
     final response = await _apiService.get(
       '/api/schools/$schoolId/classes/$classId/students/$studentId/purchases',
     );
+
+    if (!response.success) {
+      debugPrint('Failed to get all purchases: ${response.error}');
+      return [];
+    }
 
     final data = response.data;
     if (data is Map && data.containsKey('items')) {
@@ -244,6 +298,11 @@ class StudentRepository {
       queryParameters: {'date': date},
     );
 
+    if (!response.success) {
+      debugPrint('Failed to get activity: ${response.error}');
+      return [];
+    }
+
     final data = response.data;
     if (data is Map && data.containsKey('dates')) {
       return (data['dates'] as List)
@@ -260,6 +319,11 @@ class StudentRepository {
       '/api/behaviors',
       queryParameters: {'date': date},
     );
+
+    if (!response.success) {
+      debugPrint('Failed to get behaviors by day: ${response.error}');
+      return [];
+    }
 
     final data = response.data;
     List<Activity> activities = [];
@@ -346,15 +410,23 @@ class StudentRepository {
     required int purchaseId,
     required String reportDetails,
   }) async {
-    await _apiService.post(
+    final response = await _apiService.post(
       '/api/schools/$schoolId/classes/$classId/students/$studentId/purchases/$purchaseId/report-missing-reward',
       data: {'ReportDetails': reportDetails},
     );
+    if (!response.success) {
+      throw Exception(response.error ?? 'Failed to report missing reward');
+    }
   }
 
   // ==================== Honor List (Top 10) ====================
   Future<List<HonorListStudent>> getHonorList() async {
     final response = await _apiService.get('/api/honor-list');
+
+    if (!response.success) {
+      debugPrint('Failed to get honor list: ${response.error}');
+      return [];
+    }
 
     if (response.data is List) {
       return (response.data as List)
@@ -367,6 +439,11 @@ class StudentRepository {
   // ==================== Notifications ====================
   Future<List<NotificationModel>> getNotifications() async {
     final response = await _apiService.get('/api/notifications');
+
+    if (!response.success) {
+      debugPrint('Failed to get notifications: ${response.error}');
+      return [];
+    }
 
     if (response.data is List) {
       final notifications = (response.data as List)
@@ -510,15 +587,24 @@ class StudentRepository {
   }
 
   Future<void> markNotificationAsRead(int notificationId) async {
-    await _apiService.post('/api/notifications/mark-as-read/$notificationId');
+    final response = await _apiService.post('/api/notifications/mark-as-read/$notificationId');
+    if (!response.success) {
+      debugPrint('Failed to mark notification as read: ${response.error}');
+    }
   }
 
   Future<void> deleteNotification(int notificationId) async {
-    await _apiService.delete('/api/notifications/$notificationId');
+    final response = await _apiService.delete('/api/notifications/$notificationId');
+    if (!response.success) {
+      debugPrint('Failed to delete notification: ${response.error}');
+    }
   }
 
   Future<Map<String, dynamic>> getNotificationSettings() async {
     final response = await _apiService.get('/api/notification_settings');
+    if (!response.success) {
+      throw Exception(response.error ?? 'Failed to get notification settings');
+    }
     return response.data as Map<String, dynamic>;
   }
 }
