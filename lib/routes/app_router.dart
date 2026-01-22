@@ -24,6 +24,7 @@ import 'package:me_plus/presentation/screens/student/profile_screen.dart';
 import 'package:me_plus/presentation/screens/student/account_screen.dart';
 import 'package:me_plus/presentation/screens/student/purchases_screen.dart';
 import 'package:me_plus/presentation/screens/student/missing_reward_screen.dart';
+import 'package:me_plus/presentation/screens/debug/debug_api_screen.dart';
 import 'package:me_plus/presentation/screens/school_class_selection_screen.dart';
 import 'package:me_plus/presentation/screens/market_owner/market_owner_home_screen.dart';
 import 'package:me_plus/presentation/screens/market_owner/add_reward_screen.dart';
@@ -224,6 +225,11 @@ class AppRouter {
           state,
           const MissingRewardScreen(),
         ),
+      ),
+      GoRoute(
+        path: '/debug/api',
+        name: 'debug-api',
+        builder: (context, state) => const DebugApiScreen(),
       ),
       GoRoute(
         path: '/market-owner/home',

@@ -28,6 +28,9 @@ class ApiService {
       final token = await _tokenStorage.getToken();
       if (token != null && token.isNotEmpty) {
         headers['Authorization'] = 'Bearer $token';
+        debugPrint('🔑 [Headers] Token present: ${token.substring(0, 20)}...');
+      } else {
+        debugPrint('⚠️ [Headers] No token found!');
       }
     }
 
@@ -254,8 +257,10 @@ class ApiService {
       _isRefreshingToken = true;
       
       final refreshToken = await _tokenStorage.getRefreshToken();
-      if (refreshToken == null || refreshToken.isEmpty) {
-        debugPrint('❌ No refresh token available');
+      final userId = await _tokenStorage.getUserId();
+      
+      if (refreshToken == null || refreshToken.isEmpty || userId == null) {
+        debugPrint('❌ No refresh token or userId available');
         return false;
       }
 
@@ -267,7 +272,10 @@ class ApiService {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        body: jsonEncode({'refreshToken': refreshToken}),
+        body: jsonEncode({
+          'userId': userId,
+          'refreshToken': refreshToken,
+        }),
       ).timeout(_timeout);
 
       if (response.statusCode == 200) {
@@ -279,7 +287,7 @@ class ApiService {
           await _tokenStorage.saveAuthData(
             token: newToken,
             refreshToken: newRefreshToken ?? refreshToken,
-            userId: await _tokenStorage.getUserId() ?? '',
+            userId: userId,
             email: await _tokenStorage.getUserEmail() ?? '',
             role: await _tokenStorage.getUserRole() ?? '',
             isFirstTimeUser: await _tokenStorage.isFirstTimeUser(),

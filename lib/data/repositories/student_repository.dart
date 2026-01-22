@@ -17,7 +17,7 @@ class StudentRepository {
 
   // ==================== Profile ====================
   Future<StudentProfile> getProfile() async {
-    final response = await _apiService.get('/student/profile');
+    final response = await _apiService.get('/api/me');
     if (!response.success) {
       throw Exception(response.error ?? 'Failed to get profile');
     }
@@ -39,8 +39,8 @@ class StudentRepository {
       }
     }
 
-    // Fetch full profile data from /student/profile endpoint
-    final profileResponse = await _apiService.get('/student/profile');
+    // Fetch full profile data from /api/me endpoint
+    final profileResponse = await _apiService.get('/api/me');
     if (!profileResponse.success) {
       throw Exception(profileResponse.error ?? 'Failed to get updated profile');
     }

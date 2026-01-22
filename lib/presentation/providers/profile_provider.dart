@@ -55,7 +55,7 @@ class ProfileProvider with ChangeNotifier {
       _error = null;
       notifyListeners();
 
-      // Fetch profile from /student/profile (includes points)
+      // Fetch profile from /api/me (includes points)
       final profile = await _repository.getProfile();
 
       _profile = profile;

@@ -253,6 +253,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         const SizedBox(height: 12),
         _buildMenuItem(
+          icon: Icons.bug_report_outlined,
+          iconColor: Colors.purple,
+          title: 'API Debug',
+          subtitle: 'Test API connections',
+          onTap: () {
+            context.go('/debug/api');
+          },
+        ),
+        const SizedBox(height: 12),
+        _buildMenuItem(
           icon: Icons.logout,
           iconColor: AppColors.errorLight,
           title: l10n.t('logout'),
