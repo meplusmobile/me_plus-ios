@@ -83,6 +83,9 @@
 	<!-- App Transport Security Settings - Production Ready -->
 	<key>NSAppTransportSecurity</key>
 	<dict>
+		<!-- Allow HTTPS connections to all domains (required for Azure) -->
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
 		<!-- Domain-specific exception for Azure backend -->
 		<key>NSExceptionDomains</key>
 		<dict>

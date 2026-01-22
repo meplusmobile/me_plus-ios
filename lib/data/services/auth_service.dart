@@ -27,9 +27,9 @@ class AuthService {
     _dio.options.baseUrl = ApiConstants.baseUrl;
     
     // iOS-optimized timeouts (App Store compliant)
-    _dio.options.connectTimeout = const Duration(seconds: 30);
-    _dio.options.receiveTimeout = const Duration(seconds: 60);
-    _dio.options.sendTimeout = const Duration(seconds: 30);
+    _dio.options.connectTimeout = const Duration(seconds: 60);
+    _dio.options.receiveTimeout = const Duration(seconds: 90);
+    _dio.options.sendTimeout = const Duration(seconds: 60);
     
     // Standard HTTP headers for iOS networking
     _dio.options.headers = {
