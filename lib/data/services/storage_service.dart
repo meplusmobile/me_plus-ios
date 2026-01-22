@@ -1,153 +1,100 @@
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
-/// Storage Service using flutter_secure_storage for iOS compatibility
-/// Replaces SharedPreferences to fix iOS channel errors
+/// Storage Service using Hive - Pure Dart, no platform channel issues!
+/// Works 100% on iOS without native plugin problems
 class StorageService {
   static final StorageService _instance = StorageService._internal();
+  static bool _initialized = false;
+  static Box? _box;
+
   factory StorageService() => _instance;
+
   StorageService._internal();
 
-  // Configure for iOS compatibility
-  final _storage = const FlutterSecureStorage(
-    aOptions: AndroidOptions(
-      encryptedSharedPreferences: true,
-    ),
-    iOptions: IOSOptions(
-      accessibility: KeychainAccessibility.first_unlock,
-    ),
-  );
+  /// Initialize Hive - call this in main.dart before runApp
+  static Future<void> init() async {
+    if (_initialized) return;
+    await Hive.initFlutter();
+    _box = await Hive.openBox('app_storage');
+    _initialized = true;
+  }
+
+  Box get box {
+    if (_box == null) {
+      throw Exception('StorageService not initialized. Call StorageService.init() first.');
+    }
+    return _box!;
+  }
 
   // ==================== String Methods ====================
-  
+
   Future<void> saveString(String key, String value) async {
-    try {
-      await _storage.write(key: key, value: value);
-    } catch (e) {
-      throw Exception('Failed to save string: $e');
-    }
+    await box.put(key, value);
   }
 
   Future<String?> getString(String key) async {
-    try {
-      return await _storage.read(key: key);
-    } catch (e) {
-      return null;
-    }
+    return box.get(key) as String?;
   }
 
   // ==================== Int Methods ====================
-  
+
   Future<void> saveInt(String key, int value) async {
-    try {
-      await _storage.write(key: key, value: value.toString());
-    } catch (e) {
-      throw Exception('Failed to save int: $e');
-    }
+    await box.put(key, value);
   }
 
   Future<int?> getInt(String key) async {
-    try {
-      final value = await _storage.read(key: key);
-      return value != null ? int.tryParse(value) : null;
-    } catch (e) {
-      return null;
-    }
+    return box.get(key) as int?;
   }
 
   // ==================== Bool Methods ====================
-  
+
   Future<void> saveBool(String key, bool value) async {
-    try {
-      await _storage.write(key: key, value: value.toString());
-    } catch (e) {
-      throw Exception('Failed to save bool: $e');
-    }
+    await box.put(key, value);
   }
 
   Future<bool> getBool(String key) async {
-    try {
-      final value = await _storage.read(key: key);
-      return value == 'true';
-    } catch (e) {
-      return false;
-    }
+    return box.get(key, defaultValue: false) as bool;
   }
 
   // ==================== Double Methods ====================
-  
+
   Future<void> saveDouble(String key, double value) async {
-    try {
-      await _storage.write(key: key, value: value.toString());
-    } catch (e) {
-      throw Exception('Failed to save double: $e');
-    }
+    await box.put(key, value);
   }
 
   Future<double?> getDouble(String key) async {
-    try {
-      final value = await _storage.read(key: key);
-      return value != null ? double.tryParse(value) : null;
-    } catch (e) {
-      return null;
-    }
+    return box.get(key) as double?;
   }
 
   // ==================== List<String> Methods ====================
-  
+
   Future<void> saveStringList(String key, List<String> value) async {
-    try {
-      // Join with a delimiter that's unlikely to be in user data
-      final joined = value.join('|||DELIMITER|||');
-      await _storage.write(key: key, value: joined);
-    } catch (e) {
-      throw Exception('Failed to save string list: $e');
-    }
+    await box.put(key, value);
   }
 
   Future<List<String>> getStringList(String key) async {
-    try {
-      final value = await _storage.read(key: key);
-      if (value == null || value.isEmpty) return [];
-      return value.split('|||DELIMITER|||');
-    } catch (e) {
-      return [];
-    }
+    final value = box.get(key);
+    if (value == null) return [];
+    return List<String>.from(value);
   }
 
   // ==================== Delete & Clear Methods ====================
-  
+
   Future<void> remove(String key) async {
-    try {
-      await _storage.delete(key: key);
-    } catch (e) {
-      throw Exception('Failed to remove key: $e');
-    }
+    await box.delete(key);
   }
 
   Future<void> clear() async {
-    try {
-      await _storage.deleteAll();
-    } catch (e) {
-      throw Exception('Failed to clear storage: $e');
-    }
+    await box.clear();
   }
 
   // ==================== Utility Methods ====================
-  
+
   Future<bool> containsKey(String key) async {
-    try {
-      final value = await _storage.read(key: key);
-      return value != null;
-    } catch (e) {
-      return false;
-    }
+    return box.containsKey(key);
   }
 
-  Future<Map<String, String>> readAll() async {
-    try {
-      return await _storage.readAll();
-    } catch (e) {
-      return {};
-    }
+  Map<String, dynamic> readAll() {
+    return box.toMap().cast<String, dynamic>();
   }
 }

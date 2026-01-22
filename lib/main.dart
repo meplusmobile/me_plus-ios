@@ -13,11 +13,15 @@ import 'package:me_plus/presentation/providers/market_profile_provider.dart';
 import 'package:me_plus/presentation/providers/parent_profile_provider.dart';
 import 'package:me_plus/presentation/providers/children_provider.dart';
 import 'package:me_plus/routes/app_router.dart';
+import 'package:me_plus/data/services/storage_service.dart';
 
 /// Main entry point of the application
 void main() async {
   // Ensure Flutter binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Hive storage (before anything else)
+  await StorageService.init();
 
   // Set preferred orientations
   await SystemChrome.setPreferredOrientations([
