@@ -6,16 +6,18 @@ import 'package:flutter/foundation.dart';
 class IOSNetworkHelper {
   /// Check if error is retryable on iOS
   static bool isRetryableError(DioException error) {
-    // iOS-specific retryable error codes
-    if (error.type == DioExceptionType.connectionTimeout) return true;
-    if (error.type == DioExceptionType.receiveTimeout) return true;
-    if (error.type == DioExceptionType.sendTimeout) return true;
-    if (error.type == DioExceptionType.connectionError) return true;
+    // DON'T retry connection errors - they won't resolve by retrying
+    // This prevents long hangs on iOS
+    if (error.type == DioExceptionType.connectionTimeout) return false;
+    if (error.type == DioExceptionType.connectionError) return false;
     
-    // Check underlying socket exception
+    // DON'T retry socket exceptions - network issue won't resolve
     if (error.error is SocketException) {
-      return true;
+      return false;
     }
+    
+    // Only retry on receive timeout (server slowness, not connection issue)
+    if (error.type == DioExceptionType.receiveTimeout) return true;
     
     // Check HTTP error codes that warrant retry
     if (error.response?.statusCode != null) {

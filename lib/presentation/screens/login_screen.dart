@@ -216,6 +216,10 @@ class _LoginScreenState extends State<LoginScreen>
     } catch (e) {
       if (!mounted) return;
 
+      // Log error immediately for debugging
+      debugPrint('❌❌❌ [LoginScreen] Login failed: $e');
+      debugPrint('❌❌❌ [LoginScreen] Error type: ${e.runtimeType}');
+
       showDialog(
         context: context,
         builder: (context) => AlertDialog(

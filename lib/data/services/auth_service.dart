@@ -26,10 +26,10 @@ class AuthService {
   void _setupDio() {
     _dio.options.baseUrl = ApiConstants.baseUrl;
     
-    // iOS-optimized timeouts (App Store compliant)
-    _dio.options.connectTimeout = const Duration(seconds: 60);
-    _dio.options.receiveTimeout = const Duration(seconds: 90);
-    _dio.options.sendTimeout = const Duration(seconds: 60);
+    // iOS-optimized timeouts (faster failure detection)
+    _dio.options.connectTimeout = const Duration(seconds: 15);
+    _dio.options.receiveTimeout = const Duration(seconds: 20);
+    _dio.options.sendTimeout = const Duration(seconds: 15);
     
     // Standard HTTP headers for iOS networking
     _dio.options.headers = {
@@ -192,44 +192,39 @@ class AuthService {
     return await _tokenStorage.isFirstTimeUser();
   }
 
-  // Login with iOS-optimized retry logic
+  // Login - direct call without retry (fail fast)
   Future<AuthResponse> login(LoginRequest request) async {
     debugPrint('🔐 [Auth] Login attempt for: ${request.email}');
     debugPrint('🔐 [Auth] Base URL: ${ApiConstants.baseUrl}');
     debugPrint('🔐 [Auth] Platform: ${Platform.operatingSystem}');
 
     try {
-      // Use iOS network helper for smart retry
-      return await IOSNetworkHelper.retryRequest<AuthResponse>(
-        maxRetries: 3,
-        request: () async {
-          final response = await _dio.post(
-            ApiConstants.login,
-            data: request.toJson(),
-          );
-
-          debugPrint('✅ [Auth] Response status: ${response.statusCode}');
-
-          if (response.statusCode == 200 || response.statusCode == 201) {
-            final authResponse = AuthResponse.fromJson(response.data);
-
-            // Save authentication data
-            await _tokenStorage.saveAuthData(
-              token: authResponse.token,
-              refreshToken: authResponse.refreshToken,
-              userId: authResponse.id.toString(),
-              email: authResponse.email,
-              role: authResponse.role,
-              isFirstTimeUser: authResponse.isFirstTimeUser,
-            );
-
-            debugPrint('✅ [Auth] Login successful!');
-            return authResponse;
-          } else {
-            throw Exception('Login failed with status: ${response.statusCode}');
-          }
-        },
+      // Direct call without retry - fail fast to show errors immediately
+      final response = await _dio.post(
+        ApiConstants.login,
+        data: request.toJson(),
       );
+
+      debugPrint('✅ [Auth] Response status: ${response.statusCode}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final authResponse = AuthResponse.fromJson(response.data);
+
+        // Save authentication data
+        await _tokenStorage.saveAuthData(
+          token: authResponse.token,
+          refreshToken: authResponse.refreshToken,
+          userId: authResponse.id.toString(),
+          email: authResponse.email,
+          role: authResponse.role,
+          isFirstTimeUser: authResponse.isFirstTimeUser,
+        );
+
+        debugPrint('✅ [Auth] Login successful!');
+        return authResponse;
+      } else {
+        throw Exception('Login failed with status: ${response.statusCode}');
+      }
     } on DioException catch (e) {
       debugPrint('❌ [Auth] DioException: ${e.type}');
       debugPrint('❌ [Auth] Error details: ${e.error}');
