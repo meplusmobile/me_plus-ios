@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:me_plus/core/constants/api_constants.dart';
@@ -219,9 +218,8 @@ class AuthService {
           errorMessage = responseData['message'] ??
                 responseData['error'] ??
                 'Invalid credentials';
-          }
-          throw Exception(errorMessage);
         }
+        throw Exception(errorMessage);
       }
       
       // Network error
