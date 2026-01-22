@@ -122,7 +122,7 @@ class _StoreScreenState extends State<StoreScreen> {
     );
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadData({int retryCount = 0}) async {
     if (!mounted) return;
 
     final profileProvider = Provider.of<ProfileProvider>(
@@ -137,8 +137,7 @@ class _StoreScreenState extends State<StoreScreen> {
     if (profileProvider.schoolId == null || profileProvider.classId == null) {
       if (mounted) {
         setState(() {
-          _error =
-              'Store not available. schoolId or classId missing.\nschoolId: ${profileProvider.schoolId}, classId: ${profileProvider.classId}';
+          _error = 'المتجر غير متاح. بيانات المدرسة أو الصف مفقودة';
           _isLoading = false;
         });
       }
@@ -171,13 +170,59 @@ class _StoreScreenState extends State<StoreScreen> {
         });
       }
     } catch (e) {
+      debugPrint('❌ Error loading store: $e');
+      
+      // Retry logic for network errors (max 2 retries)
+      if (retryCount < 2 && _shouldRetry(e.toString())) {
+        debugPrint('🔄 Retrying store load (attempt ${retryCount + 1})...');
+        await Future.delayed(Duration(seconds: 1 + retryCount));
+        return _loadData(retryCount: retryCount + 1);
+      }
+      
       if (mounted) {
         setState(() {
-          _error = 'Error loading store: ${e.toString()}';
+          _error = _getUserFriendlyError(e.toString());
           _isLoading = false;
         });
       }
     }
+  }
+  
+  /// Check if error should trigger a retry
+  bool _shouldRetry(String error) {
+    final lowerError = error.toLowerCase();
+    return lowerError.contains('timeout') ||
+           lowerError.contains('connection') ||
+           lowerError.contains('socket') ||
+           lowerError.contains('network');
+  }
+  
+  /// Convert technical errors to user-friendly messages
+  String _getUserFriendlyError(String error) {
+    final lowerError = error.toLowerCase();
+    
+    if (lowerError.contains('timeout')) {
+      return 'انتهت مهلة الاتصال';
+    }
+    if (lowerError.contains('socket') || lowerError.contains('connection')) {
+      return 'لا يوجد اتصال بالإنترنت';
+    }
+    if (lowerError.contains('401') || lowerError.contains('unauthorized')) {
+      return 'انتهت صلاحية الجلسة';
+    }
+    if (lowerError.contains('404')) {
+      return 'لم يتم العثور على المتجر';
+    }
+    if (lowerError.contains('500') || lowerError.contains('server')) {
+      return 'خطأ في الخادم';
+    }
+    
+    // Remove "Exception: " prefix if present
+    if (error.startsWith('Exception: ')) {
+      return error.substring(11);
+    }
+    
+    return 'خطأ في تحميل المتجر';
   }
 
   Future<void> _purchaseItem(StoreReward reward) async {

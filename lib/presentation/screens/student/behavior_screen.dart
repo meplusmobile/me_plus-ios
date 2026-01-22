@@ -28,7 +28,7 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
     _loadData();
   }
 
-  Future<void> _loadData() async {
+  Future<void> _loadData({int retryCount = 0}) async {
     if (!mounted) return;
 
     try {
@@ -46,13 +46,59 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
         });
       }
     } catch (e) {
+      debugPrint('❌ Error loading behavior data: $e');
+      
+      // Retry logic for network errors (max 2 retries)
+      if (retryCount < 2 && _shouldRetry(e.toString())) {
+        debugPrint('🔄 Retrying behavior load (attempt ${retryCount + 1})...');
+        await Future.delayed(Duration(seconds: 1 + retryCount));
+        return _loadData(retryCount: retryCount + 1);
+      }
+      
       if (mounted) {
         setState(() {
-          _error = e.toString();
+          _error = _getUserFriendlyError(e.toString());
           _isLoading = false;
         });
       }
     }
+  }
+  
+  /// Check if error should trigger a retry
+  bool _shouldRetry(String error) {
+    final lowerError = error.toLowerCase();
+    return lowerError.contains('timeout') ||
+           lowerError.contains('connection') ||
+           lowerError.contains('socket') ||
+           lowerError.contains('network');
+  }
+  
+  /// Convert technical errors to user-friendly messages
+  String _getUserFriendlyError(String error) {
+    final lowerError = error.toLowerCase();
+    
+    if (lowerError.contains('timeout')) {
+      return 'انتهت مهلة الاتصال';
+    }
+    if (lowerError.contains('socket') || lowerError.contains('connection')) {
+      return 'لا يوجد اتصال بالإنترنت';
+    }
+    if (lowerError.contains('401') || lowerError.contains('unauthorized')) {
+      return 'انتهت صلاحية الجلسة';
+    }
+    if (lowerError.contains('404')) {
+      return 'لم يتم العثور على البيانات';
+    }
+    if (lowerError.contains('500') || lowerError.contains('server')) {
+      return 'خطأ في الخادم';
+    }
+    
+    // Remove "Exception: " prefix if present
+    if (error.startsWith('Exception: ')) {
+      return error.substring(11);
+    }
+    
+    return error;
   }
 
   Future<void> _handleGiftTap() async {

@@ -12,7 +12,10 @@ class ApiService {
   final TokenStorageService _tokenStorage = TokenStorageService();
   final http.Client _client = http.Client();
   
-  static const Duration _timeout = Duration(seconds: 15);
+  static const Duration _timeout = Duration(seconds: 20);
+  
+  // Flag to prevent infinite retry loops
+  bool _isRefreshingToken = false;
 
   /// Get headers with optional auth token
   Future<Map<String, String>> _getHeaders({bool withAuth = true}) async {
@@ -44,11 +47,12 @@ class ApiService {
     return uri;
   }
 
-  /// GET request
+  /// GET request with retry on 401
   Future<ApiResponse> get(
     String path, {
     Map<String, dynamic>? queryParameters,
     bool withAuth = true,
+    bool isRetry = false,
   }) async {
     try {
       final uri = _buildUri(path, queryParameters: queryParameters);
@@ -59,6 +63,15 @@ class ApiService {
       final response = await _client.get(uri, headers: headers).timeout(_timeout);
 
       debugPrint('✅ [GET] Status: ${response.statusCode}');
+
+      // If 401 and not already retrying, try to refresh token
+      if (response.statusCode == 401 && !isRetry && withAuth && !_isRefreshingToken) {
+        debugPrint('🔄 [GET] 401 - Attempting token refresh...');
+        final refreshed = await _refreshTokenAndRetry();
+        if (refreshed) {
+          return get(path, queryParameters: queryParameters, withAuth: withAuth, isRetry: true);
+        }
+      }
 
       return _handleResponse(response);
     } catch (e) {
@@ -71,12 +84,13 @@ class ApiService {
     }
   }
 
-  /// POST request
+  /// POST request with retry on 401
   Future<ApiResponse> post(
     String path, {
     dynamic data,
     Map<String, dynamic>? queryParameters,
     bool withAuth = true,
+    bool isRetry = false,
   }) async {
     try {
       final uri = _buildUri(path, queryParameters: queryParameters);
@@ -88,6 +102,15 @@ class ApiService {
       final response = await _client.post(uri, headers: headers, body: body).timeout(_timeout);
 
       debugPrint('✅ [POST] Status: ${response.statusCode}');
+
+      // If 401 and not already retrying, try to refresh token
+      if (response.statusCode == 401 && !isRetry && withAuth && !_isRefreshingToken) {
+        debugPrint('🔄 [POST] 401 - Attempting token refresh...');
+        final refreshed = await _refreshTokenAndRetry();
+        if (refreshed) {
+          return post(path, data: data, queryParameters: queryParameters, withAuth: withAuth, isRetry: true);
+        }
+      }
 
       return _handleResponse(response);
     } catch (e) {
@@ -223,18 +246,81 @@ class ApiService {
     );
   }
 
+  /// Refresh token and retry
+  Future<bool> _refreshTokenAndRetry() async {
+    if (_isRefreshingToken) return false;
+    
+    try {
+      _isRefreshingToken = true;
+      
+      final refreshToken = await _tokenStorage.getRefreshToken();
+      if (refreshToken == null || refreshToken.isEmpty) {
+        debugPrint('❌ No refresh token available');
+        return false;
+      }
+
+      debugPrint('🔄 Refreshing token...');
+      
+      final response = await _client.post(
+        Uri.parse('$baseUrl/refresh-token'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({'refreshToken': refreshToken}),
+      ).timeout(_timeout);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final newToken = data['token'] as String?;
+        final newRefreshToken = data['refreshToken'] as String?;
+        
+        if (newToken != null) {
+          await _tokenStorage.saveAuthData(
+            token: newToken,
+            refreshToken: newRefreshToken ?? refreshToken,
+            userId: await _tokenStorage.getUserId() ?? '',
+            email: await _tokenStorage.getUserEmail() ?? '',
+            role: await _tokenStorage.getUserRole() ?? '',
+            isFirstTimeUser: await _tokenStorage.isFirstTimeUser(),
+          );
+          
+          debugPrint('✅ Token refreshed successfully');
+          return true;
+        }
+      }
+      
+      debugPrint('❌ Token refresh failed with status: ${response.statusCode}');
+      return false;
+    } catch (e) {
+      debugPrint('❌ Token refresh error: $e');
+      return false;
+    } finally {
+      _isRefreshingToken = false;
+    }
+  }
+
   /// Handle errors
   String _handleError(dynamic error) {
-    if (error.toString().contains('TimeoutException')) {
-      return 'Connection timeout. Please check your internet.';
+    final errorStr = error.toString().toLowerCase();
+    
+    if (errorStr.contains('timeoutexception') || errorStr.contains('timeout')) {
+      return 'انتهت مهلة الاتصال. يرجى التحقق من الإنترنت.';
     }
-    if (error.toString().contains('SocketException')) {
-      return 'No internet connection.';
+    if (errorStr.contains('socketexception') || errorStr.contains('socket')) {
+      return 'لا يوجد اتصال بالإنترنت.';
     }
-    if (error.toString().contains('HandshakeException')) {
-      return 'SSL certificate error.';
+    if (errorStr.contains('handshakeexception')) {
+      return 'خطأ في شهادة الأمان.';
     }
-    return 'Network error: ${error.toString()}';
+    if (errorStr.contains('formatexception')) {
+      return 'تنسيق البيانات غير صحيح.';
+    }
+    if (errorStr.contains('connection refused')) {
+      return 'تعذر الاتصال بالخادم.';
+    }
+    
+    return 'خطأ في الشبكة: ${error.toString()}';
   }
 
   /// Close the client when done

@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:me_plus/core/constants/app_colors.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'dart:io';
 import 'package:me_plus/presentation/providers/profile_provider.dart';
 import 'package:me_plus/core/localization/app_localizations.dart';
+import 'package:me_plus/core/utils/image_picker_helper.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -29,7 +29,6 @@ class _AccountScreenState extends State<AccountScreen> {
   bool _isSaving = false;
   bool _isPasswordEmpty = true;
   File? _selectedImage;
-  final ImagePicker _imagePicker = ImagePicker();
   String? _initialCountryCode;
   String? _fullPhoneNumber;
 
@@ -188,28 +187,12 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Future<void> _pickImage() async {
-    try {
-      final XFile? pickedFile = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 1024,
-        maxHeight: 1024,
-        imageQuality: 85,
-      );
-
-      if (pickedFile != null) {
-        setState(() {
-          _selectedImage = File(pickedFile.path);
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to pick image: $e'),
-            backgroundColor: AppColors.errorLight,
-          ),
-        );
-      }
+    final file = await ImagePickerHelper.showImageSourceDialog(context);
+    
+    if (file != null) {
+      setState(() {
+        _selectedImage = file;
+      });
     }
   }
 

@@ -45,7 +45,7 @@ class ProfileProvider with ChangeNotifier {
   }
 
   // Fetch profile from API and save to storage
-  Future<void> loadProfile({bool forceRefresh = false}) async {
+  Future<void> loadProfile({bool forceRefresh = false, int retryCount = 0}) async {
     if (_isLoading) return;
 
     if (!forceRefresh && _profile != null) return;
@@ -66,10 +66,56 @@ class ProfileProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      _error = e.toString();
+      debugPrint('❌ Error loading profile: $e');
+      
+      // Retry logic for network errors (max 2 retries)
+      if (retryCount < 2 && _shouldRetry(e.toString())) {
+        debugPrint('🔄 Retrying profile load (attempt ${retryCount + 1})...');
+        await Future.delayed(Duration(seconds: 1 + retryCount));
+        return loadProfile(forceRefresh: forceRefresh, retryCount: retryCount + 1);
+      }
+      
+      _error = _getUserFriendlyError(e.toString());
       _isLoading = false;
       notifyListeners();
     }
+  }
+  
+  /// Check if error should trigger a retry
+  bool _shouldRetry(String error) {
+    final lowerError = error.toLowerCase();
+    return lowerError.contains('timeout') ||
+           lowerError.contains('connection') ||
+           lowerError.contains('socket') ||
+           lowerError.contains('network');
+  }
+  
+  /// Convert technical errors to user-friendly messages
+  String _getUserFriendlyError(String error) {
+    final lowerError = error.toLowerCase();
+    
+    if (lowerError.contains('timeout')) {
+      return 'انتهت مهلة الاتصال. يرجى المحاولة مرة أخرى.';
+    }
+    if (lowerError.contains('socket') || lowerError.contains('connection')) {
+      return 'لا يوجد اتصال بالإنترنت. يرجى التحقق من الاتصال.';
+    }
+    if (lowerError.contains('401') || lowerError.contains('unauthorized')) {
+      return 'انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى.';
+    }
+    if (lowerError.contains('404')) {
+      return 'لم يتم العثور على البيانات المطلوبة.';
+    }
+    if (lowerError.contains('500') || lowerError.contains('server')) {
+      return 'خطأ في الخادم. يرجى المحاولة لاحقاً.';
+    }
+    
+    // Remove "Exception: " prefix if present
+    if (error.startsWith('Exception: ')) {
+      return error.substring(11);
+    }
+    
+    return error;
   }
 
   // Update points from API
