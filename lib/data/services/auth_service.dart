@@ -10,8 +10,6 @@ import 'package:me_plus/data/models/school.dart';
 import 'package:me_plus/data/models/class_model.dart';
 import 'package:me_plus/data/models/forgot_password_request.dart';
 import 'package:me_plus/data/services/token_storage_service.dart';
-import 'package:me_plus/core/utils/ios_network_helper.dart';
-import 'package:me_plus/core/utils/dio_ios_adapter.dart';
 
 class AuthService {
   final Dio _dio;
@@ -26,38 +24,21 @@ class AuthService {
   void _setupDio() {
     _dio.options.baseUrl = ApiConstants.baseUrl;
     
-    // iOS-optimized timeouts (faster failure detection)
-    _dio.options.connectTimeout = const Duration(seconds: 15);
-    _dio.options.receiveTimeout = const Duration(seconds: 20);
-    _dio.options.sendTimeout = const Duration(seconds: 15);
+    // Simple timeouts
+    _dio.options.connectTimeout = const Duration(seconds: 30);
+    _dio.options.receiveTimeout = const Duration(seconds: 30);
+    _dio.options.sendTimeout = const Duration(seconds: 30);
     
-    // Standard HTTP headers for iOS networking
+    // Simple headers - just what we need
     _dio.options.headers = {
-      'Content-Type': ApiConstants.contentType,
+      'Content-Type': 'application/json',
       'Accept': 'application/json',
-      'Accept-Encoding': 'gzip, deflate, br',
-      'User-Agent': 'MePlus-iOS/2.0.0 (iOS; iPhone; ${Platform.operatingSystemVersion})',
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
     };
 
-    // Proper validation settings
-    _dio.options.validateStatus = (status) {
-      return status != null && status < 500;
-    };
+    // Accept all HTTP status codes
+    _dio.options.validateStatus = (status) => true;
 
-    // iOS-specific settings
-    _dio.options.followRedirects = true;
-    _dio.options.maxRedirects = 5;
-    _dio.options.persistentConnection = true;
-    _dio.options.receiveDataWhenStatusError = true;
-    
-    // Apply iOS-specific adapter
-    if (Platform.isIOS) {
-      DioIOSAdapter.configureDio(_dio);
-      IOSNetworkHelper.logNetworkConfig();
-      debugPrint('✅ [Auth] iOS adapter configured');
-    }
+    debugPrint('✅ [Auth] Dio configured for iOS - BaseURL: ${_dio.options.baseUrl}');
 
     // Add interceptor for token and logging
     _dio.interceptors.add(
@@ -192,25 +173,23 @@ class AuthService {
     return await _tokenStorage.isFirstTimeUser();
   }
 
-  // Login - direct call without retry (fail fast)
+  // Login
   Future<AuthResponse> login(LoginRequest request) async {
-    debugPrint('🔐 [Auth] Login attempt for: ${request.email}');
-    debugPrint('🔐 [Auth] Base URL: ${ApiConstants.baseUrl}');
-    debugPrint('🔐 [Auth] Platform: ${Platform.operatingSystem}');
+    debugPrint('🔐 [Login] Starting...');
+    debugPrint('🔐 [Login] URL: ${_dio.options.baseUrl}${ApiConstants.login}');
+    debugPrint('🔐 [Login] Email: ${request.email}');
 
     try {
-      // Direct call without retry - fail fast to show errors immediately
       final response = await _dio.post(
         ApiConstants.login,
         data: request.toJson(),
       );
 
-      debugPrint('✅ [Auth] Response status: ${response.statusCode}');
+      debugPrint('✅ [Login] Got response: ${response.statusCode}');
+      debugPrint('✅ [Login] Data: ${response.data}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final authResponse = AuthResponse.fromJson(response.data);
-
-        // Save authentication data
         await _tokenStorage.saveAuthData(
           token: authResponse.token,
           refreshToken: authResponse.refreshToken,
@@ -219,30 +198,25 @@ class AuthService {
           role: authResponse.role,
           isFirstTimeUser: authResponse.isFirstTimeUser,
         );
-
-        debugPrint('✅ [Auth] Login successful!');
+        debugPrint('✅ [Login] Success!');
         return authResponse;
       } else {
-        throw Exception('Login failed with status: ${response.statusCode}');
+        debugPrint('❌ [Login] Bad status: ${response.statusCode}');
+        throw Exception('Login failed');
       }
     } on DioException catch (e) {
-      debugPrint('❌ [Auth] DioException: ${e.type}');
-      debugPrint('❌ [Auth] Error details: ${e.error}');
-      debugPrint('❌ [Auth] Response: ${e.response?.data}');
+      debugPrint('❌ [Login] DioException: ${e.type}');
+      debugPrint('❌ [Login] Message: ${e.message}');
+      debugPrint('❌ [Login] Error: ${e.error}');
+      debugPrint('❌ [Login] Response: ${e.response?.statusCode} - ${e.response?.data}');
       
-      // Check for non-retryable errors (4xx)
       if (e.response != null) {
-        final statusCode = e.response!.statusCode;
-        if (statusCode != null && statusCode >= 400 && statusCode < 500) {
-          // Client error - don't retry
-          final responseData = e.response?.data;
-          String errorMessage = 'Login failed';
-
-          if (responseData is String) {
-            errorMessage = responseData;
-          } else if (responseData is Map) {
-            errorMessage =
-                responseData['message'] ??
+        final responseData = e.response?.data;
+        String errorMessage = 'Login failed';
+        if (responseData is String) {
+          errorMessage = responseData;
+        } else if (responseData is Map) {
+          errorMessage = responseData['message'] ??
                 responseData['error'] ??
                 'Invalid credentials';
           }
@@ -250,15 +224,17 @@ class AuthService {
         }
       }
       
-      // Use iOS helper to get user-friendly error message
-      final errorMessage = IOSNetworkHelper.getIOSErrorMessage(e);
-      throw Exception(errorMessage);
-    } catch (e) {
-      debugPrint('❌ [Auth] Unexpected error: $e');
-      if (e is Exception) {
-        rethrow;
+      // Network error
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        throw Exception('Unable to connect to server. Check your internet connection.');
       }
-      throw Exception('An unexpected error occurred. Please try again.');
+      
+      throw Exception('Network error: ${e.message}');
+    } catch (e) {
+      debugPrint('❌ [Login] Unexpected: $e');
+      rethrow;
     }
   }
 
