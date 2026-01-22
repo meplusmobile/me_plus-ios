@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import 'package:me_plus/core/constants/api_constants.dart';
 import 'package:me_plus/data/models/auth_response.dart';
 import 'package:me_plus/data/models/signup_request.dart';
@@ -172,23 +174,29 @@ class AuthService {
     return await _tokenStorage.isFirstTimeUser();
   }
 
-  // Login
+  // Login - using http package (simpler, more iOS compatible)
   Future<AuthResponse> login(LoginRequest request) async {
-    debugPrint('🔐 [Login] Starting...');
-    debugPrint('🔐 [Login] URL: ${_dio.options.baseUrl}${ApiConstants.login}');
+    debugPrint('🔐 [Login] Starting with http package...');
+    final url = '${ApiConstants.baseUrl}${ApiConstants.login}';
+    debugPrint('🔐 [Login] URL: $url');
     debugPrint('🔐 [Login] Email: ${request.email}');
 
     try {
-      final response = await _dio.post(
-        ApiConstants.login,
-        data: request.toJson(),
-      );
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: json.encode(request.toJson()),
+      ).timeout(const Duration(seconds: 15));
 
       debugPrint('✅ [Login] Got response: ${response.statusCode}');
-      debugPrint('✅ [Login] Data: ${response.data}');
+      debugPrint('✅ [Login] Body: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final authResponse = AuthResponse.fromJson(response.data);
+        final data = json.decode(response.body);
+        final authResponse = AuthResponse.fromJson(data);
         await _tokenStorage.saveAuthData(
           token: authResponse.token,
           refreshToken: authResponse.refreshToken,
@@ -201,37 +209,14 @@ class AuthService {
         return authResponse;
       } else {
         debugPrint('❌ [Login] Bad status: ${response.statusCode}');
-        throw Exception('Login failed');
+        final errorData = json.decode(response.body);
+        throw Exception(errorData['message'] ?? 'Login failed');
       }
-    } on DioException catch (e) {
-      debugPrint('❌ [Login] DioException: ${e.type}');
-      debugPrint('❌ [Login] Message: ${e.message}');
-      debugPrint('❌ [Login] Error: ${e.error}');
-      debugPrint('❌ [Login] Response: ${e.response?.statusCode} - ${e.response?.data}');
-      
-      if (e.response != null) {
-        final responseData = e.response?.data;
-        String errorMessage = 'Login failed';
-        if (responseData is String) {
-          errorMessage = responseData;
-        } else if (responseData is Map) {
-          errorMessage = responseData['message'] ??
-                responseData['error'] ??
-                'Invalid credentials';
-        }
-        throw Exception(errorMessage);
-      }
-      
-      // Network error
-      if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout ||
-          e.type == DioExceptionType.connectionError) {
-        throw Exception('Unable to connect to server. Check your internet connection.');
-      }
-      
-      throw Exception('Network error: ${e.message}');
     } catch (e) {
-      debugPrint('❌ [Login] Unexpected: $e');
+      debugPrint('❌ [Login] Error: $e');
+      if (e.toString().contains('TimeoutException')) {
+        throw Exception('Connection timeout. Please try again.');
+      }
       rethrow;
     }
   }
