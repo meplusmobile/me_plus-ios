@@ -14,13 +14,12 @@ class ApiService {
     _dio = Dio(
       BaseOptions(
         baseUrl: baseUrl,
-        connectTimeout: const Duration(seconds: 90), // Increased for iOS
-        receiveTimeout: const Duration(seconds: 90),
-        sendTimeout: const Duration(seconds: 90),
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 15),
+        sendTimeout: const Duration(seconds: 15),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'User-Agent': 'MePlus/1.0.0',
         },
         validateStatus: (status) {
           // Accept all status codes to handle them manually

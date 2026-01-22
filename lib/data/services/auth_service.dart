@@ -23,12 +23,12 @@ class AuthService {
   void _setupDio() {
     _dio.options.baseUrl = ApiConstants.baseUrl;
     
-    // Simple timeouts
-    _dio.options.connectTimeout = const Duration(seconds: 30);
-    _dio.options.receiveTimeout = const Duration(seconds: 30);
-    _dio.options.sendTimeout = const Duration(seconds: 30);
+    // Fast timeouts - fail quickly to show errors
+    _dio.options.connectTimeout = const Duration(seconds: 10);
+    _dio.options.receiveTimeout = const Duration(seconds: 10);
+    _dio.options.sendTimeout = const Duration(seconds: 10);
     
-    // Simple headers - just what we need
+    // Simple headers
     _dio.options.headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -37,7 +37,7 @@ class AuthService {
     // Accept all HTTP status codes
     _dio.options.validateStatus = (status) => true;
 
-    debugPrint('✅ [Auth] Dio configured for iOS - BaseURL: ${_dio.options.baseUrl}');
+    debugPrint('✅ [Auth] Dio configured - BaseURL: ${_dio.options.baseUrl}');
 
     // Add interceptor for token and logging
     _dio.interceptors.add(
