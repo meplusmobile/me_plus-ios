@@ -1,5 +1,8 @@
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:me_plus/data/services/api_service.dart';
+import 'package:me_plus/data/services/token_storage_service.dart';
 import 'package:me_plus/data/models/student_profile.dart';
 import 'package:me_plus/data/models/behavior_model.dart';
 import 'package:me_plus/data/models/behavior_streak_model.dart';
@@ -10,6 +13,7 @@ import 'package:me_plus/core/services/translation_service.dart';
 class StudentRepository {
   final ApiService _apiService = ApiService();
   final TranslationService _translationService = TranslationService();
+  final TokenStorageService _tokenStorage = TokenStorageService();
 
   // ==================== Profile ====================
   Future<StudentProfile> getProfile() async {
@@ -20,11 +24,19 @@ class StudentRepository {
     return StudentProfile.fromJson(response.data);
   }
 
-  // Update profile
+  // Update profile (handles image upload if imagePath is provided)
   Future<StudentProfile> updateProfile(Map<String, dynamic> data) async {
-    final response = await _apiService.put('/api/me', data: data);
-    if (!response.success) {
-      throw Exception(response.error ?? 'Failed to update profile');
+    final imagePath = data.remove('imagePath') as String?;
+    
+    if (imagePath != null) {
+      // Use multipart request for image upload
+      await _updateProfileWithImage(data, imagePath);
+    } else {
+      // Use regular JSON request
+      final response = await _apiService.put('/api/me', data: data);
+      if (!response.success) {
+        throw Exception(response.error ?? 'Failed to update profile');
+      }
     }
 
     // Fetch full profile data from /student/profile endpoint
@@ -33,6 +45,40 @@ class StudentRepository {
       throw Exception(profileResponse.error ?? 'Failed to get updated profile');
     }
     return StudentProfile.fromJson(profileResponse.data);
+  }
+
+  Future<void> _updateProfileWithImage(Map<String, dynamic> data, String imagePath) async {
+    final token = await _tokenStorage.getToken();
+    final uri = Uri.parse('${ApiService.baseUrl}/api/me');
+    
+    final request = http.MultipartRequest('PUT', uri);
+    request.headers['Authorization'] = 'Bearer $token';
+    
+    // Add all fields
+    data.forEach((key, value) {
+      if (value != null) {
+        request.fields[key] = value.toString();
+      }
+    });
+
+    // Add image
+    final fileName = imagePath.split('/').last;
+    final extension = fileName.split('.').last.toLowerCase();
+    final mimeType = extension == 'png' ? 'image/png' : 'image/jpeg';
+    
+    request.files.add(await http.MultipartFile.fromPath(
+      'Image',
+      imagePath,
+      filename: fileName,
+      contentType: MediaType.parse(mimeType),
+    ));
+
+    final streamedResponse = await request.send().timeout(const Duration(seconds: 30));
+    final response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Failed to update profile: ${response.body}');
+    }
   }
 
   // ==================== Behavior ====================

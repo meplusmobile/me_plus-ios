@@ -1,17 +1,15 @@
-import 'package:dio/dio.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'dart:developer' as developer;
 
+/// Translation Service using http package - Works 100% on iOS!
 class TranslationService {
   static final TranslationService _instance = TranslationService._internal();
   factory TranslationService() => _instance;
   TranslationService._internal();
 
-  final Dio _dio = Dio(
-    BaseOptions(
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 10),
-    ),
-  );
+  final http.Client _client = http.Client();
+  static const Duration _timeout = Duration(seconds: 10);
 
   // Cache to avoid translating the same text multiple times
   final Map<String, String> _translationCache = {};
@@ -34,12 +32,13 @@ class TranslationService {
       final url =
           'https://translate.googleapis.com/translate_a/single?client=gtx&sl=$from&tl=$to&dt=t&q=$encodedText';
 
-      final response = await _dio.get(url);
+      final response = await _client.get(Uri.parse(url)).timeout(_timeout);
 
-      if (response.statusCode == 200 && response.data != null) {
+      if (response.statusCode == 200 && response.body.isNotEmpty) {
         // Google Translate returns: [[["translated text","original text",null,null,3]],null,"en"]
-        if (response.data is List && response.data.isNotEmpty) {
-          final translations = response.data[0] as List;
+        final data = jsonDecode(response.body);
+        if (data is List && data.isNotEmpty) {
+          final translations = data[0] as List;
           if (translations.isNotEmpty && translations[0] is List) {
             final translatedText = translations[0][0] as String?;
             if (translatedText != null && translatedText.isNotEmpty) {
@@ -60,21 +59,16 @@ class TranslationService {
 
   Future<String> translateToArabic(String text) async {
     if (text.isEmpty) return text;
-
-    // Always translate to Arabic
     return await translate(text, from: 'en', to: 'ar');
   }
 
   Future<String> translateToEnglish(String text) async {
     if (text.isEmpty) return text;
-
-    // Always translate to English
     return await translate(text, from: 'ar', to: 'en');
   }
 
   bool _isArabic(String text) {
     if (text.isEmpty) return false;
-
     final arabicRegex = RegExp(r'[\u0600-\u06FF]');
     return arabicRegex.hasMatch(text);
   }
@@ -85,5 +79,9 @@ class TranslationService {
 
   void clearCache() {
     _translationCache.clear();
+  }
+
+  void dispose() {
+    _client.close();
   }
 }

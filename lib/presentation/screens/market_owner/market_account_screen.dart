@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:me_plus/core/constants/app_colors.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -195,12 +194,8 @@ class _MarketAccountScreenState extends State<MarketAccountScreen> {
                                 }
 
                                 if (_selectedImage != null) {
-                                  // Handle image upload if needed, or add to data map if repository handles File
-                                  // But repository expects Map<String, dynamic> and converts to FormData.
-                                  // We need to pass MultipartFile.
-                                  data['Image'] = await MultipartFile.fromFile(
-                                    _selectedImage!.path,
-                                  );
+                                  // Pass image path - repository will handle upload
+                                  data['imagePath'] = _selectedImage!.path;
                                 }
 
                                 try {

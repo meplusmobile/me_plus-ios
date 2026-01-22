@@ -1,5 +1,8 @@
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:me_plus/data/services/api_service.dart';
+import 'package:me_plus/data/services/token_storage_service.dart';
 import 'package:me_plus/data/models/user_profile.dart';
 import 'package:me_plus/data/models/activity_model.dart';
 import 'package:me_plus/data/models/store_model.dart';
@@ -11,6 +14,7 @@ import 'package:me_plus/core/services/translation_service.dart';
 class ParentRepository {
   final ApiService _apiService = ApiService();
   final TranslationService _translationService = TranslationService();
+  final TokenStorageService _tokenStorage = TokenStorageService();
 
   // Get all children for the parent
   Future<List<Child>> getChildren() async {
@@ -279,11 +283,50 @@ class ParentRepository {
   }
 
   Future<UserProfile> updateParentProfile(Map<String, dynamic> data) async {
-    final response = await _apiService.put('/api/me', data: data);
-    if (!response.success) {
-      throw Exception(response.error ?? 'Error updating parent profile');
+    final imagePath = data.remove('imagePath') as String?;
+    
+    if (imagePath != null) {
+      // Use multipart request for image upload
+      await _updateProfileWithImage(data, imagePath);
+    } else {
+      final response = await _apiService.put('/api/me', data: data);
+      if (!response.success) {
+        throw Exception(response.error ?? 'Error updating parent profile');
+      }
     }
     return await getParentProfile();
+  }
+
+  Future<void> _updateProfileWithImage(Map<String, dynamic> data, String imagePath) async {
+    final token = await _tokenStorage.getToken();
+    final uri = Uri.parse('${ApiService.baseUrl}/api/me');
+    
+    final request = http.MultipartRequest('PUT', uri);
+    request.headers['Authorization'] = 'Bearer $token';
+    
+    data.forEach((key, value) {
+      if (value != null) {
+        request.fields[key] = value.toString();
+      }
+    });
+
+    final fileName = imagePath.split('/').last;
+    final extension = fileName.split('.').last.toLowerCase();
+    final mimeType = extension == 'png' ? 'image/png' : 'image/jpeg';
+    
+    request.files.add(await http.MultipartFile.fromPath(
+      'Image',
+      imagePath,
+      filename: fileName,
+      contentType: MediaType.parse(mimeType),
+    ));
+
+    final streamedResponse = await request.send().timeout(const Duration(seconds: 30));
+    final response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception('Failed to update profile: ${response.body}');
+    }
   }
 
   // Notification methods

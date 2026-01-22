@@ -3,7 +3,6 @@ import 'package:me_plus/core/constants/app_colors.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:dio/dio.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'dart:io';
 import 'package:me_plus/presentation/providers/profile_provider.dart';
@@ -142,12 +141,9 @@ class _AccountScreenState extends State<AccountScreen> {
         updateData['Password'] = _passwordController.text;
       }
 
-      // Add image if selected
+      // Add image path if selected (repository will handle upload)
       if (_selectedImage != null) {
-        updateData['image'] = await MultipartFile.fromFile(
-          _selectedImage!.path,
-          filename: 'profile.jpg',
-        );
+        updateData['imagePath'] = _selectedImage!.path;
       }
 
       await profileProvider.updateProfile(updateData);
