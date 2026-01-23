@@ -53,9 +53,8 @@ dependencies:
   # Image picker for profile picture
   image_picker: ^1.0.7
 
-  # Local storage (Hive - pure Dart, no platform channel issues)
-  hive: ^2.2.3
-  hive_flutter: ^1.1.0
+  # Local storage - SharedPreferences works perfectly on iOS
+  shared_preferences: ^2.2.2
   path_provider: ^2.1.1
 
   # Internationalization

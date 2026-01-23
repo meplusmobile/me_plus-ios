@@ -1,58 +1,49 @@
 import 'package:flutter/foundation.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-/// Storage Service using Hive - Pure Dart, no platform channel issues!
-/// Works 100% on iOS without native plugin problems
+/// Storage Service using SharedPreferences - Works 100% on iOS!
 class StorageService {
   static final StorageService _instance = StorageService._internal();
+  static SharedPreferences? _prefs;
   static bool _initialized = false;
-  static Box? _box;
 
   factory StorageService() => _instance;
 
   StorageService._internal();
 
-  /// Initialize Hive - call this in main.dart before runApp
+  /// Initialize SharedPreferences - call this in main.dart before runApp
   static Future<void> init() async {
     if (_initialized) return;
     try {
-      await Hive.initFlutter();
-      _box = await Hive.openBox('app_storage');
+      _prefs = await SharedPreferences.getInstance();
       _initialized = true;
-      debugPrint('✅ Hive storage initialized successfully');
+      debugPrint('✅ SharedPreferences storage initialized successfully');
     } catch (e) {
-      debugPrint('❌ Hive init error: $e');
-      // Try fallback initialization
-      try {
-        _box = await Hive.openBox('app_storage');
-        _initialized = true;
-      } catch (e2) {
-        debugPrint('❌ Hive fallback also failed: $e2');
-        _initialized = true; // Mark as initialized to prevent loops
-      }
+      debugPrint('❌ SharedPreferences init error: $e');
+      _initialized = true; // Mark as initialized to prevent loops
     }
   }
 
   /// Check if storage is ready
-  static bool get isReady => _initialized && _box != null;
+  static bool get isReady => _initialized && _prefs != null;
 
-  Box? get box => _box;
+  SharedPreferences? get prefs => _prefs;
 
   // ==================== String Methods ====================
 
   Future<void> saveString(String key, String value) async {
-    if (box == null) return;
+    if (prefs == null) return;
     try {
-      await box!.put(key, value);
+      await prefs!.setString(key, value);
     } catch (e) {
       debugPrint('Error saving string $key: $e');
     }
   }
 
   Future<String?> getString(String key) async {
-    if (box == null) return null;
+    if (prefs == null) return null;
     try {
-      return box!.get(key) as String?;
+      return prefs!.getString(key);
     } catch (e) {
       debugPrint('Error getting string $key: $e');
       return null;
@@ -62,18 +53,18 @@ class StorageService {
   // ==================== Int Methods ====================
 
   Future<void> saveInt(String key, int value) async {
-    if (box == null) return;
+    if (prefs == null) return;
     try {
-      await box!.put(key, value);
+      await prefs!.setInt(key, value);
     } catch (e) {
       debugPrint('Error saving int $key: $e');
     }
   }
 
   Future<int?> getInt(String key) async {
-    if (box == null) return null;
+    if (prefs == null) return null;
     try {
-      return box!.get(key) as int?;
+      return prefs!.getInt(key);
     } catch (e) {
       debugPrint('Error getting int $key: $e');
       return null;
@@ -83,18 +74,18 @@ class StorageService {
   // ==================== Bool Methods ====================
 
   Future<void> saveBool(String key, bool value) async {
-    if (box == null) return;
+    if (prefs == null) return;
     try {
-      await box!.put(key, value);
+      await prefs!.setBool(key, value);
     } catch (e) {
       debugPrint('Error saving bool $key: $e');
     }
   }
 
   Future<bool> getBool(String key) async {
-    if (box == null) return false;
+    if (prefs == null) return false;
     try {
-      return box!.get(key, defaultValue: false) as bool;
+      return prefs!.getBool(key) ?? false;
     } catch (e) {
       debugPrint('Error getting bool $key: $e');
       return false;
@@ -104,18 +95,18 @@ class StorageService {
   // ==================== Double Methods ====================
 
   Future<void> saveDouble(String key, double value) async {
-    if (box == null) return;
+    if (prefs == null) return;
     try {
-      await box!.put(key, value);
+      await prefs!.setDouble(key, value);
     } catch (e) {
       debugPrint('Error saving double $key: $e');
     }
   }
 
   Future<double?> getDouble(String key) async {
-    if (box == null) return null;
+    if (prefs == null) return null;
     try {
-      return box!.get(key) as double?;
+      return prefs!.getDouble(key);
     } catch (e) {
       debugPrint('Error getting double $key: $e');
       return null;
@@ -125,41 +116,39 @@ class StorageService {
   // ==================== List<String> Methods ====================
 
   Future<void> saveStringList(String key, List<String> value) async {
-    if (box == null) return;
+    if (prefs == null) return;
     try {
-      await box!.put(key, value);
+      await prefs!.setStringList(key, value);
     } catch (e) {
-      debugPrint('Error saving list $key: $e');
+      debugPrint('Error saving string list $key: $e');
     }
   }
 
-  Future<List<String>> getStringList(String key) async {
-    if (box == null) return [];
+  Future<List<String>?> getStringList(String key) async {
+    if (prefs == null) return null;
     try {
-      final value = box!.get(key);
-      if (value == null) return [];
-      return List<String>.from(value);
+      return prefs!.getStringList(key);
     } catch (e) {
-      debugPrint('Error getting list $key: $e');
-      return [];
+      debugPrint('Error getting string list $key: $e');
+      return null;
     }
   }
 
   // ==================== Delete & Clear Methods ====================
 
   Future<void> remove(String key) async {
-    if (box == null) return;
+    if (prefs == null) return;
     try {
-      await box!.delete(key);
+      await prefs!.remove(key);
     } catch (e) {
       debugPrint('Error removing $key: $e');
     }
   }
 
   Future<void> clear() async {
-    if (box == null) return;
+    if (prefs == null) return;
     try {
-      await box!.clear();
+      await prefs!.clear();
     } catch (e) {
       debugPrint('Error clearing storage: $e');
     }
@@ -168,21 +157,21 @@ class StorageService {
   // ==================== Utility Methods ====================
 
   Future<bool> containsKey(String key) async {
-    if (box == null) return false;
+    if (prefs == null) return false;
     try {
-      return box!.containsKey(key);
+      return prefs!.containsKey(key);
     } catch (e) {
       debugPrint('Error checking key $key: $e');
       return false;
     }
   }
 
-  Map<String, dynamic> readAll() {
-    if (box == null) return {};
+  Future<Set<String>> getAllKeys() async {
+    if (prefs == null) return {};
     try {
-      return box!.toMap().cast<String, dynamic>();
+      return prefs!.getKeys();
     } catch (e) {
-      debugPrint('Error reading all: $e');
+      debugPrint('Error getting keys: $e');
       return {};
     }
   }
