@@ -1,25 +1,37 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-/// Storage Service using SharedPreferences - Works 100% on iOS!
+/// Storage Service using SharedPreferences + Secure Storage for iOS
+/// Uses iOS Keychain for sensitive data like tokens
 class StorageService {
   static final StorageService _instance = StorageService._internal();
   static SharedPreferences? _prefs;
+  static FlutterSecureStorage? _secureStorage;
   static bool _initialized = false;
 
   factory StorageService() => _instance;
 
   StorageService._internal();
 
-  /// Initialize SharedPreferences - call this in main.dart before runApp
+  /// Initialize SharedPreferences + Secure Storage - call this in main.dart before runApp
   static Future<void> init() async {
     if (_initialized) return;
     try {
       _prefs = await SharedPreferences.getInstance();
+      
+      // Initialize secure storage with iOS Keychain configuration
+      const secureOptions = IOSOptions(
+        accessibility: KeychainAccessibility.first_unlock,
+      );
+      _secureStorage = const FlutterSecureStorage(
+        iOptions: secureOptions,
+      );
+      
       _initialized = true;
-      debugPrint('✅ SharedPreferences storage initialized successfully');
+      debugPrint('✅ Storage initialized: SharedPreferences + iOS Keychain');
     } catch (e) {
-      debugPrint('❌ SharedPreferences init error: $e');
+      debugPrint('❌ Storage init error: $e');
       _initialized = true; // Mark as initialized to prevent loops
     }
   }
@@ -28,8 +40,54 @@ class StorageService {
   static bool get isReady => _initialized && _prefs != null;
 
   SharedPreferences? get prefs => _prefs;
+  FlutterSecureStorage? get secureStorage => _secureStorage;
+
+  // ==================== Secure Storage Methods (for tokens/sensitive data) ====================
+
+  Future<void> saveSecureString(String key, String value) async {
+    if (secureStorage == null) return;
+    try {
+      await secureStorage!.write(key: key, value: value);
+      debugPrint('✅ Saved to iOS Keychain: $key');
+    } catch (e) {
+      debugPrint('❌ Error saving to Keychain $key: $e');
+    }
+  }
+
+  Future<String?> getSecureString(String key) async {
+    if (secureStorage == null) return null;
+    try {
+      final value = await secureStorage!.read(key: key);
+      debugPrint('📖 Read from iOS Keychain: $key = ${value != null ? "exists" : "null"}');
+      return value;
+    } catch (e) {
+      debugPrint('❌ Error reading from Keychain $key: $e');
+      return null;
+    }
+  }
+
+  Future<void> removeSecure(String key) async {
+    if (secureStorage == null) return;
+    try {
+      await secureStorage!.delete(key: key);
+      debugPrint('🗑️ Removed from iOS Keychain: $key');
+    } catch (e) {
+      debugPrint('❌ Error removing from Keychain $key: $e');
+    }
+  }
+
+  Future<void> clearSecure() async {
+    if (secureStorage == null) return;
+    try {
+      await secureStorage!.deleteAll();
+      debugPrint('🗑️ Cleared all iOS Keychain data');
+    } catch (e) {
+      debugPrint('❌ Error clearing Keychain: $e');
+    }
+  }
 
   // ==================== String Methods ====================
+
 
   Future<void> saveString(String key, String value) async {
     if (prefs == null) return;

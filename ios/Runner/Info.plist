@@ -46,6 +46,12 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	
+	<!-- iOS Keychain Access Groups for Secure Storage -->
+	<key>KeychainAccessGroups</key>
+	<array>
+		<string>$(AppIdentifierPrefix)com.meplus.mobileapp</string>
+	</array>
+	
 	<!-- Prevent crashes from background state -->
 	<key>UIBackgroundModes</key>
 	<array>

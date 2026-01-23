@@ -14,7 +14,7 @@ class TokenStorageService {
 
   final _storage = StorageService();
 
-  // Save authentication data
+  // Save authentication data - tokens use iOS Keychain for security
   Future<void> saveAuthData({
     required String token,
     required String refreshToken,
@@ -23,20 +23,25 @@ class TokenStorageService {
     required String role,
     required bool isFirstTimeUser,
   }) async {
-    await _storage.saveString(_tokenKey, token);
-    await _storage.saveString(_refreshTokenKey, refreshToken);
+    // Save tokens to secure storage (iOS Keychain)
+    await _storage.saveSecureString(_tokenKey, token);
+    await _storage.saveSecureString(_refreshTokenKey, refreshToken);
+    
+    // Save other data to regular preferences
     await _storage.saveString(_userIdKey, userId);
     await _storage.saveString(_userEmailKey, email);
     await _storage.saveString(_userRoleKey, role);
     await _storage.saveBool(_isFirstTimeUserKey, isFirstTimeUser);
+    
+    debugPrint('✅ Auth data saved: token & refreshToken in iOS Keychain, userId=$userId');
   }
 
   Future<String?> getToken() async {
-    return await _storage.getString(_tokenKey);
+    return await _storage.getSecureString(_tokenKey);
   }
 
   Future<String?> getRefreshToken() async {
-    return await _storage.getString(_refreshTokenKey);
+    return await _storage.getSecureString(_refreshTokenKey);
   }
 
   Future<String?> getUserId() async {
@@ -63,12 +68,17 @@ class TokenStorageService {
   // Clear all authentication data (logout)
   Future<void> clearAuthData() async {
     try {
-      await _storage.remove(_tokenKey);
-      await _storage.remove(_refreshTokenKey);
+      // Clear tokens from iOS Keychain
+      await _storage.removeSecure(_tokenKey);
+      await _storage.removeSecure(_refreshTokenKey);
+      
+      // Clear other data from regular preferences
       await _storage.remove(_userIdKey);
       await _storage.remove(_userEmailKey);
       await _storage.remove(_userRoleKey);
       await _storage.remove(_isFirstTimeUserKey);
+      
+      debugPrint('✅ Auth data cleared from iOS Keychain and preferences');
     } catch (e) {
       debugPrint('Error clearing auth data: $e');
     }
@@ -98,6 +108,26 @@ class TokenStorageService {
   Future<bool> getRememberMe() async {
     return await _storage.getBool(_rememberMeKey);
   }
+
+  // Debug method to check token storage status
+  Future<void> debugTokenStorage() async {
+    final hasToken = await isLoggedIn();
+    final token = await getToken();
+    final refreshToken = await getRefreshToken();
+    final userId = await getUserId();
+    
+    debugPrint('=== iOS Keychain Token Debug ===');
+    debugPrint('✅ Has Token: $hasToken');
+    debugPrint('✅ Token exists: ${token != null}');
+    if (token != null && token.length > 20) {
+      debugPrint('✅ Token preview: ${token.substring(0, 20)}...');
+      debugPrint('✅ Token length: ${token.length}');
+    }
+    debugPrint('✅ Refresh token exists: ${refreshToken != null}');
+    debugPrint('✅ User ID: $userId');
+    debugPrint('================================');
+  }
+}
 
   Future<String?> getSavedEmail() async {
     return await _storage.getString(_savedEmailKey);
