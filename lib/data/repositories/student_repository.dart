@@ -1,4 +1,8 @@
-import 'package:me_plus/data/services/api_service.dart';
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'package:me_plus/core/constants/api_constants.dart';
+import 'package:me_plus/data/services/token_storage_service.dart';
 import 'package:me_plus/data/models/student_profile.dart';
 import 'package:me_plus/data/models/behavior_model.dart';
 import 'package:me_plus/data/models/behavior_streak_model.dart';
@@ -7,47 +11,98 @@ import 'package:me_plus/data/models/activity_model.dart';
 import 'package:me_plus/core/services/translation_service.dart';
 
 class StudentRepository {
-  final ApiService _apiService = ApiService();
+  final TokenStorageService _tokenStorage = TokenStorageService();
   final TranslationService _translationService = TranslationService();
+  final http.Client _client = http.Client();
+  
+  static const Duration _timeout = Duration(seconds: 20);
+
+  /// Get headers with Bearer token - Same pattern as AuthService
+  Future<Map<String, String>> _getHeaders() async {
+    final token = await _tokenStorage.getToken();
+    return {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': 'Bearer ${token ?? ''}',
+    };
+  }
+
+  /// Handle HTTP response - Same pattern as AuthService
+  dynamic _handleResponse(http.Response response, {String operation = 'Request'}) {
+    debugPrint('📡 [$operation] Status: ${response.statusCode}');
+    
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (response.body.isEmpty) return null;
+      try {
+        return jsonDecode(response.body);
+      } catch (e) {
+        debugPrint('⚠️ [$operation] Response not JSON: ${response.body}');
+        return response.body;
+      }
+    } else {
+      String error = '$operation فشل';
+      try {
+        final data = jsonDecode(response.body);
+        if (data is Map) {
+          error = data['message'] ?? data['error'] ?? error;
+        }
+      } catch (_) {
+        if (response.body.isNotEmpty) error = response.body;
+      }
+      throw Exception(error);
+    }
+  }
 
   // ==================== Profile ====================
   Future<StudentProfile> getProfile() async {
-    final response = await _apiService.get('/student/profile');
-    return StudentProfile.fromJson(response.data);
+    final url = '${ApiConstants.baseUrl}/api/me';
+    final headers = await _getHeaders();
+    
+    final response = await _client.get(
+      Uri.parse(url),
+      headers: headers,
+    ).timeout(_timeout);
+    
+    final data = _handleResponse(response, operation: 'GetProfile');
+    return StudentProfile.fromJson(data);
   }
 
-  // Update profile - FIXED: استخدام isMultipart بدل isFormData
   Future<StudentProfile> updateProfile(Map<String, dynamic> data) async {
-    // Send update request with multipart flag
-    await _apiService.put(
-      '/api/me', 
-      data: data, 
-      isMultipart: true,  // ✅ FIXED: استخدام isMultipart
-    );
+    final url = '${ApiConstants.baseUrl}/api/me';
+    final headers = await _getHeaders();
+    
+    await _client.put(
+      Uri.parse(url),
+      headers: headers,
+      body: jsonEncode(data),
+    ).timeout(_timeout);
 
-    // Fetch full profile data from /student/profile endpoint
-    final profileResponse = await _apiService.get('/student/profile');
-    return StudentProfile.fromJson(profileResponse.data);
+    return await getProfile();
   }
 
   // ==================== Behavior ====================
   Future<BehaviorStreakResponse> getBehaviorStreak() async {
-    final response = await _apiService.get('/api/behavior-streak');
-    return BehaviorStreakResponse.fromJson(response.data);
+    final url = '${ApiConstants.baseUrl}/api/behavior-streak';
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetBehaviorStreak');
+    return BehaviorStreakResponse.fromJson(data);
   }
 
   Future<Map<String, dynamic>> claimBehaviorReward() async {
-    final response = await _apiService.post(
-      '/api/behavior-streak/claim-reward',
-    );
-    return response.data as Map<String, dynamic>;
+    final url = '${ApiConstants.baseUrl}/api/behavior-streak/claim-reward';
+    final headers = await _getHeaders();
+    final response = await _client.post(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'ClaimBehaviorReward');
+    return data as Map<String, dynamic>;
   }
 
   Future<List<WeekDetailBehavior>> getWeekDetails(int weekNumber) async {
-    final response = await _apiService.get(
-      '/api/behavior-streak/weeks/$weekNumber',
-    );
-    return (response.data as List)
+    final url = '${ApiConstants.baseUrl}/api/behavior-streak/weeks/$weekNumber';
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetWeekDetails');
+    return (data as List)
         .map((item) => WeekDetailBehavior.fromJson(item))
         .toList();
   }
@@ -59,12 +114,11 @@ class StudentRepository {
     int pageSize = 10,
     int pageNumber = 1,
   }) async {
-    final response = await _apiService.get(
-      '/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/this-month',
-      queryParameters: {'pageSize': pageSize, 'pageNumber': pageNumber},
-    );
+    final url = '${ApiConstants.baseUrl}/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/this-month?pageSize=$pageSize&pageNumber=$pageNumber';
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetBehaviorThisMonth');
 
-    final data = response.data;
     if (data is Map && data.containsKey('data')) {
       return (data['data'] as List)
           .map((week) => BehaviorWeek.fromJson(week))
@@ -81,11 +135,12 @@ class StudentRepository {
     required int childId,
     required DateTime date,
   }) async {
-    final response = await _apiService.get(
-      '/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/report',
-      queryParameters: {'date': '${date.year}-${date.month}-${date.day}'},
-    );
-    return BehaviorReport.fromJson(response.data);
+    final dateStr = '${date.year}-${date.month}-${date.day}';
+    final url = '${ApiConstants.baseUrl}/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/report?date=$dateStr';
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetBehaviorReport');
+    return BehaviorReport.fromJson(data);
   }
 
   Future<List<DateTime>> getStartOfWeeks({
@@ -93,12 +148,13 @@ class StudentRepository {
     required int classId,
     required int childId,
   }) async {
-    final response = await _apiService.get(
-      '/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/start-of-weeks',
-    );
+    final url = '${ApiConstants.baseUrl}/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/start-of-weeks';
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetStartOfWeeks');
 
     final dates =
-        (response.data as List?)
+        (data as List?)
             ?.map((date) => DateTime.parse(date.toString()))
             .toList() ??
         [];
@@ -109,13 +165,14 @@ class StudentRepository {
   Future<List<BehaviorDetail>> getBehaviorByDay({
     required DateTime date,
   }) async {
-    final response = await _apiService.get(
-      '/api/behaviors',
-      queryParameters: {'date': '${date.year}-${date.month}-${date.day}'},
-    );
+    final dateStr = '${date.year}-${date.month}-${date.day}';
+    final url = '${ApiConstants.baseUrl}/api/behaviors?date=$dateStr';
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetBehaviorByDay');
 
-    if (response.data is List) {
-      return (response.data as List)
+    if (data is List) {
+      return data
           .map((behavior) => BehaviorDetail.fromJson(behavior))
           .toList();
     }
@@ -129,12 +186,11 @@ class StudentRepository {
     int pageSize = 10,
     int pageNumber = 1,
   }) async {
-    final response = await _apiService.get(
-      '/api/schools/$schoolId/classes/$classId/store',
-      queryParameters: {'pageSize': pageSize, 'pageNumber': pageNumber},
-    );
+    final url = '${ApiConstants.baseUrl}/api/schools/$schoolId/classes/$classId/store?pageSize=$pageSize&pageNumber=$pageNumber';
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetStoreRewards');
 
-    final data = response.data;
     if (data is Map && data.containsKey('items')) {
       final items = (data['items'] as List)
           .map((reward) => StoreReward.fromJson(reward))
@@ -158,18 +214,18 @@ class StudentRepository {
     required int studentId,
     required int rewardId,
   }) async {
-    await _apiService.post(
-      '/api/schools/$schoolId/classes/$classId/students/$studentId/store/$rewardId/purchase',
-    );
+    final url = '${ApiConstants.baseUrl}/api/schools/$schoolId/classes/$classId/students/$studentId/store/$rewardId/purchase';
+    final headers = await _getHeaders();
+    await _client.post(Uri.parse(url), headers: headers).timeout(_timeout);
   }
 
   Future<void> confirmPurchaseReceived({
     required int studentId,
     required int purchaseId,
   }) async {
-    await _apiService.post(
-      '/api/students/$studentId/purchases/$purchaseId/confirmation',
-    );
+    final url = '${ApiConstants.baseUrl}/api/students/$studentId/purchases/$purchaseId/confirmation';
+    final headers = await _getHeaders();
+    await _client.post(Uri.parse(url), headers: headers).timeout(_timeout);
   }
 
   Future<List<Purchase>> getStudentPurchases({
@@ -177,12 +233,13 @@ class StudentRepository {
     required int classId,
     required int studentId,
   }) async {
-    final response = await _apiService.get(
-      '/api/schools/$schoolId/classes/$classId/students/$studentId/purchases',
-    );
+    final url = '${ApiConstants.baseUrl}/api/schools/$schoolId/classes/$classId/students/$studentId/purchases';
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetStudentPurchases');
 
-    if (response.data is List) {
-      return (response.data as List)
+    if (data is List) {
+      return data
           .map((purchase) => Purchase.fromJson(purchase))
           .toList();
     }
@@ -196,12 +253,11 @@ class StudentRepository {
     int pageSize = 10,
     int pageNumber = 1,
   }) async {
-    final response = await _apiService.get(
-      '/api/schools/$schoolId/classes/$classId/students/$studentId/purchases/this-month',
-      queryParameters: {'pageSize': pageSize, 'pageNumber': pageNumber},
-    );
+    final url = '${ApiConstants.baseUrl}/api/schools/$schoolId/classes/$classId/students/$studentId/purchases/this-month?pageSize=$pageSize&pageNumber=$pageNumber';
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetPurchasesThisMonth');
 
-    final data = response.data;
     if (data is Map && data.containsKey('data')) {
       return (data['data'] as List)
           .map((purchase) => Purchase.fromJson(purchase))
@@ -217,11 +273,11 @@ class StudentRepository {
     required int classId,
     required int studentId,
   }) async {
-    final response = await _apiService.get(
-      '/api/schools/$schoolId/classes/$classId/students/$studentId/purchases',
-    );
+    final url = '${ApiConstants.baseUrl}/api/schools/$schoolId/classes/$classId/students/$studentId/purchases';
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetAllPurchases');
 
-    final data = response.data;
     if (data is Map && data.containsKey('items')) {
       return (data['items'] as List)
           .map((purchase) => Purchase.fromJson(purchase))
@@ -240,12 +296,11 @@ class StudentRepository {
   Future<List<BehaviorDate>> getActivity({
     required String date,
   }) async {
-    final response = await _apiService.get(
-      '/api/activity',
-      queryParameters: {'date': date},
-    );
+    final url = '${ApiConstants.baseUrl}/api/activity?date=$date';
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetActivity');
 
-    final data = response.data;
     if (data is Map && data.containsKey('dates')) {
       return (data['dates'] as List)
           .map((item) => BehaviorDate.fromJson(item))
@@ -257,12 +312,11 @@ class StudentRepository {
   Future<List<Activity>> getBehaviorsByDay({
     required String date,
   }) async {
-    final response = await _apiService.get(
-      '/api/behaviors',
-      queryParameters: {'date': date},
-    );
+    final url = '${ApiConstants.baseUrl}/api/behaviors?date=$date';
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetBehaviorsByDay');
 
-    final data = response.data;
     List<Activity> activities = [];
 
     if (data is Map && data.containsKey('items')) {
@@ -347,18 +401,24 @@ class StudentRepository {
     required int purchaseId,
     required String reportDetails,
   }) async {
-    await _apiService.post(
-      '/api/schools/$schoolId/classes/$classId/students/$studentId/purchases/$purchaseId/report-missing-reward',
-      data: {'ReportDetails': reportDetails},
-    );
+    final url = '${ApiConstants.baseUrl}/api/schools/$schoolId/classes/$classId/students/$studentId/purchases/$purchaseId/report-missing-reward';
+    final headers = await _getHeaders();
+    await _client.post(
+      Uri.parse(url),
+      headers: headers,
+      body: jsonEncode({'ReportDetails': reportDetails}),
+    ).timeout(_timeout);
   }
 
   // ==================== Honor List ====================
   Future<List<HonorListStudent>> getHonorList() async {
-    final response = await _apiService.get('/api/honor-list');
+    final url = '${ApiConstants.baseUrl}/api/honor-list';
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetHonorList');
 
-    if (response.data is List) {
-      return (response.data as List)
+    if (data is List) {
+      return data
           .map((student) => HonorListStudent.fromJson(student))
           .toList();
     }
@@ -367,10 +427,13 @@ class StudentRepository {
 
   // ==================== Notifications ====================
   Future<List<NotificationModel>> getNotifications() async {
-    final response = await _apiService.get('/api/notifications');
+    final url = '${ApiConstants.baseUrl}/api/notifications';
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetNotifications');
 
-    if (response.data is List) {
-      final notifications = (response.data as List)
+    if (data is List) {
+      final notifications = data
           .map((notification) => NotificationModel.fromJson(notification))
           .toList();
 
@@ -506,15 +569,22 @@ class StudentRepository {
   }
 
   Future<void> markNotificationAsRead(int notificationId) async {
-    await _apiService.post('/api/notifications/mark-as-read/$notificationId');
+    final url = '${ApiConstants.baseUrl}/api/notifications/mark-as-read/$notificationId';
+    final headers = await _getHeaders();
+    await _client.post(Uri.parse(url), headers: headers).timeout(_timeout);
   }
 
   Future<void> deleteNotification(int notificationId) async {
-    await _apiService.delete('/api/notifications/$notificationId');
+    final url = '${ApiConstants.baseUrl}/api/notifications/$notificationId';
+    final headers = await _getHeaders();
+    await _client.delete(Uri.parse(url), headers: headers).timeout(_timeout);
   }
 
   Future<Map<String, dynamic>> getNotificationSettings() async {
-    final response = await _apiService.get('/api/notification_settings');
-    return response.data as Map<String, dynamic>;
+    final url = '${ApiConstants.baseUrl}/api/notification_settings';
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetNotificationSettings');
+    return data as Map<String, dynamic>;
   }
 }

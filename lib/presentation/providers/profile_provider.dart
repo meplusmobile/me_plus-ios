@@ -47,7 +47,6 @@ class ProfileProvider with ChangeNotifier {
   // Fetch profile from API and save to storage
   Future<void> loadProfile({bool forceRefresh = false, int retryCount = 0}) async {
     if (_isLoading) return;
-
     if (!forceRefresh && _profile != null) return;
 
     try {
@@ -55,22 +54,15 @@ class ProfileProvider with ChangeNotifier {
       _error = null;
       notifyListeners();
 
-      // Fetch profile from /api/me (includes points)
       final profile = await _repository.getProfile();
-
       _profile = profile;
 
-      // Save to local storage
       await _storage.saveProfile(_profile!);
 
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      debugPrint('❌ Error loading profile: $e');
-      
-      // Retry logic for network errors (max 2 retries)
       if (retryCount < 2 && _shouldRetry(e.toString())) {
-        debugPrint('🔄 Retrying profile load (attempt ${retryCount + 1})...');
         await Future.delayed(Duration(seconds: 1 + retryCount));
         return loadProfile(forceRefresh: forceRefresh, retryCount: retryCount + 1);
       }

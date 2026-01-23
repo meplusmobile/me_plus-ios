@@ -106,14 +106,12 @@ class MyApp extends StatelessWidget {
                             textAlign: TextAlign.center,
                             style: const TextStyle(fontSize: 16),
                           ),
-                          if (details.exception != null) ...[
-                            const SizedBox(height: 8),
-                            Text(
-                              details.exception.toString(),
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(fontSize: 12, color: Colors.grey),
-                            ),
-                          ],
+                          const SizedBox(height: 8),
+                          Text(
+                            details.exception.toString(),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
                         ],
                       ),
                     ),

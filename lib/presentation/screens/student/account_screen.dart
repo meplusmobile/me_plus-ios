@@ -26,7 +26,6 @@ class _AccountScreenState extends State<AccountScreen> {
   final _schoolController = TextEditingController();
   final _gradeController = TextEditingController();
   bool _obscurePassword = true;
-  bool _isSaving = false;
   bool _isPasswordEmpty = true;
   File? _selectedImage;
   String? _initialCountryCode;
@@ -108,81 +107,6 @@ class _AccountScreenState extends State<AccountScreen> {
         _dobController.text = profile.birthDate ?? '';
         _schoolController.text = profile.schoolName ?? '';
       });
-    }
-  }
-
-  Future<void> _saveProfile() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    setState(() {
-      _isSaving = true;
-    });
-
-    try {
-      final profileProvider = context.read<ProfileProvider>();
-
-      final updateData = <String, dynamic>{
-        'FirstName': _firstNameController.text.trim(),
-        'LastName': _lastNameController.text.trim(),
-        'PhoneNumber':
-            _fullPhoneNumber ?? _phoneController.text.trim(), // Use full number
-      };
-
-      // Add birthDate if provided
-      if (_dobController.text.isNotEmpty) {
-        updateData['BirthDate'] = _dobController.text;
-      }
-
-      // Add password if changed
-      if (_passwordController.text.isNotEmpty && !_isPasswordEmpty) {
-        updateData['Password'] = _passwordController.text;
-      }
-
-      // Add image path if selected (repository will handle upload)
-      if (_selectedImage != null) {
-        updateData['imagePath'] = _selectedImage!.path;
-      }
-
-      await profileProvider.updateProfile(updateData);
-
-      if (mounted) {
-        // Reload profile data from API after successful update
-        await _refreshProfile();
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              AppLocalizations.of(context)!.t('profile_updated_successfully'),
-            ),
-            backgroundColor: AppColors.success,
-          ),
-        );
-        // Clear password field and selected image after successful update
-        _passwordController.clear();
-        _isPasswordEmpty = true;
-        setState(() {
-          _selectedImage = null;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${AppLocalizations.of(context)!.t('failed_to_update_profile')}: ${e.toString().replaceAll('Exception: ', '')}',
-            ),
-            backgroundColor: AppColors.errorLight,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSaving = false;
-        });
-      }
     }
   }
 
@@ -669,42 +593,6 @@ class _AccountScreenState extends State<AccountScreen> {
     } catch (e) {
       return isoDate;
     }
-  }
-
-  Widget _buildSaveButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: ElevatedButton(
-        onPressed: _isSaving ? null : _saveProfile,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          disabledBackgroundColor: AppColors.disabled,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(26),
-          ),
-          elevation: 0,
-        ),
-        child: _isSaving
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2,
-                ),
-              )
-            : Text(
-                AppLocalizations.of(context)!.t('save_changes'),
-                style: const TextStyle(
-                  fontFamily: 'Poppins',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-      ),
-    );
   }
 
   Widget _buildDropdownField({required String label, required String value}) {
