@@ -8,15 +8,28 @@ workflows:
       xcode: latest
       cocoapods: default
     scripts:
+      - name: Clean previous builds
+        script: |
+          echo "🧹 Cleaning previous builds..."
+          flutter clean
+          rm -rf ios/Pods
+          rm -f ios/Podfile.lock
+          echo "✅ Clean completed"
       - name: Get Flutter packages
         script: |
+          echo "📦 Getting Flutter packages..."
           flutter pub get
+          echo "✅ Packages downloaded"
       - name: Install CocoaPods dependencies
         script: |
+          echo "🔧 Installing CocoaPods dependencies..."
           cd ios && pod install
+          echo "✅ Pods installed"
       - name: Build iOS Release
         script: |
+          echo "🏗️ Building iOS Release..."
           flutter build ios --release --no-codesign
+          echo "✅ Build completed"
       - name: Verify Release Build
         script: |
           if [ -d "build/ios/Release-iphoneos/Runner.app" ]; then
