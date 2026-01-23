@@ -1,110 +1,116 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
-import 'package:http_parser/http_parser.dart';
-import 'package:me_plus/data/services/api_service.dart';
-import 'package:me_plus/data/services/token_storage_service.dart';
+import 'package:me_plus/core/constants/api_constants.dart';
 import 'package:me_plus/data/models/student_profile.dart';
 import 'package:me_plus/data/models/behavior_model.dart';
 import 'package:me_plus/data/models/behavior_streak_model.dart';
 import 'package:me_plus/data/models/store_model.dart';
 import 'package:me_plus/data/models/activity_model.dart';
 import 'package:me_plus/core/services/translation_service.dart';
+import 'package:me_plus/data/services/token_storage_service.dart';
 
 class StudentRepository {
-  final ApiService _apiService = ApiService();
-  final TranslationService _translationService = TranslationService();
   final TokenStorageService _tokenStorage = TokenStorageService();
+  final TranslationService _translationService = TranslationService();
+  final http.Client _client = http.Client();
+  
+  static const Duration _timeout = Duration(seconds: 20);
+
+  /// Get headers with auth token
+  Future<Map<String, String>> _getHeaders() async {
+    final token = await _tokenStorage.getToken();
+    return {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': 'Bearer ${token ?? ''}',
+    };
+  }
+
+  /// Handle HTTP response
+  dynamic _handleResponse(http.Response response, {String operation = 'Request'}) {
+    debugPrint('✅ [$operation] Status: ${response.statusCode}');
+    
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (response.body.isEmpty) return null;
+      return jsonDecode(response.body);
+    } else {
+      String error = '$operation failed';
+      try {
+        final data = jsonDecode(response.body);
+        if (data is Map) {
+          error = data['message'] ?? data['error'] ?? error;
+        } else if (data is String) {
+          error = data;
+        }
+      } catch (_) {
+        if (response.body.isNotEmpty) error = response.body;
+      }
+      debugPrint('❌ [$operation] Error: $error');
+      throw Exception(error);
+    }
+  }
 
   // ==================== Profile ====================
   Future<StudentProfile> getProfile() async {
-    final response = await _apiService.get('/api/me');
-    if (!response.success) {
-      throw Exception(response.error ?? 'Failed to get profile');
-    }
-    return StudentProfile.fromJson(response.data);
+    debugPrint('👤 [GetProfile] Starting...');
+    final url = '${ApiConstants.baseUrl}/api/me';
+    
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetProfile');
+    
+    return StudentProfile.fromJson(data);
   }
 
-  // Update profile (handles image upload if imagePath is provided)
+  // Update profile (sends as JSON)
   Future<StudentProfile> updateProfile(Map<String, dynamic> data) async {
-    final imagePath = data.remove('imagePath') as String?;
+    debugPrint('👤 [UpdateProfile] Starting...');
+    final url = '${ApiConstants.baseUrl}/api/me';
     
-    if (imagePath != null) {
-      // Use multipart request for image upload
-      await _updateProfileWithImage(data, imagePath);
-    } else {
-      // Use regular JSON request
-      final response = await _apiService.put('/api/me', data: data);
-      if (!response.success) {
-        throw Exception(response.error ?? 'Failed to update profile');
-      }
-    }
+    final headers = await _getHeaders();
+    await _client.put(
+      Uri.parse(url),
+      headers: headers,
+      body: jsonEncode(data),
+    ).timeout(_timeout);
 
-    // Fetch full profile data from /api/me endpoint
-    final profileResponse = await _apiService.get('/api/me');
-    if (!profileResponse.success) {
-      throw Exception(profileResponse.error ?? 'Failed to get updated profile');
-    }
-    return StudentProfile.fromJson(profileResponse.data);
-  }
-
-  Future<void> _updateProfileWithImage(Map<String, dynamic> data, String imagePath) async {
-    final token = await _tokenStorage.getToken();
-    final uri = Uri.parse('${ApiService.baseUrl}/api/me');
-    
-    final request = http.MultipartRequest('PUT', uri);
-    request.headers['Authorization'] = 'Bearer $token';
-    
-    // Add all fields
-    data.forEach((key, value) {
-      if (value != null) {
-        request.fields[key] = value.toString();
-      }
-    });
-
-    // Add image
-    final fileName = imagePath.split('/').last;
-    final extension = fileName.split('.').last.toLowerCase();
-    final mimeType = extension == 'png' ? 'image/png' : 'image/jpeg';
-    
-    request.files.add(await http.MultipartFile.fromPath(
-      'Image',
-      imagePath,
-      filename: fileName,
-      contentType: MediaType.parse(mimeType),
-    ));
-
-    final streamedResponse = await request.send().timeout(const Duration(seconds: 30));
-    final response = await http.Response.fromStream(streamedResponse);
-
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception('Failed to update profile: ${response.body}');
-    }
+    // Fetch updated profile
+    return await getProfile();
   }
 
   // ==================== Behavior ====================
   Future<BehaviorStreakResponse> getBehaviorStreak() async {
-    final response = await _apiService.get('/api/behavior-streak');
-    if (!response.success) {
-      throw Exception(response.error ?? 'Failed to get behavior streak');
-    }
-    return BehaviorStreakResponse.fromJson(response.data);
+    debugPrint('📊 [GetBehaviorStreak] Starting...');
+    final url = '${ApiConstants.baseUrl}/api/behavior-streak';
+    
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetBehaviorStreak');
+    
+    return BehaviorStreakResponse.fromJson(data);
   }
 
   Future<Map<String, dynamic>> claimBehaviorReward() async {
-    final response = await _apiService.post('/api/behavior-streak/claim-reward');
-    if (!response.success) {
-      throw Exception(response.error ?? 'Failed to claim reward');
-    }
-    return response.data as Map<String, dynamic>;
+    debugPrint('🎁 [ClaimBehaviorReward] Starting...');
+    final url = '${ApiConstants.baseUrl}/api/behavior-streak/claim-reward';
+    
+    final headers = await _getHeaders();
+    final response = await _client.post(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'ClaimBehaviorReward');
+    
+    return data as Map<String, dynamic>;
   }
 
   Future<List<WeekDetailBehavior>> getWeekDetails(int weekNumber) async {
-    final response = await _apiService.get('/api/behavior-streak/weeks/$weekNumber');
-    if (!response.success) {
-      debugPrint('Failed to get week details: ${response.error}');
-      return [];
-    }
-    return (response.data as List)
+    debugPrint('📊 [GetWeekDetails] Week: $weekNumber');
+    final url = '${ApiConstants.baseUrl}/api/behavior-streak/weeks/$weekNumber';
+    
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetWeekDetails');
+    
+    return (data as List)
         .map((item) => WeekDetailBehavior.fromJson(item))
         .toList();
   }
@@ -116,17 +122,13 @@ class StudentRepository {
     int pageSize = 10,
     int pageNumber = 1,
   }) async {
-    final response = await _apiService.get(
-      '/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/this-month',
-      queryParameters: {'pageSize': pageSize, 'pageNumber': pageNumber},
-    );
+    debugPrint('📊 [GetBehaviorThisMonth] Child: $childId');
+    final url = '${ApiConstants.baseUrl}/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/this-month?pageSize=$pageSize&pageNumber=$pageNumber';
+    
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetBehaviorThisMonth');
 
-    if (!response.success) {
-      debugPrint('Failed to get behavior this month: ${response.error}');
-      return [];
-    }
-
-    final data = response.data;
     if (data is Map && data.containsKey('data')) {
       return (data['data'] as List)
           .map((week) => BehaviorWeek.fromJson(week))
@@ -143,14 +145,15 @@ class StudentRepository {
     required int childId,
     required DateTime date,
   }) async {
-    final response = await _apiService.get(
-      '/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/report',
-      queryParameters: {'date': '${date.year}-${date.month}-${date.day}'},
-    );
-    if (!response.success) {
-      throw Exception(response.error ?? 'Failed to get behavior report');
-    }
-    return BehaviorReport.fromJson(response.data);
+    debugPrint('📊 [GetBehaviorReport] Date: $date');
+    final dateStr = '${date.year}-${date.month}-${date.day}';
+    final url = '${ApiConstants.baseUrl}/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/report?date=$dateStr';
+    
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetBehaviorReport');
+    
+    return BehaviorReport.fromJson(data);
   }
 
   Future<List<DateTime>> getStartOfWeeks({
@@ -158,18 +161,18 @@ class StudentRepository {
     required int classId,
     required int childId,
   }) async {
-    final response = await _apiService.get(
-      '/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/start-of-weeks',
-    );
+    debugPrint('📅 [GetStartOfWeeks] Child: $childId');
+    final url = '${ApiConstants.baseUrl}/api/schools/$schoolId/classes/$classId/childs/$childId/behavior/start-of-weeks';
+    
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetStartOfWeeks');
 
-    if (!response.success) {
-      debugPrint('Failed to get start of weeks: ${response.error}');
-      return [];
-    }
-
-    final dates = (response.data as List?)
-        ?.map((date) => DateTime.parse(date.toString()))
-        .toList() ?? [];
+    final dates =
+        (data as List?)
+            ?.map((date) => DateTime.parse(date.toString()))
+            .toList() ??
+        [];
 
     return dates;
   }
@@ -177,18 +180,16 @@ class StudentRepository {
   Future<List<BehaviorDetail>> getBehaviorByDay({
     required DateTime date,
   }) async {
-    final response = await _apiService.get(
-      '/api/behaviors',
-      queryParameters: {'date': '${date.year}-${date.month}-${date.day}'},
-    );
+    debugPrint('📊 [GetBehaviorByDay] Date: $date');
+    final dateStr = '${date.year}-${date.month}-${date.day}';
+    final url = '${ApiConstants.baseUrl}/api/behaviors?date=$dateStr';
+    
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetBehaviorByDay');
 
-    if (!response.success) {
-      debugPrint('Failed to get behavior by day: ${response.error}');
-      return [];
-    }
-
-    if (response.data is List) {
-      return (response.data as List)
+    if (data is List) {
+      return (data as List)
           .map((behavior) => BehaviorDetail.fromJson(behavior))
           .toList();
     }
@@ -202,17 +203,13 @@ class StudentRepository {
     int pageSize = 10,
     int pageNumber = 1,
   }) async {
-    final response = await _apiService.get(
-      '/api/schools/$schoolId/classes/$classId/store',
-      queryParameters: {'pageSize': pageSize, 'pageNumber': pageNumber},
-    );
+    debugPrint('🛍️ [GetStoreRewards] School: $schoolId, Class: $classId');
+    final url = '${ApiConstants.baseUrl}/api/schools/$schoolId/classes/$classId/store?pageSize=$pageSize&pageNumber=$pageNumber';
+    
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetStoreRewards');
 
-    if (!response.success) {
-      debugPrint('Failed to get store rewards: ${response.error}');
-      return [];
-    }
-
-    final data = response.data;
     if (data is Map && data.containsKey('items')) {
       final items = (data['items'] as List)
           .map((reward) => StoreReward.fromJson(reward))
@@ -236,24 +233,22 @@ class StudentRepository {
     required int studentId,
     required int rewardId,
   }) async {
-    final response = await _apiService.post(
-      '/api/schools/$schoolId/classes/$classId/students/$studentId/store/$rewardId/purchase',
-    );
-    if (!response.success) {
-      throw Exception(response.error ?? 'Failed to purchase reward');
-    }
+    debugPrint('🛍️ [PurchaseReward] Reward: $rewardId, Student: $studentId');
+    final url = '${ApiConstants.baseUrl}/api/schools/$schoolId/classes/$classId/students/$studentId/store/$rewardId/purchase';
+    
+    final headers = await _getHeaders();
+    await _client.post(Uri.parse(url), headers: headers).timeout(_timeout);
   }
 
   Future<void> confirmPurchaseReceived({
     required int studentId,
     required int purchaseId,
   }) async {
-    final response = await _apiService.post(
-      '/api/students/$studentId/purchases/$purchaseId/confirmation',
-    );
-    if (!response.success) {
-      throw Exception(response.error ?? 'Failed to confirm purchase');
-    }
+    debugPrint('✅ [ConfirmPurchase] Purchase: $purchaseId');
+    final url = '${ApiConstants.baseUrl}/api/students/$studentId/purchases/$purchaseId/confirmation';
+    
+    final headers = await _getHeaders();
+    await _client.post(Uri.parse(url), headers: headers).timeout(_timeout);
   }
 
   Future<List<Purchase>> getStudentPurchases({
@@ -261,17 +256,15 @@ class StudentRepository {
     required int classId,
     required int studentId,
   }) async {
-    final response = await _apiService.get(
-      '/api/schools/$schoolId/classes/$classId/students/$studentId/purchases',
-    );
+    debugPrint('💰 [GetStudentPurchases] Student: $studentId');
+    final url = '${ApiConstants.baseUrl}/api/schools/$schoolId/classes/$classId/students/$studentId/purchases';
+    
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetStudentPurchases');
 
-    if (!response.success) {
-      debugPrint('Failed to get student purchases: ${response.error}');
-      return [];
-    }
-
-    if (response.data is List) {
-      return (response.data as List)
+    if (data is List) {
+      return (data as List)
           .map((purchase) => Purchase.fromJson(purchase))
           .toList();
     }
@@ -285,17 +278,13 @@ class StudentRepository {
     int pageSize = 10,
     int pageNumber = 1,
   }) async {
-    final response = await _apiService.get(
-      '/api/schools/$schoolId/classes/$classId/students/$studentId/purchases/this-month',
-      queryParameters: {'pageSize': pageSize, 'pageNumber': pageNumber},
-    );
+    debugPrint('💰 [GetPurchasesThisMonth] Student: $studentId');
+    final url = '${ApiConstants.baseUrl}/api/schools/$schoolId/classes/$classId/students/$studentId/purchases/this-month?pageSize=$pageSize&pageNumber=$pageNumber';
+    
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetPurchasesThisMonth');
 
-    if (!response.success) {
-      debugPrint('Failed to get purchases this month: ${response.error}');
-      return [];
-    }
-
-    final data = response.data;
     if (data is Map && data.containsKey('data')) {
       return (data['data'] as List)
           .map((purchase) => Purchase.fromJson(purchase))
@@ -311,16 +300,13 @@ class StudentRepository {
     required int classId,
     required int studentId,
   }) async {
-    final response = await _apiService.get(
-      '/api/schools/$schoolId/classes/$classId/students/$studentId/purchases',
-    );
+    debugPrint('💰 [GetAllPurchases] Student: $studentId');
+    final url = '${ApiConstants.baseUrl}/api/schools/$schoolId/classes/$classId/students/$studentId/purchases';
+    
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetAllPurchases');
 
-    if (!response.success) {
-      debugPrint('Failed to get all purchases: ${response.error}');
-      return [];
-    }
-
-    final data = response.data;
     if (data is Map && data.containsKey('items')) {
       return (data['items'] as List)
           .map((purchase) => Purchase.fromJson(purchase))
@@ -339,17 +325,13 @@ class StudentRepository {
   Future<List<BehaviorDate>> getActivity({
     required String date, // Format: "2025-06"
   }) async {
-    final response = await _apiService.get(
-      '/api/activity',
-      queryParameters: {'date': date},
-    );
+    debugPrint('📅 [GetActivity] Date: $date');
+    final url = '${ApiConstants.baseUrl}/api/activity?date=$date';
+    
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetActivity');
 
-    if (!response.success) {
-      debugPrint('Failed to get activity: ${response.error}');
-      return [];
-    }
-
-    final data = response.data;
     if (data is Map && data.containsKey('dates')) {
       return (data['dates'] as List)
           .map((item) => BehaviorDate.fromJson(item))
@@ -361,17 +343,13 @@ class StudentRepository {
   Future<List<Activity>> getBehaviorsByDay({
     required String date, // Format: "2025-6-24"
   }) async {
-    final response = await _apiService.get(
-      '/api/behaviors',
-      queryParameters: {'date': date},
-    );
+    debugPrint('📅 [GetBehaviorsByDay] Date: $date');
+    final url = '${ApiConstants.baseUrl}/api/behaviors?date=$date';
+    
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetBehaviorsByDay');
 
-    if (!response.success) {
-      debugPrint('Failed to get behaviors by day: ${response.error}');
-      return [];
-    }
-
-    final data = response.data;
     List<Activity> activities = [];
 
     if (data is Map && data.containsKey('items')) {
@@ -386,6 +364,7 @@ class StudentRepository {
       activities = data.map((item) => Activity.fromJson(item)).toList();
     }
 
+    // Auto-translate activities
     final translatedActivities = <Activity>[];
     for (var activity in activities) {
       translatedActivities.add(await _autoTranslateActivity(activity));
@@ -394,12 +373,14 @@ class StudentRepository {
     return translatedActivities;
   }
 
+  /// Auto-translate activity fields if they're missing in either language
   Future<Activity> _autoTranslateActivity(Activity activity) async {
     String? titleAr = activity.titleAr;
     String? titleEn = activity.titleEn;
     String? descriptionAr = activity.descriptionAr;
     String? descriptionEn = activity.descriptionEn;
 
+    // Translate title
     if (titleAr == null && titleEn == null) {
       final detectedLang = _translationService.detectLanguage(activity.title);
       if (detectedLang == 'ar') {
@@ -415,6 +396,7 @@ class StudentRepository {
       titleEn = await _translationService.translateToEnglish(titleAr);
     }
 
+    // Translate description
     if (descriptionAr == null && descriptionEn == null) {
       final detectedLang = _translationService.detectLanguage(
         activity.description,
@@ -456,26 +438,28 @@ class StudentRepository {
     required int purchaseId,
     required String reportDetails,
   }) async {
-    final response = await _apiService.post(
-      '/api/schools/$schoolId/classes/$classId/students/$studentId/purchases/$purchaseId/report-missing-reward',
-      data: {'ReportDetails': reportDetails},
-    );
-    if (!response.success) {
-      throw Exception(response.error ?? 'Failed to report missing reward');
-    }
+    debugPrint('⚠️ [ReportMissingReward] Purchase: $purchaseId');
+    final url = '${ApiConstants.baseUrl}/api/schools/$schoolId/classes/$classId/students/$studentId/purchases/$purchaseId/report-missing-reward';
+    
+    final headers = await _getHeaders();
+    await _client.post(
+      Uri.parse(url),
+      headers: headers,
+      body: jsonEncode({'ReportDetails': reportDetails}),
+    ).timeout(_timeout);
   }
 
   // ==================== Honor List (Top 10) ====================
   Future<List<HonorListStudent>> getHonorList() async {
-    final response = await _apiService.get('/api/honor-list');
+    debugPrint('🏆 [GetHonorList] Starting...');
+    final url = '${ApiConstants.baseUrl}/api/honor-list';
+    
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetHonorList');
 
-    if (!response.success) {
-      debugPrint('Failed to get honor list: ${response.error}');
-      return [];
-    }
-
-    if (response.data is List) {
-      return (response.data as List)
+    if (data is List) {
+      return (data as List)
           .map((student) => HonorListStudent.fromJson(student))
           .toList();
     }
@@ -484,18 +468,19 @@ class StudentRepository {
 
   // ==================== Notifications ====================
   Future<List<NotificationModel>> getNotifications() async {
-    final response = await _apiService.get('/api/notifications');
+    debugPrint('🔔 [GetNotifications] Starting...');
+    final url = '${ApiConstants.baseUrl}/api/notifications';
+    
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetNotifications');
 
-    if (!response.success) {
-      debugPrint('Failed to get notifications: ${response.error}');
-      return [];
-    }
-
-    if (response.data is List) {
-      final notifications = (response.data as List)
+    if (data is List) {
+      final notifications = (data as List)
           .map((notification) => NotificationModel.fromJson(notification))
           .toList();
 
+      // Auto-translate notifications if language is missing
       final translatedNotifications = <NotificationModel>[];
       for (var notification in notifications) {
         translatedNotifications.add(
@@ -508,6 +493,7 @@ class StudentRepository {
     return [];
   }
 
+  /// Auto-translate notification fields if they're missing in either language
   Future<NotificationModel> _autoTranslateNotification(
     NotificationModel notification,
   ) async {
@@ -516,6 +502,7 @@ class StudentRepository {
     String? messageAr = notification.messageAr;
     String? messageEn = notification.messageEn;
 
+    // If backend doesn't provide titleAr/titleEn, use the main title field
     if (titleAr == null && titleEn == null && notification.title.isNotEmpty) {
       final detectedLang = _translationService.detectLanguage(
         notification.title,
@@ -625,6 +612,7 @@ class StudentRepository {
       return 'You requested a $itemName, Did you receive it?';
     }
 
+    // If no pattern matches, use regular translation
     if (toLang == 'ar') {
       return await _translationService.translateToArabic(message);
     } else {
@@ -633,24 +621,29 @@ class StudentRepository {
   }
 
   Future<void> markNotificationAsRead(int notificationId) async {
-    final response = await _apiService.post('/api/notifications/mark-as-read/$notificationId');
-    if (!response.success) {
-      debugPrint('Failed to mark notification as read: ${response.error}');
-    }
+    debugPrint('✅ [MarkNotificationAsRead] ID: $notificationId');
+    final url = '${ApiConstants.baseUrl}/api/notifications/mark-as-read/$notificationId';
+    
+    final headers = await _getHeaders();
+    await _client.post(Uri.parse(url), headers: headers).timeout(_timeout);
   }
 
   Future<void> deleteNotification(int notificationId) async {
-    final response = await _apiService.delete('/api/notifications/$notificationId');
-    if (!response.success) {
-      debugPrint('Failed to delete notification: ${response.error}');
-    }
+    debugPrint('🗑️ [DeleteNotification] ID: $notificationId');
+    final url = '${ApiConstants.baseUrl}/api/notifications/$notificationId';
+    
+    final headers = await _getHeaders();
+    await _client.delete(Uri.parse(url), headers: headers).timeout(_timeout);
   }
 
   Future<Map<String, dynamic>> getNotificationSettings() async {
-    final response = await _apiService.get('/api/notification_settings');
-    if (!response.success) {
-      throw Exception(response.error ?? 'Failed to get notification settings');
-    }
-    return response.data as Map<String, dynamic>;
+    debugPrint('⚙️ [GetNotificationSettings] Starting...');
+    final url = '${ApiConstants.baseUrl}/api/notification_settings';
+    
+    final headers = await _getHeaders();
+    final response = await _client.get(Uri.parse(url), headers: headers).timeout(_timeout);
+    final data = _handleResponse(response, operation: 'GetNotificationSettings');
+    
+    return data as Map<String, dynamic>;
   }
 }
