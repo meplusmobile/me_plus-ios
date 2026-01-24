@@ -1,12 +1,11 @@
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-/// Storage Service using SharedPreferences + Secure Storage for iOS
-/// Uses iOS Keychain for sensitive data like tokens
+/// Storage Service using ONLY FlutterSecureStorage (iOS Keychain)
+/// SharedPreferences was failing on iOS with channel errors
+/// iOS Keychain works perfectly for ALL data (not just tokens)
 class StorageService {
   static final StorageService _instance = StorageService._internal();
-  static SharedPreferences? _prefs;
   static FlutterSecureStorage? _secureStorage;
   static bool _initialized = false;
 
@@ -14,20 +13,16 @@ class StorageService {
 
   StorageService._internal();
 
-  /// Initialize SharedPreferences + Secure Storage - call this in main.dart before runApp
+  /// Initialize Secure Storage only - call this in main.dart before runApp
   static Future<void> init() async {
-    if (_initialized && _prefs != null && _secureStorage != null) {
+    if (_initialized && _secureStorage != null) {
       debugPrint('✅ Storage already initialized');
       return;
     }
     
     try {
-      debugPrint('🔄 Initializing SharedPreferences...');
-      _prefs = await SharedPreferences.getInstance();
-      debugPrint('✅ SharedPreferences initialized: ${_prefs != null}');
-      
       // Initialize secure storage with iOS Keychain configuration
-      debugPrint('🔄 Initializing FlutterSecureStorage...');
+      debugPrint('🔄 Initializing FlutterSecureStorage (iOS Keychain)...');
       const secureOptions = IOSOptions(
         accessibility: KeychainAccessibility.first_unlock,
       );
@@ -37,21 +32,19 @@ class StorageService {
       debugPrint('✅ FlutterSecureStorage initialized: ${_secureStorage != null}');
       
       _initialized = true;
-      debugPrint('✅ Storage initialized: SharedPreferences + iOS Keychain');
+      debugPrint('✅ Storage initialized: iOS Keychain ONLY');
       debugPrint('✅ Storage isReady: $isReady');
     } catch (e, stackTrace) {
       debugPrint('❌ Storage init error: $e');
       debugPrint('❌ Stack trace: $stackTrace');
-      // Don't mark as initialized if it failed
       _initialized = false;
-      rethrow; // Re-throw so main.dart knows it failed
+      rethrow;
     }
   }
 
   /// Check if storage is ready
-  static bool get isReady => _initialized && _prefs != null;
+  static bool get isReady => _initialized && _secureStorage != null;
 
-  SharedPreferences? get prefs => _prefs;
   FlutterSecureStorage? get secureStorage => _secureStorage;
 
   // ==================== Secure Storage Methods (for tokens/sensitive data) ====================
@@ -100,20 +93,19 @@ class StorageService {
 
   // ==================== String Methods ====================
 
-
   Future<void> saveString(String key, String value) async {
-    if (prefs == null) return;
+    if (secureStorage == null) return;
     try {
-      await prefs!.setString(key, value);
+      await secureStorage!.write(key: key, value: value);
     } catch (e) {
       debugPrint('Error saving string $key: $e');
     }
   }
 
   Future<String?> getString(String key) async {
-    if (prefs == null) return null;
+    if (secureStorage == null) return null;
     try {
-      return prefs!.getString(key);
+      return await secureStorage!.read(key: key);
     } catch (e) {
       debugPrint('Error getting string $key: $e');
       return null;
@@ -123,125 +115,74 @@ class StorageService {
   // ==================== Int Methods ====================
 
   Future<void> saveInt(String key, int value) async {
-    if (prefs == null) return;
-    try {
-      await prefs!.setInt(key, value);
-    } catch (e) {
-      debugPrint('Error saving int $key: $e');
-    }
+    await saveString(key, value.toString());
   }
 
   Future<int?> getInt(String key) async {
-    if (prefs == null) return null;
-    try {
-      return prefs!.getInt(key);
-    } catch (e) {
-      debugPrint('Error getting int $key: $e');
-      return null;
-    }
+    final str = await getString(key);
+    if (str == null) return null;
+    return int.tryParse(str);
   }
 
   // ==================== Bool Methods ====================
 
   Future<void> saveBool(String key, bool value) async {
-    if (prefs == null) return;
-    try {
-      await prefs!.setBool(key, value);
-    } catch (e) {
-      debugPrint('Error saving bool $key: $e');
-    }
+    await saveString(key, value.toString());
   }
 
   Future<bool> getBool(String key) async {
-    if (prefs == null) return false;
-    try {
-      return prefs!.getBool(key) ?? false;
-    } catch (e) {
-      debugPrint('Error getting bool $key: $e');
-      return false;
-    }
+    final str = await getString(key);
+    return str == 'true';
   }
 
   // ==================== Double Methods ====================
 
   Future<void> saveDouble(String key, double value) async {
-    if (prefs == null) return;
-    try {
-      await prefs!.setDouble(key, value);
-    } catch (e) {
-      debugPrint('Error saving double $key: $e');
-    }
+    await saveString(key, value.toString());
   }
 
   Future<double?> getDouble(String key) async {
-    if (prefs == null) return null;
-    try {
-      return prefs!.getDouble(key);
-    } catch (e) {
-      debugPrint('Error getting double $key: $e');
-      return null;
-    }
+    final str = await getString(key);
+    if (str == null) return null;
+    return double.tryParse(str);
   }
 
   // ==================== List<String> Methods ====================
 
   Future<void> saveStringList(String key, List<String> value) async {
-    if (prefs == null) return;
-    try {
-      await prefs!.setStringList(key, value);
-    } catch (e) {
-      debugPrint('Error saving string list $key: $e');
-    }
+    await saveString(key, value.join('|||')); // Use delimiter
   }
 
   Future<List<String>?> getStringList(String key) async {
-    if (prefs == null) return null;
-    try {
-      return prefs!.getStringList(key);
-    } catch (e) {
-      debugPrint('Error getting string list $key: $e');
-      return null;
-    }
+    final str = await getString(key);
+    if (str == null || str.isEmpty) return null;
+    return str.split('|||');
   }
 
   // ==================== Delete & Clear Methods ====================
 
   Future<void> remove(String key) async {
-    if (prefs == null) return;
-    try {
-      await prefs!.remove(key);
-    } catch (e) {
-      debugPrint('Error removing $key: $e');
-    }
+    await removeSecure(key);
   }
 
   Future<void> clear() async {
-    if (prefs == null) return;
-    try {
-      await prefs!.clear();
-    } catch (e) {
-      debugPrint('Error clearing storage: $e');
-    }
+    await clearSecure();
   }
 
   // ==================== Utility Methods ====================
 
   Future<bool> containsKey(String key) async {
-    if (prefs == null) return false;
-    try {
-      return prefs!.containsKey(key);
-    } catch (e) {
-      debugPrint('Error checking key $key: $e');
-      return false;
-    }
+    final value = await getString(key);
+    return value != null;
   }
 
   Future<Set<String>> getAllKeys() async {
-    if (prefs == null) return {};
+    if (secureStorage == null) return {};
     try {
-      return prefs!.getKeys();
+      final all = await secureStorage!.readAll();
+      return all.keys.toSet();
     } catch (e) {
-      debugPrint('Error getting keys: $e');
+      debugPrint('Error getting all keys: $e');
       return {};
     }
   }

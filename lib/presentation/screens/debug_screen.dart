@@ -61,9 +61,9 @@ ${token != null && token.length > 30 ? '• Preview: ${token.substring(0, 30)}..
 💾 Storage Status:
 ━━━━━━━━━━━━━━━━━━━━━━━━
 • Storage Ready: ${StorageService.isReady ? '✅ YES' : '❌ NO'}
-• SharedPreferences: ${StorageService().prefs != null ? '✅ OK' : '❌ NULL'}
 • Secure Storage: ${StorageService().secureStorage != null ? '✅ OK' : '❌ NULL'}
-• iOS Keychain: Enabled
+• iOS Keychain: ${StorageService.isReady ? '✅ Active' : '❌ Inactive'}
+• Using: iOS Keychain ONLY (no SharedPreferences)
 ''';
     });
 
@@ -290,8 +290,7 @@ ${token != null && token.length > 30 ? '• Preview: ${token.substring(0, 30)}..
       
       if (StorageService.isReady) {
         _debugService.logSuccess('✅ Storage initialized successfully!');
-        _debugService.logSuccess('SharedPreferences: ${StorageService().prefs != null ? 'OK' : 'NULL'}');
-        _debugService.logSuccess('Secure Storage: ${StorageService().secureStorage != null ? 'OK' : 'NULL'}');
+        _debugService.logSuccess('Secure Storage (iOS Keychain): ${StorageService().secureStorage != null ? 'OK' : 'NULL'}');
       } else {
         _debugService.logError('❌ Storage init completed but not ready');
       }
