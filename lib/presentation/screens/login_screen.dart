@@ -883,77 +883,77 @@ class _LoginScreenState extends State<LoginScreen>
 
                                 const SizedBox(height: 32),
 
-                                // Divider with text
-                                Row(
-                                  children: [
-                                    const Expanded(child: Divider()),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                      ),
-                                      child: Text(
-                                        localizations.t('or_sign_in_with'),
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 12,
-                                          color: AppColors.textSecondary,
-                                          letterSpacing: -0.12,
-                                        ),
-                                      ),
-                                    ),
-                                    const Expanded(child: Divider()),
-                                  ],
-                                ),
+                                // Temporarily hidden: Divider with text
+                                // Row(
+                                //   children: [
+                                //     const Expanded(child: Divider()),
+                                //     Padding(
+                                //       padding: const EdgeInsets.symmetric(
+                                //         horizontal: 16,
+                                //       ),
+                                //       child: Text(
+                                //         localizations.t('or_sign_in_with'),
+                                //         style: GoogleFonts.poppins(
+                                //           fontSize: 12,
+                                //           color: AppColors.textSecondary,
+                                //           letterSpacing: -0.12,
+                                //         ),
+                                //       ),
+                                //     ),
+                                //     const Expanded(child: Divider()),
+                                //   ],
+                                // ),
 
-                                const SizedBox(height: 16),
+                                // const SizedBox(height: 16),
 
-                                // Google sign in button
-                                Container(
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: AppColors.secondaryLight,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppColors.secondaryLight
-                                            .withValues(alpha: 0.6),
-                                        blurRadius: 6,
-                                        offset: const Offset(0, -3),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      onTap: _isGoogleLoading || _isLoading
-                                          ? null
-                                          : _handleGoogleSignIn,
-                                      borderRadius: BorderRadius.circular(10),
-                                      child: Center(
-                                        child: _isGoogleLoading
-                                            ? const SizedBox(
-                                                width: 18,
-                                                height: 18,
-                                                child: CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                  valueColor:
-                                                      AlwaysStoppedAnimation<
-                                                        Color
-                                                      >(AppColors.primary),
-                                                ),
-                                              )
-                                            : SvgPicture.asset(
-                                                'assets/images/Google__G__logo.svg',
-                                                width: 18,
-                                                height: 18,
-                                              ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 24),
+                                // Temporarily hidden: Google sign in button
+                                // Container(
+                                //   height: 48,
+                                //   decoration: BoxDecoration(
+                                //     color: Colors.white,
+                                //     borderRadius: BorderRadius.circular(10),
+                                //     border: Border.all(
+                                //       color: AppColors.secondaryLight,
+                                //     ),
+                                //     boxShadow: [
+                                //       BoxShadow(
+                                //         color: AppColors.secondaryLight
+                                //             .withValues(alpha: 0.6),
+                                //         blurRadius: 6,
+                                //         offset: const Offset(0, -3),
+                                //       ),
+                                //     ],
+                                //   ),
+                                //   child: Material(
+                                //     color: Colors.transparent,
+                                //     child: InkWell(
+                                //       onTap: _isGoogleLoading || _isLoading
+                                //           ? null
+                                //           : _handleGoogleSignIn,
+                                //       borderRadius: BorderRadius.circular(10),
+                                //       child: Center(
+                                //         child: _isGoogleLoading
+                                //             ? const SizedBox(
+                                //                 width: 18,
+                                //                 height: 18,
+                                //                 child: CircularProgressIndicator(
+                                //                   strokeWidth: 2,
+                                //                   valueColor:
+                                //                       AlwaysStoppedAnimation<
+                                //                         Color
+                                //                       >(AppColors.primary),
+                                //                 ),
+                                //               )
+                                //             : SvgPicture.asset(
+                                //                 'assets/images/Google__G__logo.svg',
+                                //                 width: 18,
+                                //                 height: 18,
+                                //               ),
+                                //       ),
+                                //     ),
+                                //   ),
+                                // ),
+                                // const SizedBox(height: 24),
 
                                 // Sign up link
                                 Row(
