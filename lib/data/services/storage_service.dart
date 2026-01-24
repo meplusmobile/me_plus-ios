@@ -50,23 +50,35 @@ class StorageService {
   // ==================== Secure Storage Methods (for tokens/sensitive data) ====================
 
   Future<void> saveSecureString(String key, String value) async {
-    if (secureStorage == null) return;
+    if (secureStorage == null) {
+      debugPrint('❌ [saveSecureString] secureStorage is NULL!');
+      return;
+    }
     try {
+      debugPrint('🔐 [saveSecureString] Saving $key to iOS Keychain...');
       await secureStorage!.write(key: key, value: value);
-      debugPrint('✅ Saved to iOS Keychain: $key');
+      debugPrint('✅ [saveSecureString] Saved to iOS Keychain: $key (length: ${value.length})');
+      
+      // Immediate verification
+      final verify = await secureStorage!.read(key: key);
+      debugPrint('🧪 [saveSecureString] Verification read: ${verify != null ? "SUCCESS" : "FAILED"}');
     } catch (e) {
-      debugPrint('❌ Error saving to Keychain $key: $e');
+      debugPrint('❌ [saveSecureString] Error saving to Keychain $key: $e');
     }
   }
 
   Future<String?> getSecureString(String key) async {
-    if (secureStorage == null) return null;
+    if (secureStorage == null) {
+      debugPrint('❌ [getSecureString] secureStorage is NULL!');
+      return null;
+    }
     try {
+      debugPrint('🔍 [getSecureString] Reading $key from iOS Keychain...');
       final value = await secureStorage!.read(key: key);
-      debugPrint('📖 Read from iOS Keychain: $key = ${value != null ? "exists" : "null"}');
+      debugPrint('📖 [getSecureString] Read from iOS Keychain: $key = ${value != null ? "exists (length: ${value.length})" : "NULL"}');
       return value;
     } catch (e) {
-      debugPrint('❌ Error reading from Keychain $key: $e');
+      debugPrint('❌ [getSecureString] Error reading from Keychain $key: $e');
       return null;
     }
   }
