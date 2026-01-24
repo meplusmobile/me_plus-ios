@@ -16,23 +16,35 @@ class StorageService {
 
   /// Initialize SharedPreferences + Secure Storage - call this in main.dart before runApp
   static Future<void> init() async {
-    if (_initialized) return;
+    if (_initialized && _prefs != null && _secureStorage != null) {
+      debugPrint('✅ Storage already initialized');
+      return;
+    }
+    
     try {
+      debugPrint('🔄 Initializing SharedPreferences...');
       _prefs = await SharedPreferences.getInstance();
+      debugPrint('✅ SharedPreferences initialized: ${_prefs != null}');
       
       // Initialize secure storage with iOS Keychain configuration
+      debugPrint('🔄 Initializing FlutterSecureStorage...');
       const secureOptions = IOSOptions(
         accessibility: KeychainAccessibility.first_unlock,
       );
       _secureStorage = const FlutterSecureStorage(
         iOptions: secureOptions,
       );
+      debugPrint('✅ FlutterSecureStorage initialized: ${_secureStorage != null}');
       
       _initialized = true;
       debugPrint('✅ Storage initialized: SharedPreferences + iOS Keychain');
-    } catch (e) {
+      debugPrint('✅ Storage isReady: $isReady');
+    } catch (e, stackTrace) {
       debugPrint('❌ Storage init error: $e');
-      _initialized = true; // Mark as initialized to prevent loops
+      debugPrint('❌ Stack trace: $stackTrace');
+      // Don't mark as initialized if it failed
+      _initialized = false;
+      rethrow; // Re-throw so main.dart knows it failed
     }
   }
 

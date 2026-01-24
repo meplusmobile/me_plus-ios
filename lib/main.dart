@@ -20,13 +20,17 @@ void main() async {
   // Ensure Flutter binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Hive storage (with error handling)
+  // Initialize Storage (critical for token persistence)
+  debugPrint('🚀 App Starting...');
+  debugPrint('🔄 Initializing StorageService...');
   try {
     await StorageService.init();
-    debugPrint('✅ StorageService initialized');
-  } catch (e) {
-    debugPrint('❌ StorageService init failed: $e');
-    // Continue without storage - app will use defaults
+    debugPrint('✅ StorageService initialized successfully');
+    debugPrint('✅ Storage Ready: ${StorageService.isReady}');
+  } catch (e, stackTrace) {
+    debugPrint('❌ StorageService init FAILED: $e');
+    debugPrint('❌ Stack: $stackTrace');
+    // This is critical - without storage, tokens won't persist
   }
 
   // Set preferred orientations

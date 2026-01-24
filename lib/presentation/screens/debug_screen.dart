@@ -21,7 +21,21 @@ class _DebugScreenState extends State<DebugScreen> {
   @override
   void initState() {
     super.initState();
-    _loadDebugInfo();
+    _initStorage();
+  }
+
+  Future<void> _initStorage() async {
+    // Try to initialize storage if not ready
+    if (!StorageService.isReady) {
+      _debugService.logWarning('Storage not ready! Attempting to initialize...');
+      try {
+        await StorageService.init();
+        _debugService.logSuccess('Storage initialized successfully');
+      } catch (e) {
+        _debugService.logError('Storage init failed: $e');
+      }
+    }
+    await _loadDebugInfo();
   }
 
   Future<void> _loadDebugInfo() async {
@@ -115,25 +129,45 @@ ${token != null && token.length > 30 ? '• Preview: ${token.substring(0, 30)}..
                   ),
                 ),
                 const SizedBox(height: 8),
+                // First Row of Buttons
                 Row(
                   children: [
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: _testTokenStorage,
-                        icon: const Icon(Icons.play_arrow),
-                        label: const Text('Test Token'),
+                        icon: const Icon(Icons.play_arrow, size: 16),
+                        label: const Text('Test Token', style: TextStyle(fontSize: 12)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
                           foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 8),
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: ElevatedButton.icon(
+                        onPressed: _reinitStorage,
+                        icon: const Icon(Icons.refresh, size: 16),
+                        label: const Text('Init Storage', style: TextStyle(fontSize: 12)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // Second Row of Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
                         onPressed: _copyLogs,
-                        icon: const Icon(Icons.copy),
-                        label: const Text('Copy Logs'),
+                        icon: const Icon(Icons.copy, size: 16),
+                        label: const Text('Copy Logs', style: TextStyle(fontSize: 12)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           foregroundColor: Colors.white,
@@ -243,6 +277,26 @@ ${token != null && token.length > 30 ? '• Preview: ${token.substring(0, 30)}..
       _debugService.logSuccess('User is logged in');
     } else {
       _debugService.logError('User is NOT logged in');
+    }
+    
+    await _loadDebugInfo();
+  }
+
+  Future<void> _reinitStorage() async {
+    _debugService.logInfo('🔄 Re-initializing storage...');
+    
+    try {
+      await StorageService.init();
+      
+      if (StorageService.isReady) {
+        _debugService.logSuccess('✅ Storage initialized successfully!');
+        _debugService.logSuccess('SharedPreferences: ${StorageService().prefs != null ? 'OK' : 'NULL'}');
+        _debugService.logSuccess('Secure Storage: ${StorageService().secureStorage != null ? 'OK' : 'NULL'}');
+      } else {
+        _debugService.logError('❌ Storage init completed but not ready');
+      }
+    } catch (e) {
+      _debugService.logError('❌ Storage initialization failed: $e');
     }
     
     await _loadDebugInfo();
