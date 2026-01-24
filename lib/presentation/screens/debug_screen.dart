@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:me_plus/core/services/debug_log_service.dart';
 import 'package:me_plus/data/services/token_storage_service.dart';
 import 'package:me_plus/data/services/storage_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DebugScreen extends StatefulWidget {
   const DebugScreen({super.key});
@@ -165,6 +166,19 @@ ${token != null && token.length > 30 ? '• Preview: ${token.substring(0, 30)}..
                   children: [
                     Expanded(
                       child: ElevatedButton.icon(
+                        onPressed: _runFullDiagnostic,
+                        icon: const Icon(Icons.troubleshoot, size: 16),
+                        label: const Text('Full Diagnostic', style: TextStyle(fontSize: 12)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.purple,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton.icon(
                         onPressed: _copyLogs,
                         icon: const Icon(Icons.copy, size: 16),
                         label: const Text('Copy Logs', style: TextStyle(fontSize: 12)),
@@ -304,6 +318,114 @@ ${token != null && token.length > 30 ? '• Preview: ${token.substring(0, 30)}..
     } else {
       _debugService.logError('User is NOT logged in');
     }
+    
+    await _loadDebugInfo();
+  }
+
+  Future<void> _runFullDiagnostic() async {
+    _debugService.logInfo('🔬 ═══════════════════════════════════════');
+    _debugService.logInfo('🔬 RUNNING FULL DIAGNOSTIC');
+    _debugService.logInfo('🔬 ═══════════════════════════════════════');
+    
+    // Test 1: Memory Cache
+    _debugService.logInfo('');
+    _debugService.logInfo('📍 TEST 1: Memory Cache');
+    _debugService.logInfo('─────────────────────────────────────');
+    final tokenService = TokenStorageService();
+    // Force a fresh read to test retrieval
+    final token1 = await tokenService.getToken();
+    if (token1 != null) {
+      _debugService.logSuccess('✅ Token in Memory Cache: ${token1.substring(0, 30)}...');
+    } else {
+      _debugService.logError('❌ Token NOT in Memory Cache');
+    }
+    
+    // Test 2: SharedPreferences
+    _debugService.logInfo('');
+    _debugService.logInfo('📍 TEST 2: SharedPreferences');
+    _debugService.logInfo('─────────────────────────────────────');
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final backupToken = prefs.getString('backup_auth_token');
+      if (backupToken != null) {
+        _debugService.logSuccess('✅ Token in SharedPreferences: ${backupToken.substring(0, 30)}...');
+        _debugService.logInfo('   Length: ${backupToken.length}');
+      } else {
+        _debugService.logError('❌ Token NOT in SharedPreferences');
+      }
+      
+      // List all keys
+      final allKeys = prefs.getKeys();
+      _debugService.logInfo('   All SP keys: ${allKeys.join(', ')}');
+    } catch (e) {
+      _debugService.logError('❌ SharedPreferences error: $e');
+    }
+    
+    // Test 3: iOS Keychain
+    _debugService.logInfo('');
+    _debugService.logInfo('📍 TEST 3: iOS Keychain');
+    _debugService.logInfo('─────────────────────────────────────');
+    final storage = StorageService();
+    try {
+      // Direct keychain test
+      const testKey = '__diagnostic_test__';
+      const testValue = 'diagnostic_test_12345';
+      
+      await storage.saveSecureString(testKey, testValue);
+      await Future.delayed(const Duration(milliseconds: 300));
+      final readTest = await storage.getSecureString(testKey);
+      await storage.removeSecure(testKey);
+      
+      if (readTest == testValue) {
+        _debugService.logSuccess('✅ iOS Keychain: WORKING');
+      } else {
+        _debugService.logError('❌ iOS Keychain: BROKEN (read: ${readTest ?? 'NULL'})');
+      }
+      
+      // Check actual token in keychain
+      final keychainToken = await storage.getSecureString('auth_token');
+      if (keychainToken != null) {
+        _debugService.logSuccess('✅ Auth Token in Keychain: ${keychainToken.substring(0, 30)}...');
+        _debugService.logInfo('   Length: ${keychainToken.length}');
+      } else {
+        _debugService.logError('❌ Auth Token NOT in Keychain');
+      }
+    } catch (e) {
+      _debugService.logError('❌ Keychain test error: $e');
+    }
+    
+    // Test 4: Token Retrieval
+    _debugService.logInfo('');
+    _debugService.logInfo('📍 TEST 4: Token Retrieval via Service');
+    _debugService.logInfo('─────────────────────────────────────');
+    final finalToken = await tokenService.getToken();
+    if (finalToken != null) {
+      _debugService.logSuccess('✅ Final Token Retrieved: ${finalToken.substring(0, 30)}...');
+      _debugService.logInfo('   Length: ${finalToken.length}');
+    } else {
+      _debugService.logError('❌ Final Token: NULL');
+    }
+    
+    // Test 5: Login Status
+    _debugService.logInfo('');
+    _debugService.logInfo('📍 TEST 5: Login Status');
+    _debugService.logInfo('─────────────────────────────────────');
+    final isLoggedIn = await tokenService.isLoggedIn();
+    final userId = await tokenService.getUserId();
+    final userEmail = await tokenService.getUserEmail();
+    
+    if (isLoggedIn) {
+      _debugService.logSuccess('✅ User is LOGGED IN');
+      _debugService.logInfo('   User ID: $userId');
+      _debugService.logInfo('   Email: $userEmail');
+    } else {
+      _debugService.logError('❌ User is NOT LOGGED IN');
+    }
+    
+    _debugService.logInfo('');
+    _debugService.logInfo('═══════════════════════════════════════');
+    _debugService.logInfo('🔬 DIAGNOSTIC COMPLETE');
+    _debugService.logInfo('═══════════════════════════════════════');
     
     await _loadDebugInfo();
   }
