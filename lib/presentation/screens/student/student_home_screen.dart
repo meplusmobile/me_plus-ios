@@ -101,16 +101,12 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                               ),
                             )
                           : SingleChildScrollView(
-                              child: LayoutBuilder(
-                                builder: (context, constraints) {
-                                  return Column(
-                                    children: [
-                                      _buildHeader(profileProvider),
-                                      const SizedBox(height: 16),
-                                      _buildMainContent(),
-                                    ],
-                                  );
-                                },
+                              child: Column(
+                                children: [
+                                  _buildHeader(profileProvider),
+                                  const SizedBox(height: 16),
+                                  _buildMainContent(),
+                                ],
                               ),
                             ),
                     ),

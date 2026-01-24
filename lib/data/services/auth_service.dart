@@ -42,8 +42,6 @@ class AuthService {
 
   /// Handle HTTP response
   dynamic _handleResponse(http.Response response, {String operation = 'Request'}) {
-    debugPrint('✅ [$operation] Status: ${response.statusCode}');
-    
     if (response.statusCode >= 200 && response.statusCode < 300) {
       if (response.body.isEmpty) return null;
       return jsonDecode(response.body);
@@ -63,9 +61,7 @@ class AuthService {
     }
   }
 
-  // ==================== Login ====================
   Future<AuthResponse> login(LoginRequest request) async {
-    debugPrint('🔐 [Login] Starting...');
     _debugLog.logInfo('Login: Starting...');
     final url = '${ApiConstants.baseUrl}${ApiConstants.login}';
 
@@ -89,39 +85,9 @@ class AuthService {
         isFirstTimeUser: authResponse.isFirstTimeUser,
       );
 
-      debugPrint('═══════════════════════════════════════');
-      debugPrint('🧪 [Login] IMMEDIATE TOKEN VERIFICATION');
-      debugPrint('═══════════════════════════════════════');
-      
-      // CRITICAL TEST: Verify token was actually saved and can be retrieved
-      // With in-memory cache AND singleton, this should ALWAYS work!
-      debugPrint('🧪 Calling getToken() immediately...');
-      final testToken = await _tokenStorage.getToken();
-      debugPrint('🧪 Result: ${testToken != null ? 'GOT TOKEN' : 'NULL'}');
-      
-      if (testToken == null) {
-        debugPrint('🚨🚨🚨 [Login] CRITICAL: Token is NULL after save!');
-        debugPrint('🚨 This should NEVER happen with Singleton + Memory Cache!');
-        _debugLog.logError('CRITICAL: Token NULL after save!');
-      } else if (testToken == authResponse.token) {
-        debugPrint('✅✅✅ [Login] Token verified successfully!');
-        debugPrint('   Preview: ${testToken.substring(0, 30)}...');
-        debugPrint('   Length: ${testToken.length}');
-        debugPrint('   Singleton: ${identical(_tokenStorage, TokenStorageService())}');
-        _debugLog.logSuccess('✅✅✅ LOGIN SUCCESS - Token verified!');
-      } else {
-        debugPrint('⚠️⚠️⚠️ [Login] Token MISMATCH!');
-        debugPrint('   Expected length: ${authResponse.token.length}');
-        debugPrint('   Got length: ${testToken.length}');
-        _debugLog.logError('Token mismatch! Saved != Retrieved');
-      }
-      
-      debugPrint('═══════════════════════════════════════\n');
       _debugLog.logSuccess('Login successful! Token saved to iOS Keychain');
-      debugPrint('✅ [Login] Success!');
       return authResponse;
     } catch (e) {
-      debugPrint('❌ [Login] Error: $e');
       if (e.toString().contains('TimeoutException')) {
         throw Exception('Connection timeout. Please try again.');
       }
@@ -131,7 +97,6 @@ class AuthService {
 
   // ==================== Signup ====================
   Future<AuthResponse> signup(SignupRequest request) async {
-    debugPrint('📝 [Signup] Starting...');
     final url = '${ApiConstants.baseUrl}${ApiConstants.signup}';
 
     try {
@@ -153,10 +118,8 @@ class AuthService {
         isFirstTimeUser: authResponse.isFirstTimeUser,
       );
 
-      debugPrint('✅ [Signup] Success!');
       return authResponse;
     } catch (e) {
-      debugPrint('❌ [Signup] Error: $e');
       if (e.toString().contains('TimeoutException')) {
         throw Exception('Connection timeout. Please try again.');
       }
@@ -166,8 +129,6 @@ class AuthService {
 
   // ==================== Refresh Token ====================
   Future<AuthResponse> refreshToken() async {
-    debugPrint('🔄 [RefreshToken] Starting...');
-    
     final refreshTokenValue = await _tokenStorage.getRefreshToken();
     final userId = await _tokenStorage.getUserId();
 
@@ -199,10 +160,8 @@ class AuthService {
         isFirstTimeUser: authResponse.isFirstTimeUser,
       );
 
-      debugPrint('✅ [RefreshToken] Success!');
       return authResponse;
     } catch (e) {
-      debugPrint('❌ [RefreshToken] Error: $e');
       rethrow;
     }
   }
@@ -226,7 +185,6 @@ class AuthService {
 
   // ==================== Schools ====================
   Future<List<School>> getSchools() async {
-    debugPrint('🏫 [GetSchools] Fetching...');
     final url = '${ApiConstants.baseUrl}${ApiConstants.schools}';
 
     try {
@@ -242,14 +200,12 @@ class AuthService {
       }
       return [];
     } catch (e) {
-      debugPrint('❌ [GetSchools] Error: $e');
       rethrow;
     }
   }
 
   // ==================== Classes ====================
   Future<List<ClassModel>> getClassesBySchool(int schoolId) async {
-    debugPrint('📚 [GetClasses] Fetching for school $schoolId...');
     final url = '${ApiConstants.baseUrl}/api/schools/$schoolId/classes';
 
     try {
@@ -265,7 +221,6 @@ class AuthService {
       }
       return [];
     } catch (e) {
-      debugPrint('❌ [GetClasses] Error: $e');
       rethrow;
     }
   }
@@ -275,7 +230,6 @@ class AuthService {
     required String schoolId,
     required String classId,
   }) async {
-    debugPrint('📨 [StudentRequest] Submitting...');
     final url = '${ApiConstants.baseUrl}/student_requests';
 
     try {
@@ -289,16 +243,13 @@ class AuthService {
       ).timeout(_timeout);
 
       _handleResponse(response, operation: 'StudentRequest');
-      debugPrint('✅ [StudentRequest] Success!');
     } catch (e) {
-      debugPrint('❌ [StudentRequest] Error: $e');
       rethrow;
     }
   }
 
   // ==================== Profile ====================
   Future<UserProfile> getProfile() async {
-    debugPrint('👤 [GetProfile] Fetching...');
     final url = '${ApiConstants.baseUrl}${ApiConstants.profile}';
 
     try {
@@ -310,13 +261,11 @@ class AuthService {
       final data = _handleResponse(response, operation: 'GetProfile');
       return UserProfile.fromJson(data);
     } catch (e) {
-      debugPrint('❌ [GetProfile] Error: $e');
       rethrow;
     }
   }
 
   Future<void> updateProfile(Map<String, dynamic> data) async {
-    debugPrint('✏️ [UpdateProfile] Updating...');
     final url = '${ApiConstants.baseUrl}${ApiConstants.updateProfile}';
 
     try {
@@ -327,16 +276,13 @@ class AuthService {
       ).timeout(_timeout);
 
       _handleResponse(response, operation: 'UpdateProfile');
-      debugPrint('✅ [UpdateProfile] Success!');
     } catch (e) {
-      debugPrint('❌ [UpdateProfile] Error: $e');
       rethrow;
     }
   }
 
   // ==================== Forgot Password ====================
   Future<String> forgotPassword(String email) async {
-    debugPrint('🔑 [ForgotPassword] Sending reset email...');
     final url = '${ApiConstants.baseUrl}${ApiConstants.forgetPassword}';
 
     try {
@@ -349,14 +295,12 @@ class AuthService {
       final data = _handleResponse(response, operation: 'ForgotPassword');
       return data.toString();
     } catch (e) {
-      debugPrint('❌ [ForgotPassword] Error: $e');
       rethrow;
     }
   }
 
   // ==================== Validate Reset Code ====================
   Future<bool> validateResetCode(String email, String code) async {
-    debugPrint('🔢 [ValidateCode] Validating...');
     final url = '${ApiConstants.baseUrl}${ApiConstants.validateResetCode}';
 
     try {
@@ -368,14 +312,12 @@ class AuthService {
 
       return response.statusCode == 200;
     } catch (e) {
-      debugPrint('❌ [ValidateCode] Error: $e');
       rethrow;
     }
   }
 
   // ==================== Reset Password ====================
   Future<String> resetPassword(String email, String code, String newPassword) async {
-    debugPrint('🔐 [ResetPassword] Resetting...');
     final url = '${ApiConstants.baseUrl}${ApiConstants.resetPassword}';
 
     try {
@@ -392,14 +334,12 @@ class AuthService {
       final data = _handleResponse(response, operation: 'ResetPassword');
       return data.toString();
     } catch (e) {
-      debugPrint('❌ [ResetPassword] Error: $e');
       rethrow;
     }
   }
 
   // ==================== Change Password ====================
   Future<void> changePassword(String oldPassword, String newPassword) async {
-    debugPrint('🔒 [ChangePassword] Changing...');
     final url = '${ApiConstants.baseUrl}${ApiConstants.changePassword}';
 
     try {
@@ -413,9 +353,7 @@ class AuthService {
       ).timeout(_timeout);
 
       _handleResponse(response, operation: 'ChangePassword');
-      debugPrint('✅ [ChangePassword] Success!');
     } catch (e) {
-      debugPrint('❌ [ChangePassword] Error: $e');
       rethrow;
     }
   }
@@ -436,7 +374,6 @@ class AuthService {
 
   // ==================== Parent Request ====================
   Future<void> submitParentRequest({required List<String> emails}) async {
-    debugPrint('👨‍👧 [ParentRequest] Submitting...');
     final url = '${ApiConstants.baseUrl}/parent_requests';
 
     try {
@@ -447,9 +384,7 @@ class AuthService {
       ).timeout(_timeout);
 
       _handleResponse(response, operation: 'ParentRequest');
-      debugPrint('✅ [ParentRequest] Success!');
     } catch (e) {
-      debugPrint('❌ [ParentRequest] Error: $e');
       rethrow;
     }
   }
