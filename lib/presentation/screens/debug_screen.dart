@@ -259,6 +259,32 @@ ${token != null && token.length > 30 ? '• Preview: ${token.substring(0, 30)}..
   Future<void> _testTokenStorage() async {
     _debugService.logInfo('Starting token storage test...');
     
+    // Test 1: Save a test token directly to Keychain
+    _debugService.logInfo('🧪 Test 1: Saving test token to iOS Keychain...');
+    final storage = StorageService();
+    try {
+      await storage.saveSecureString('test_token', 'my_test_token_12345');
+      _debugService.logSuccess('Test token saved');
+      
+      // Test 2: Retrieve it immediately
+      _debugService.logInfo('🧪 Test 2: Retrieving test token from iOS Keychain...');
+      final retrieved = await storage.getSecureString('test_token');
+      if (retrieved == 'my_test_token_12345') {
+        _debugService.logSuccess('✅ iOS Keychain WORKS! Token retrieved successfully!');
+      } else if (retrieved == null) {
+        _debugService.logError('❌ iOS Keychain FAILED! Retrieved NULL');
+      } else {
+        _debugService.logError('❌ iOS Keychain MISMATCH! Got: $retrieved');
+      }
+      
+      // Clean up test
+      await storage.removeSecure('test_token');
+      _debugService.logInfo('Test token removed');
+    } catch (e) {
+      _debugService.logError('iOS Keychain test error: $e');
+    }
+    
+    // Test 3: Check actual auth token
     final token = await _tokenStorage.getToken();
     _debugService.logToken(token);
     
