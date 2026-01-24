@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:me_plus/core/constants/api_constants.dart';
 import 'package:me_plus/data/services/token_storage_service.dart';
+import 'package:me_plus/core/services/debug_log_service.dart';
 import 'package:me_plus/data/models/student_profile.dart';
 import 'package:me_plus/data/models/behavior_model.dart';
 import 'package:me_plus/data/models/behavior_streak_model.dart';
@@ -14,12 +15,24 @@ class StudentRepository {
   final TokenStorageService _tokenStorage = TokenStorageService();
   final TranslationService _translationService = TranslationService();
   final http.Client _client = http.Client();
+  final DebugLogService _debugLog = DebugLogService();
   
   static const Duration _timeout = Duration(seconds: 20);
 
   /// Get headers with Bearer token - Same pattern as AuthService
   Future<Map<String, String>> _getHeaders() async {
     final token = await _tokenStorage.getToken();
+    
+    // Log to UI debug screen
+    _debugLog.logToken(token);
+    debugPrint('🔑 [StudentRepo] Token from iOS Keychain: ${token != null ? 'EXISTS' : 'NULL'}');
+    if (token != null && token.length > 20) {
+      debugPrint('🔑 [StudentRepo] Token preview: ${token.substring(0, 20)}... (length: ${token.length})');
+    } else {
+      debugPrint('🚨 [StudentRepo] WARNING: Token is null or too short: $token');
+      _debugLog.logError('Token is null or invalid');
+    }
+    
     return {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -30,6 +43,7 @@ class StudentRepository {
   /// Handle HTTP response - Same pattern as AuthService
   dynamic _handleResponse(http.Response response, {String operation = 'Request'}) {
     debugPrint('📡 [$operation] Status: ${response.statusCode}');
+    _debugLog.logApiCall(operation, response.statusCode);
     
     if (response.statusCode >= 200 && response.statusCode < 300) {
       if (response.body.isEmpty) return null;
@@ -55,8 +69,14 @@ class StudentRepository {
 
   // ==================== Profile ====================
   Future<StudentProfile> getProfile() async {
+    debugPrint('📱 [GetProfile] Starting...');
+    _debugLog.logInfo('GetProfile: Starting API call...');
     final url = '${ApiConstants.baseUrl}/api/me';
     final headers = await _getHeaders();
+    
+    debugPrint('📡 [GetProfile] URL: $url');
+    debugPrint('📡 [GetProfile] Headers: $headers');
+    _debugLog.logInfo('GetProfile: URL = /api/me');
     
     final response = await _client.get(
       Uri.parse(url),

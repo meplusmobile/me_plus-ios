@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:me_plus/core/constants/api_constants.dart';
 import 'package:me_plus/data/models/auth_response.dart';
+import 'package:me_plus/core/services/debug_log_service.dart';
 import 'package:me_plus/data/models/signup_request.dart';
 import 'package:me_plus/data/models/login_request.dart';
 import 'package:me_plus/data/models/user_profile.dart';
@@ -15,6 +16,7 @@ import 'package:me_plus/data/services/token_storage_service.dart';
 class AuthService {
   final TokenStorageService _tokenStorage;
   final http.Client _client = http.Client();
+  final DebugLogService _debugLog = DebugLogService();
   
   static const Duration _timeout = Duration(seconds: 15);
 
@@ -64,6 +66,7 @@ class AuthService {
   // ==================== Login ====================
   Future<AuthResponse> login(LoginRequest request) async {
     debugPrint('🔐 [Login] Starting...');
+    _debugLog.logInfo('Login: Starting...');
     final url = '${ApiConstants.baseUrl}${ApiConstants.login}';
 
     try {
@@ -73,6 +76,7 @@ class AuthService {
         body: jsonEncode(request.toJson()),
       ).timeout(_timeout);
 
+      _debugLog.logApiCall('Login', response.statusCode);
       final data = _handleResponse(response, operation: 'Login');
       final authResponse = AuthResponse.fromJson(data);
 
@@ -85,6 +89,7 @@ class AuthService {
         isFirstTimeUser: authResponse.isFirstTimeUser,
       );
 
+      _debugLog.logSuccess('Login successful! Token saved to iOS Keychain');
       debugPrint('✅ [Login] Success!');
       return authResponse;
     } catch (e) {

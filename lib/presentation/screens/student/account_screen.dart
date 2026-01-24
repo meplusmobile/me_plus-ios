@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:me_plus/presentation/providers/profile_provider.dart';
 import 'package:me_plus/core/localization/app_localizations.dart';
 import 'package:me_plus/core/utils/image_picker_helper.dart';
+import 'package:me_plus/presentation/screens/debug_screen.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -212,7 +213,21 @@ class _AccountScreenState extends State<AccountScreen> {
               ),
             ),
           ),
-          const SizedBox(width: 48), // Balance the back button
+          // Debug Button
+          GestureDetector(
+            onLongPress: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const DebugScreen()),
+              );
+            },
+            child: const Icon(
+              Icons.bug_report,
+              color: Colors.black12,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 8),
         ],
       ),
     );

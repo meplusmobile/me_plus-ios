@@ -109,8 +109,17 @@ class _LoginScreenState extends State<LoginScreen>
 
       if (!mounted) return;
 
-      // Save Remember Me credentials
+      // CRITICAL iOS DEBUG: Verify token was saved to Keychain
       final tokenStorage = TokenStorageService();
+      await tokenStorage.debugTokenStorage();
+      
+      final savedToken = await tokenStorage.getToken();
+      debugPrint('🔐 [Login] Token saved to iOS Keychain: ${savedToken != null}');
+      if (savedToken != null && savedToken.length > 20) {
+        debugPrint('🔐 [Login] Token preview: ${savedToken.substring(0, 20)}...');
+      }
+
+      // Save Remember Me credentials
       await tokenStorage.saveRememberMe(
         rememberMe: _rememberMe,
         email: _rememberMe ? _emailController.text : null,
