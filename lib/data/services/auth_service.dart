@@ -89,22 +89,34 @@ class AuthService {
         isFirstTimeUser: authResponse.isFirstTimeUser,
       );
 
+      debugPrint('═══════════════════════════════════════');
+      debugPrint('🧪 [Login] IMMEDIATE TOKEN VERIFICATION');
+      debugPrint('═══════════════════════════════════════');
+      
       // CRITICAL TEST: Verify token was actually saved and can be retrieved
-      // With in-memory cache, this should be instant!
-      debugPrint('🧪 [Login] Verifying token immediately after save...');
+      // With in-memory cache AND singleton, this should ALWAYS work!
+      debugPrint('🧪 Calling getToken() immediately...');
       final testToken = await _tokenStorage.getToken();
+      debugPrint('🧪 Result: ${testToken != null ? 'GOT TOKEN' : 'NULL'}');
       
       if (testToken == null) {
-        debugPrint('🚨 [Login] CRITICAL: Token is NULL after save!');
+        debugPrint('🚨🚨🚨 [Login] CRITICAL: Token is NULL after save!');
+        debugPrint('🚨 This should NEVER happen with Singleton + Memory Cache!');
         _debugLog.logError('CRITICAL: Token NULL after save!');
       } else if (testToken == authResponse.token) {
-        debugPrint('✅✅✅ [Login] Token verified: ${testToken.substring(0, 20)}... (length: ${testToken.length})');
+        debugPrint('✅✅✅ [Login] Token verified successfully!');
+        debugPrint('   Preview: ${testToken.substring(0, 30)}...');
+        debugPrint('   Length: ${testToken.length}');
+        debugPrint('   Singleton: ${identical(_tokenStorage, TokenStorageService())}');
         _debugLog.logSuccess('✅✅✅ LOGIN SUCCESS - Token verified!');
       } else {
-        debugPrint('⚠️ [Login] Token mismatch! Length: ${testToken.length} vs ${authResponse.token.length}');
+        debugPrint('⚠️⚠️⚠️ [Login] Token MISMATCH!');
+        debugPrint('   Expected length: ${authResponse.token.length}');
+        debugPrint('   Got length: ${testToken.length}');
         _debugLog.logError('Token mismatch! Saved != Retrieved');
       }
-
+      
+      debugPrint('═══════════════════════════════════════\n');
       _debugLog.logSuccess('Login successful! Token saved to iOS Keychain');
       debugPrint('✅ [Login] Success!');
       return authResponse;

@@ -10,6 +10,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// 3. iOS Keychain (Primary secure storage)
 /// ═══════════════════════════════════════════════════════════════
 class TokenStorageService {
+  // ═══════════════════════════════════════════════════════════════
+  // SINGLETON PATTERN - CRITICAL FOR MEMORY CACHE PERSISTENCE!
+  // ═══════════════════════════════════════════════════════════════
+  static final TokenStorageService _instance = TokenStorageService._internal();
+  factory TokenStorageService() => _instance;
+  TokenStorageService._internal();
+  
   static const String _tokenKey = 'auth_token';
   static const String _refreshTokenKey = 'refresh_token';
   static const String _userIdKey = 'user_id';
@@ -103,10 +110,14 @@ class TokenStorageService {
     // STEP 1: Memory Cache (Instant)
     // ═══════════════════════════════════════
     debugPrint('\n📍 STEP 1: Saving to Memory Cache...');
+    debugPrint('  🔍 Before: _cachedAccessToken = ${_cachedAccessToken != null ? 'EXISTS' : 'NULL'}');
     _cachedAccessToken = token;
     _cachedRefreshToken = refreshToken;
     debugPrint('  ✅ Memory cache updated');
+    debugPrint('  🔍 After: _cachedAccessToken = ${_cachedAccessToken != null ? 'EXISTS' : 'NULL'}');
     debugPrint('  ✅ Can read from cache: ${_cachedAccessToken != null}');
+    debugPrint('  ✅ Singleton instance: ${identical(this, TokenStorageService())}');
+    debugPrint('  ✅ Cache value matches: ${_cachedAccessToken == token}');
     
     // ═══════════════════════════════════════
     // STEP 2: SharedPreferences (Backup)
@@ -179,15 +190,18 @@ class TokenStorageService {
     debugPrint('\n🔍 ═══════════════════════════════════════');
     debugPrint('🔍 RETRIEVING ACCESS TOKEN');
     debugPrint('🔍 ═══════════════════════════════════════');
+    debugPrint('🔍 Singleton instance: ${identical(this, TokenStorageService())}');
+    debugPrint('🔍 Cache state: ${_cachedAccessToken != null ? 'HAS DATA' : 'EMPTY'}');
     
     // Try Level 1: Memory Cache (Instant)
     if (_cachedAccessToken != null) {
       debugPrint('✅ LEVEL 1: Found in Memory Cache (instant)');
       debugPrint('   Token preview: ${_cachedAccessToken!.substring(0, 30)}...');
+      debugPrint('   Token length: ${_cachedAccessToken!.length}');
       debugPrint('═══════════════════════════════════════\n');
       return _cachedAccessToken;
     }
-    debugPrint('❌ LEVEL 1: Not in Memory Cache');
+    debugPrint('❌ LEVEL 1: Not in Memory Cache (_cachedAccessToken is NULL)');
     
     // Try Level 2: SharedPreferences (Backup)
     try {
