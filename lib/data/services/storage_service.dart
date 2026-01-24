@@ -23,10 +23,10 @@ class StorageService {
     try {
       // Initialize secure storage with iOS Keychain configuration
       debugPrint('🔄 Initializing FlutterSecureStorage (iOS Keychain)...');
-      const secureOptions = IOSOptions(
+      final secureOptions = IOSOptions(
         accessibility: KeychainAccessibility.first_unlock,
       );
-      _secureStorage = const FlutterSecureStorage(
+      _secureStorage = FlutterSecureStorage(
         iOptions: secureOptions,
       );
       debugPrint('✅ FlutterSecureStorage initialized: ${_secureStorage != null}');
