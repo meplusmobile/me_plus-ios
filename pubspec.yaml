@@ -53,8 +53,8 @@ dependencies:
   # Image picker for profile picture
   image_picker: ^1.0.7
 
-  # Local storage - SharedPreferences works perfectly on iOS
-  shared_preferences: ^2.2.2
+  # Local storage - Using older stable version for iOS compatibility
+  shared_preferences: ^2.0.15
   path_provider: ^2.1.1
   
   # Secure storage for tokens using iOS Keychain
