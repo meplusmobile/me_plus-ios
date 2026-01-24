@@ -23,13 +23,29 @@ class StorageService {
     try {
       // Initialize secure storage with iOS Keychain configuration
       debugPrint('🔄 Initializing FlutterSecureStorage (iOS Keychain)...');
-      final secureOptions = IOSOptions(
-        accessibility: KeychainAccessibility.first_unlock,
-      );
+      
+      // Use unlocked accessibility for better iOS compatibility
       _secureStorage = FlutterSecureStorage(
-        iOptions: secureOptions,
+        iOptions: IOSOptions(
+          accessibility: KeychainAccessibility.unlocked,
+          accountName: 'com.meplus.mobileapp',
+        ),
+        aOptions: AndroidOptions(
+          encryptedSharedPreferences: true,
+        ),
       );
+      
       debugPrint('✅ FlutterSecureStorage initialized: ${_secureStorage != null}');
+      
+      // Test write/read to verify it works
+      try {
+        await _secureStorage!.write(key: '__test__', value: 'test');
+        final testRead = await _secureStorage!.read(key: '__test__');
+        await _secureStorage!.delete(key: '__test__');
+        debugPrint('✅ Keychain test: ${testRead == 'test' ? 'PASSED' : 'FAILED'}');
+      } catch (e) {
+        debugPrint('⚠️ Keychain test error: $e');
+      }
       
       _initialized = true;
       debugPrint('✅ Storage initialized: iOS Keychain ONLY');
@@ -50,35 +66,48 @@ class StorageService {
   // ==================== Secure Storage Methods (for tokens/sensitive data) ====================
 
   Future<void> saveSecureString(String key, String value) async {
-    if (secureStorage == null) {
-      debugPrint('❌ [saveSecureString] secureStorage is NULL!');
+    if (!_initialized || secureStorage == null) {
+      debugPrint('❌ [saveSecureString] Storage not ready! init: $_initialized, storage: ${secureStorage != null}');
       return;
     }
     try {
       debugPrint('🔐 [saveSecureString] Saving $key to iOS Keychain...');
       await secureStorage!.write(key: key, value: value);
-      debugPrint('✅ [saveSecureString] Saved to iOS Keychain: $key (length: ${value.length})');
+      debugPrint('✅ [saveSecureString] Write complete: $key (length: ${value.length})');
       
-      // Immediate verification
+      // Add small delay to ensure iOS Keychain commits
+      await Future.delayed(const Duration(milliseconds: 100));
+      
+      // Verify the write
       final verify = await secureStorage!.read(key: key);
-      debugPrint('🧪 [saveSecureString] Verification read: ${verify != null ? "SUCCESS" : "FAILED"}');
-    } catch (e) {
-      debugPrint('❌ [saveSecureString] Error saving to Keychain $key: $e');
+      if (verify == value) {
+        debugPrint('🧪 [saveSecureString] ✅ Verification SUCCESS');
+      } else {
+        debugPrint('🧪 [saveSecureString] ❌ Verification FAILED: ${verify == null ? 'NULL' : 'MISMATCH'}');
+      }
+    } catch (e, stackTrace) {
+      debugPrint('❌ [saveSecureString] Error: $e');
+      debugPrint('❌ Stack: $stackTrace');
     }
   }
 
   Future<String?> getSecureString(String key) async {
-    if (secureStorage == null) {
-      debugPrint('❌ [getSecureString] secureStorage is NULL!');
+    if (!_initialized || secureStorage == null) {
+      debugPrint('❌ [getSecureString] Storage not ready! init: $_initialized, storage: ${secureStorage != null}');
       return null;
     }
     try {
       debugPrint('🔍 [getSecureString] Reading $key from iOS Keychain...');
       final value = await secureStorage!.read(key: key);
-      debugPrint('📖 [getSecureString] Read from iOS Keychain: $key = ${value != null ? "exists (length: ${value.length})" : "NULL"}');
+      if (value != null) {
+        debugPrint('📖 [getSecureString] ✅ Found: $key (length: ${value.length})');
+      } else {
+        debugPrint('📖 [getSecureString] ❌ NULL: $key');
+      }
       return value;
-    } catch (e) {
-      debugPrint('❌ [getSecureString] Error reading from Keychain $key: $e');
+    } catch (e, stackTrace) {
+      debugPrint('❌ [getSecureString] Error: $e');
+      debugPrint('❌ Stack: $stackTrace');
       return null;
     }
   }

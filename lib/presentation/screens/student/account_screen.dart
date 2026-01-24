@@ -27,9 +27,9 @@ class _AccountScreenState extends State<AccountScreen> {
   final _schoolController = TextEditingController();
   final _gradeController = TextEditingController();
   bool _obscurePassword = true;
-  bool _isPasswordEmpty = true;
   File? _selectedImage;
   String? _initialCountryCode;
+  // ignore: unused_field
   String? _fullPhoneNumber;
 
   @override
