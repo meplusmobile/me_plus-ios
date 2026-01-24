@@ -9,7 +9,6 @@ import 'package:me_plus/data/models/activity_model.dart';
 import 'package:me_plus/data/models/store_model.dart';
 import 'package:me_plus/core/localization/app_localizations.dart';
 import 'package:me_plus/core/services/prefetch_service.dart';
-import 'package:me_plus/presentation/screens/debug_screen.dart';
 
 class StudentHomeScreen extends StatefulWidget {
   const StudentHomeScreen({super.key});
@@ -101,12 +100,16 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                               ),
                             )
                           : SingleChildScrollView(
-                              child: Column(
-                                children: [
-                                  _buildHeader(profileProvider),
-                                  const SizedBox(height: 16),
-                                  _buildMainContent(),
-                                ],
+                              child: LayoutBuilder(
+                                builder: (context, constraints) {
+                                  return Column(
+                                    children: [
+                                      _buildHeader(profileProvider),
+                                      const SizedBox(height: 16),
+                                      _buildMainContent(),
+                                    ],
+                                  );
+                                },
                               ),
                             ),
                     ),
@@ -127,20 +130,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Debug Button (Floating Bug Icon)
-          GestureDetector(
-            onLongPress: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const DebugScreen()),
-              );
-            },
-            child: const Icon(
-              Icons.bug_report,
-              color: Colors.white24,
-              size: 20,
-            ),
-          ),
+          const SizedBox(width: 20),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

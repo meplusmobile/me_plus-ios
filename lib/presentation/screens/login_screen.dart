@@ -338,46 +338,43 @@ class _LoginScreenState extends State<LoginScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Positioned(
-              top: -180,
-              left: 0,
-              right: 0,
-              child: Image.network(
-                'https://c.animaapp.com/mhqrlq9bisClG6/img/blur.png',
-                height: 430,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  height: 430,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.orange.withValues(alpha: 0.1),
-                        Colors.blue.withValues(alpha: 0.1),
-                      ],
-                    ),
+      body: Stack(
+        children: [
+          // Background Image
+          Positioned.fill(
+            child: Image.network(
+              'https://c.animaapp.com/mhqrlq9bisClG6/img/blur.png',
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.orange.withValues(alpha: 0.1),
+                      Colors.blue.withValues(alpha: 0.1),
+                    ],
                   ),
                 ),
               ),
             ),
+          ),
 
-            Positioned(
-              bottom: -80,
-              left: 0,
-              right: 0,
-              child: Image.asset(
-                'assets/images/bottombackgroundloginpage.png',
-                fit: BoxFit.cover,
-                alignment: Alignment.bottomCenter,
-              ),
+          // Bottom decoration
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Image.asset(
+              'assets/images/bottombackgroundloginpage.png',
+              fit: BoxFit.cover,
+              alignment: Alignment.bottomCenter,
             ),
+          ),
 
-            // Main content
-            SingleChildScrollView(
+          // Main content
+          SafeArea(
+            child: SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: Column(
@@ -723,8 +720,8 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -55,6 +55,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
             purchase.pointsSpent >= _costRange.start &&
             purchase.pointsSpent <= _costRange.end;
 
+        // Status Filter
         bool matchesStatus = true;
         final String status = purchase.status.toLowerCase();
 
@@ -77,6 +78,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
           }
         }
 
+        // Reward Type Filter
         bool matchesType = true;
         if (_rewardTypeFilter != 'All') {
           final String nameLower = purchase.rewardName.toLowerCase();
@@ -156,6 +158,7 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
       listen: false,
     );
 
+    // Load profile first if not loaded
     if (!profileProvider.hasProfile) {
       await profileProvider.loadProfile();
     }
