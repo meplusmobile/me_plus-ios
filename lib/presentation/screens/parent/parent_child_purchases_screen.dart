@@ -66,6 +66,7 @@ class _ParentChildPurchasesScreenState
   }
 
   void _parseSelectedMonth() {
+    // Parse the selected month from widget parameter or use current month
     if (widget.selectedMonth != null) {
       try {
         final parts = widget.selectedMonth!.split('-');

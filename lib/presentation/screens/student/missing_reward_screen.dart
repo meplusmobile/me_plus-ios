@@ -31,7 +31,7 @@ class _MissingRewardScreenState extends State<MissingRewardScreen> {
     });
   }
 
-  Future<void> _loadPurchases({int retryCount = 0}) async {
+  Future<void> _loadPurchases() async {
     if (!mounted) return;
 
     final profileProvider = Provider.of<ProfileProvider>(
@@ -39,6 +39,7 @@ class _MissingRewardScreenState extends State<MissingRewardScreen> {
       listen: false,
     );
 
+    // Load profile first if not loaded
     if (!profileProvider.hasProfile) {
       await profileProvider.loadProfile();
     }
@@ -48,7 +49,7 @@ class _MissingRewardScreenState extends State<MissingRewardScreen> {
         profileProvider.studentId == null) {
       if (mounted) {
         setState(() {
-          _error = 'بيانات الطالب غير كاملة. يرجى المحاولة لاحقاً.';
+          _error = AppLocalizations.of(context)!.t('unable_to_load_purchases');
           _isLoading = false;
         });
       }
@@ -80,59 +81,13 @@ class _MissingRewardScreenState extends State<MissingRewardScreen> {
         });
       }
     } catch (e) {
-      debugPrint('❌ Error loading purchases: $e');
-      
-      // Retry logic for network errors (max 2 retries)
-      if (retryCount < 2 && _shouldRetry(e.toString())) {
-        debugPrint('🔄 Retrying purchases load (attempt ${retryCount + 1})...');
-        await Future.delayed(Duration(seconds: 1 + retryCount));
-        return _loadPurchases(retryCount: retryCount + 1);
-      }
-      
       if (mounted) {
         setState(() {
-          _error = _getUserFriendlyError(e.toString());
+          _error = AppLocalizations.of(context)!.t('unable_to_load_purchases');
           _isLoading = false;
         });
       }
     }
-  }
-  
-  /// Check if error should trigger a retry
-  bool _shouldRetry(String error) {
-    final lowerError = error.toLowerCase();
-    return lowerError.contains('timeout') ||
-           lowerError.contains('connection') ||
-           lowerError.contains('socket') ||
-           lowerError.contains('network');
-  }
-  
-  /// Convert technical errors to user-friendly messages
-  String _getUserFriendlyError(String error) {
-    final lowerError = error.toLowerCase();
-    
-    if (lowerError.contains('timeout')) {
-      return 'انتهت مهلة الاتصال';
-    }
-    if (lowerError.contains('socket') || lowerError.contains('connection')) {
-      return 'لا يوجد اتصال بالإنترنت';
-    }
-    if (lowerError.contains('401') || lowerError.contains('unauthorized')) {
-      return 'انتهت صلاحية الجلسة';
-    }
-    if (lowerError.contains('404')) {
-      return 'لم يتم العثور على المشتريات';
-    }
-    if (lowerError.contains('500') || lowerError.contains('server')) {
-      return 'خطأ في الخادم';
-    }
-    
-    // Remove "Exception: " prefix if present
-    if (error.startsWith('Exception: ')) {
-      return error.substring(11);
-    }
-    
-    return 'تعذر تحميل المشتريات';
   }
 
   Future<void> _submitReport() async {

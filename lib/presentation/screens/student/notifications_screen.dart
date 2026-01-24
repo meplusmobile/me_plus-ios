@@ -131,6 +131,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         throw Exception('Student ID not found');
       }
 
+      // Check if purchaseId is valid
       if (purchaseId == 0) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -145,6 +146,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         return;
       }
 
+      // Call API to confirm purchase received
       await _repository.confirmPurchaseReceived(
         studentId: studentId,
         purchaseId: purchaseId,
@@ -189,6 +191,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       await _markAsRead(notificationId);
 
       if (mounted) {
+        // Navigate to missing rewards page
         context.go('/student/report-missing');
       }
     } catch (e) {
@@ -325,6 +328,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
           final timeAgo = _getTimeAgo(notification.createdAt);
 
+          // Check if message contains "Did you receive it?" to show buttons
           final messageEn = notification.messageEn ?? notification.message;
           final messageAr = notification.messageAr ?? notification.message;
           final shouldShowButtons =
@@ -401,6 +405,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   String _getFullImageUrl(String? imageUrl) {
     if (imageUrl == null || imageUrl.isEmpty) return '';
 
+    // If already a full URL, return as is
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
       return imageUrl;
     }
@@ -408,6 +413,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     // Azure Blob Storage base URL for images
     const baseUrl = 'https://meplus2.blob.core.windows.net/images';
 
+    // Remove leading slash if present
     final cleanPath = imageUrl.startsWith('/')
         ? imageUrl.substring(1)
         : imageUrl;
@@ -432,8 +438,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final localeProvider = context.watch<LocaleProvider>();
     final isArabic = localeProvider.isArabic;
 
+    // Show ONLY message in user's selected language
     final message = isArabic ? messageAr : messageEn;
 
+    // Get full image URL
     final fullImageUrl = _getFullImageUrl(imageUrl);
 
     return Container(
@@ -452,6 +460,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         children: [
           Stack(
             children: [
+              // Show image from API if available, otherwise use icon
               fullImageUrl.isNotEmpty
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(20),

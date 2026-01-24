@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:me_plus/presentation/theme/app_colors.dart';
 import 'package:me_plus/core/localization/app_localizations.dart';
@@ -29,6 +30,7 @@ class _PasswordChangeSuccessScreenState
       duration: const Duration(milliseconds: 2500),
     );
 
+    // Background color transition from beige to white
     _bgColorAnimation =
         ColorTween(begin: const Color(0xFFFEEED7), end: Colors.white).animate(
           CurvedAnimation(
@@ -45,6 +47,7 @@ class _PasswordChangeSuccessScreenState
       ),
     );
 
+    // Checkmark animation
     _checkmarkAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
@@ -52,6 +55,7 @@ class _PasswordChangeSuccessScreenState
       ),
     );
 
+    // Content fade in (text and button)
     _contentFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
@@ -86,6 +90,7 @@ class _PasswordChangeSuccessScreenState
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    // Animated success icon
                     ScaleTransition(
                       scale: _circleScaleAnimation,
                       child: Container(
@@ -122,7 +127,7 @@ class _PasswordChangeSuccessScreenState
                           final localizations = AppLocalizations.of(context)!;
                           return Text(
                             localizations.t('successful'),
-                            style: const TextStyle(fontFamily: 'Poppins', 
+                            style: GoogleFonts.poppins(
                               fontSize: 28,
                               fontWeight: FontWeight.w600,
                               color: Colors.black,
@@ -143,7 +148,7 @@ class _PasswordChangeSuccessScreenState
                           return Text(
                             localizations.t('congratulations_password_changed'),
                             textAlign: TextAlign.center,
-                            style: const TextStyle(fontFamily: 'Inter', 
+                            style: GoogleFonts.inter(
                               fontSize: 14,
                               fontWeight: FontWeight.w400,
                               color: const Color(0xFF9E9E9E),
@@ -177,7 +182,7 @@ class _PasswordChangeSuccessScreenState
                               ),
                               child: Text(
                                 localizations.t('login'),
-                                style: const TextStyle(fontFamily: 'Poppins', 
+                                style: GoogleFonts.poppins(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,
                                 ),

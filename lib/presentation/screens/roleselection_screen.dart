@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -70,6 +71,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
       body: Stack(
         fit: StackFit.expand,
         children: [
+          // Background blur image
           Positioned(
             top: -180,
             left: 0,
@@ -94,6 +96,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
             ),
           ),
 
+          // Bottom decoration
           Positioned(
             left: 0,
             right: 0,
@@ -105,6 +108,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
             ),
           ),
 
+          // Top left vector (with IgnorePointer to allow clicks through)
           Positioned(
             top: 40,
             left: 12,
@@ -180,7 +184,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                 const SizedBox(height: 8),
                 Text(
                   localizations.t('select_role_to_continue'),
-                  style: const TextStyle(fontFamily: 'Inter', 
+                  style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: AppColors.textSecondary,
@@ -212,7 +216,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
               children: [
                 Text(
                   localizations.t('select_role_to_continue'),
-                  style: const TextStyle(fontFamily: 'Poppins', 
+                  style: GoogleFonts.poppins(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: AppColors.textSecondary,
@@ -340,7 +344,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen>
                       final localizations = AppLocalizations.of(context)!;
                       return Text(
                         localizations.t('next'),
-                        style: const TextStyle(fontFamily: 'Poppins', 
+                        style: GoogleFonts.poppins(
                           fontSize: 20,
                           fontWeight: FontWeight.w600,
                         ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -51,6 +52,8 @@ class _ParentScreenSignUpState extends State<ParentScreenSignUp>
     try {
       final signupData = context.read<SignupData>();
 
+      // Check if user already signed up (via Google)
+      // If firstName is null, it means they came from Google signup
       final isGoogleSignup = signupData.firstName == null;
 
       if (!isGoogleSignup) {
@@ -69,6 +72,7 @@ class _ParentScreenSignUpState extends State<ParentScreenSignUp>
           password: signupData.password!,
         );
 
+        // Call signup API
         await _authService.signup(request);
       } else {
         // Token already exists from Google OAuth
@@ -82,16 +86,17 @@ class _ParentScreenSignUpState extends State<ParentScreenSignUp>
           _isLoading = false;
         });
 
+        // Show verification overlay
         VerificationOverlay.show(
           context,
           onComplete: () {
             // For Google signup, always go to onboarding (new users)
             if (isGoogleSignup) {
-              context.go('/onboarding/parent');
+              context.push('/onboarding/parent');
             } else {
               // For regular signup, check isFirstTimeUser
               // Note: response might not be available for Google signup
-              context.go('/onboarding/parent');
+              context.push('/onboarding/parent');
             }
           },
           duration: const Duration(seconds: 3),
@@ -142,12 +147,15 @@ class _ParentScreenSignUpState extends State<ParentScreenSignUp>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          Positioned(
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Background blur image
+            Positioned(
             top: -180,
             left: 0,
             right: 0,
@@ -171,6 +179,7 @@ class _ParentScreenSignUpState extends State<ParentScreenSignUp>
             ),
           ),
 
+          // Bottom decoration
           Positioned(
             left: 0,
             right: 0,
@@ -182,6 +191,7 @@ class _ParentScreenSignUpState extends State<ParentScreenSignUp>
             ),
           ),
 
+          // Top left logo (with IgnorePointer to allow clicks through)
           Positioned(
             top: 40,
             left: 12,
@@ -242,6 +252,7 @@ class _ParentScreenSignUpState extends State<ParentScreenSignUp>
           ),
         ],
       ),
+      ),
     );
   }
 
@@ -266,7 +277,7 @@ class _ParentScreenSignUpState extends State<ParentScreenSignUp>
         Text(
           localizations.t('almost_there_add_child_email'),
           textAlign: TextAlign.center,
-          style: const TextStyle(fontFamily: 'Inter', 
+          style: GoogleFonts.inter(
             fontSize: 12,
             fontWeight: FontWeight.w500,
             color: AppColors.disabled,

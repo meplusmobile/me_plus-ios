@@ -1,4 +1,5 @@
 class ApiConstants {
+  // Base URL
   static const String baseUrl =
       'https://meplus3-hjfehnfpfyg2gyau.israelcentral-01.azurewebsites.net';
 
@@ -21,6 +22,7 @@ class ApiConstants {
   static const String schools = '/api/schools';
   static const String schoolInfo = '/api/school_info';
 
+  // Headers
   static const String contentType = 'application/json';
   static const String authorization = 'Authorization';
 

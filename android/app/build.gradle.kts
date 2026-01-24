@@ -46,15 +46,16 @@ android {
         }
     }
 
-    // Split APKs by ABI to reduce size
-    splits {
-        abi {
-            isEnable = true
-            reset()
-            include("armeabi-v7a", "arm64-v8a", "x86_64")
-            isUniversalApk = true
-        }
-    }
+    // Note: Splits are disabled for AAB builds - Google Play handles ABIs automatically
+    // Uncomment for APK builds only
+    // splits {
+    //     abi {
+    //         isEnable = true
+    //         reset()
+    //         include("armeabi-v7a", "arm64-v8a", "x86_64")
+    //         isUniversalApk = true
+    //     }
+    // }
 }
 
 flutter {

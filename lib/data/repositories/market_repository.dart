@@ -1,96 +1,58 @@
-import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
-import 'package:http_parser/http_parser.dart';
-import 'dart:io';
 import 'package:me_plus/data/services/api_service.dart';
-import 'package:me_plus/data/services/token_storage_service.dart';
 import 'package:me_plus/data/models/user_profile.dart';
 import 'package:me_plus/data/models/store_model.dart';
 import 'package:me_plus/data/models/activity_model.dart';
 import 'package:me_plus/data/models/order_model.dart';
 import 'package:me_plus/core/services/translation_service.dart';
+import 'dart:io';
+import 'package:dio/dio.dart';
 
 class MarketRepository {
   final ApiService _apiService = ApiService();
   final TranslationService _translationService = TranslationService();
-  final TokenStorageService _tokenStorage = TokenStorageService();
 
   Future<UserProfile> getMarketProfile() async {
-    final response = await _apiService.get('/market/profile');
-    if (!response.success) {
-      throw Exception(response.error ?? 'Error fetching market profile');
+    try {
+      final response = await _apiService.get('/market/profile');
+      return UserProfile.fromJson(response.data);
+    } catch (e) {
+      throw Exception('Error fetching market profile: $e');
     }
-    return UserProfile.fromJson(response.data);
   }
 
   Future<UserProfile> updateMarketProfile(Map<String, dynamic> data) async {
-    final imagePath = data.remove('imagePath') as String?;
-    
-    if (imagePath != null) {
-      // Use multipart request for image upload
-      await _updateProfileWithImage(data, imagePath);
-    } else {
-      final response = await _apiService.put('/api/me', data: data);
-      if (!response.success) {
-        throw Exception(response.error ?? 'Error updating market profile');
-      }
-    }
-    return await getMarketProfile();
-  }
+    try {
+      // Create FormData
+      final formData = FormData.fromMap(data);
 
-  Future<void> _updateProfileWithImage(Map<String, dynamic> data, String imagePath) async {
-    final token = await _tokenStorage.getToken();
-    final uri = Uri.parse('${ApiService.baseUrl}/api/me');
-    
-    final request = http.MultipartRequest('PUT', uri);
-    request.headers['Authorization'] = 'Bearer $token';
-    
-    data.forEach((key, value) {
-      if (value != null) {
-        request.fields[key] = value.toString();
-      }
-    });
+      await _apiService.put('/api/me', data: formData, isFormData: true);
 
-    final fileName = imagePath.split('/').last;
-    final extension = fileName.split('.').last.toLowerCase();
-    final mimeType = extension == 'png' ? 'image/png' : 'image/jpeg';
-    
-    request.files.add(await http.MultipartFile.fromPath(
-      'Image',
-      imagePath,
-      filename: fileName,
-      contentType: MediaType.parse(mimeType),
-    ));
-
-    final streamedResponse = await request.send().timeout(const Duration(seconds: 30));
-    final response = await http.Response.fromStream(streamedResponse);
-
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception('Failed to update profile: ${response.body}');
+      // Fetch full profile data again to ensure we have the latest state
+      return await getMarketProfile();
+    } catch (e) {
+      throw Exception('Error updating market profile: $e');
     }
   }
 
+  // Get market items with pagination and sorting
   Future<List<StoreReward>> getMarketItems({
     String sortType = 'sortBy',
     String sortValue = 'oldest',
   }) async {
+    // Build query parameters - use either sortBy OR priceOrder
     final Map<String, dynamic> queryParams = {'pageSize': 35, 'pageNumber': 1};
 
+    // Add the appropriate sort parameter
     if (sortType == 'sortBy') {
-      queryParams['sortBy'] = sortValue;
+      queryParams['sortBy'] = sortValue; // oldest or newest
     } else if (sortType == 'priceOrder') {
-      queryParams['priceOrder'] = sortValue;
+      queryParams['priceOrder'] = sortValue; // asc or desc
     }
 
     final response = await _apiService.get(
       '/api/market/rewards',
       queryParameters: queryParams,
     );
-
-    if (!response.success) {
-      debugPrint('Failed to get market items: ${response.error}');
-      return [];
-    }
 
     if (response.data != null && response.data['items'] is List) {
       return (response.data['items'] as List)
@@ -103,43 +65,34 @@ class MarketRepository {
 
   Future<void> addMarketItem(String name, int credits, File? image) async {
     try {
-      final token = await _tokenStorage.getToken();
-      final uri = Uri.parse('${ApiService.baseUrl}/api/market/rewards');
-      
-      final request = http.MultipartRequest('POST', uri);
-      request.headers['Authorization'] = 'Bearer $token';
-      
-      request.fields['Name'] = name;
-      request.fields['Credits'] = credits.toString();
+      final formData = FormData();
 
+      // Add form fields
+      formData.fields.add(MapEntry('Name', name));
+      formData.fields.add(MapEntry('Credits', credits.toString()));
+
+      // Add image file if provided
       if (image != null) {
         final fileName = image.path.split('/').last;
-        final extension = fileName.split('.').last.toLowerCase();
-        final mimeType = extension == 'png' ? 'image/png' : 'image/jpeg';
-        
-        request.files.add(await http.MultipartFile.fromPath(
-          'image',
-          image.path,
-          filename: fileName,
-          contentType: MediaType.parse(mimeType),
-        ));
+        formData.files.add(
+          MapEntry(
+            'image',
+            await MultipartFile.fromFile(image.path, filename: fileName),
+          ),
+        );
       }
 
-      final streamedResponse = await request.send().timeout(const Duration(seconds: 30));
-      final response = await http.Response.fromStream(streamedResponse);
-
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw Exception('Failed to add reward: ${response.body}');
-      }
+      await _apiService.post('/api/market/rewards', data: formData);
     } catch (e) {
       throw Exception('Error adding reward: $e');
     }
   }
 
   Future<void> deleteMarketItem(int id) async {
-    final response = await _apiService.delete('/api/market/rewards/$id');
-    if (!response.success) {
-      throw Exception(response.error ?? 'Error deleting reward');
+    try {
+      await _apiService.delete('/api/market/rewards/$id');
+    } catch (e) {
+      throw Exception('Error deleting reward: $e');
     }
   }
 
@@ -150,48 +103,42 @@ class MarketRepository {
     File? image,
   ) async {
     try {
-      if (image == null) {
+      final formData = FormData();
+
+      // Add form fields
+      formData.fields.add(MapEntry('Name', name));
+      formData.fields.add(MapEntry('Credits', credits.toString()));
+
+      // Add image file (required by API)
+      if (image != null) {
+        final fileName = image.path.split('/').last;
+        formData.files.add(
+          MapEntry(
+            'image',
+            await MultipartFile.fromFile(image.path, filename: fileName),
+          ),
+        );
+      } else {
         throw Exception('Image is required for updating reward');
       }
 
-      final token = await _tokenStorage.getToken();
-      final uri = Uri.parse('${ApiService.baseUrl}/api/market/rewards/$id');
-      
-      final request = http.MultipartRequest('PUT', uri);
-      request.headers['Authorization'] = 'Bearer $token';
-      
-      request.fields['Name'] = name;
-      request.fields['Credits'] = credits.toString();
-
-      final fileName = image.path.split('/').last;
-      final extension = fileName.split('.').last.toLowerCase();
-      final mimeType = extension == 'png' ? 'image/png' : 'image/jpeg';
-      
-      request.files.add(await http.MultipartFile.fromPath(
-        'image',
-        image.path,
-        filename: fileName,
-        contentType: MediaType.parse(mimeType),
-      ));
-
-      final streamedResponse = await request.send().timeout(const Duration(seconds: 30));
-      final response = await http.Response.fromStream(streamedResponse);
-
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw Exception('Failed to update reward: ${response.body}');
-      }
+      await _apiService.dio.put(
+        '/api/market/rewards/$id',
+        data: formData,
+        options: Options(headers: {'Content-Type': 'multipart/form-data'}),
+      );
+    } on DioException catch (e) {
+      throw Exception(
+        'Error updating reward: ${e.response?.data ?? e.message}',
+      );
     } catch (e) {
       throw Exception('Error updating reward: $e');
     }
   }
 
+  // Placeholder for orders
   Future<List<OrderModel>> getThisMonthOrders() async {
     final response = await _apiService.get('/api/market/orders/this-month');
-
-    if (!response.success) {
-      debugPrint('Failed to get this month orders: ${response.error}');
-      return [];
-    }
 
     if (response.data is List) {
       return (response.data as List)
@@ -205,11 +152,6 @@ class MarketRepository {
   Future<List<OrderModel>> getLastMonthOrders() async {
     final response = await _apiService.get('/api/market/orders/last-month');
 
-    if (!response.success) {
-      debugPrint('Failed to get last month orders: ${response.error}');
-      return [];
-    }
-
     if (response.data is List) {
       return (response.data as List)
           .map((order) => OrderModel.fromJson(order))
@@ -220,32 +162,23 @@ class MarketRepository {
   }
 
   Future<void> approveOrder(int orderId) async {
-    final response = await _apiService.post('/api/market/orders/$orderId/approve');
-    if (!response.success) {
-      throw Exception(response.error ?? 'Failed to approve order');
-    }
+    await _apiService.post('/api/market/orders/$orderId/approve');
   }
 
   Future<void> rejectOrder(int orderId) async {
-    final response = await _apiService.post('/api/market/orders/$orderId/reject');
-    if (!response.success) {
-      throw Exception(response.error ?? 'Failed to reject order');
-    }
+    await _apiService.post('/api/market/orders/$orderId/reject');
   }
 
+  // Notification methods
   Future<List<NotificationModel>> getNotifications() async {
     final response = await _apiService.get('/api/notifications');
-
-    if (!response.success) {
-      debugPrint('Failed to get notifications: ${response.error}');
-      return [];
-    }
 
     if (response.data is List) {
       final notifications = (response.data as List)
           .map((notification) => NotificationModel.fromJson(notification))
           .toList();
 
+      // Auto-translate notifications if language is missing
       final translatedNotifications = <NotificationModel>[];
       for (var notification in notifications) {
         translatedNotifications.add(
@@ -259,6 +192,7 @@ class MarketRepository {
     return [];
   }
 
+  /// Auto-translate notification fields if they're missing in either language
   Future<NotificationModel> _autoTranslateNotification(
     NotificationModel notification,
   ) async {
@@ -267,6 +201,7 @@ class MarketRepository {
     String? messageAr = notification.messageAr;
     String? messageEn = notification.messageEn;
 
+    // If backend doesn't provide titleAr/titleEn, use the main title field
     if (titleAr == null && titleEn == null && notification.title.isNotEmpty) {
       final detectedLang = _translationService.detectLanguage(
         notification.title,
@@ -283,11 +218,14 @@ class MarketRepository {
         );
       }
     } else if (titleAr == null && titleEn != null) {
+      // Only English title exists, translate to Arabic
       titleAr = await _translationService.translateToArabic(titleEn);
     } else if (titleEn == null && titleAr != null) {
+      // Only Arabic title exists, translate to English
       titleEn = await _translationService.translateToEnglish(titleAr);
     }
 
+    // Smart translation for message - preserve item names
     if (messageAr == null &&
         messageEn == null &&
         notification.message.isNotEmpty) {
@@ -310,11 +248,14 @@ class MarketRepository {
         );
       }
     } else if (messageAr == null && messageEn != null) {
+      // Only English message exists, translate to Arabic with smart parsing
       messageAr = await _smartTranslateMessage(messageEn, 'en', 'ar');
     } else if (messageEn == null && messageAr != null) {
+      // Only Arabic message exists, translate to English with smart parsing
       messageEn = await _smartTranslateMessage(messageAr, 'ar', 'en');
     }
 
+    // Return notification with both translations
     return NotificationModel(
       id: notification.id,
       title: notification.title,
@@ -330,11 +271,13 @@ class MarketRepository {
     );
   }
 
+  /// Smart translation that preserves item names and student names in order notifications
   Future<String> _smartTranslateMessage(
     String message,
     String fromLang,
     String toLang,
   ) async {
+    // Pattern 1: "ItemName has been ordered from StudentName"
     final orderPattern = RegExp(r'^(.+?)\s+has been ordered from\s+(.+)$');
     final orderMatch = orderPattern.firstMatch(message);
 
@@ -347,6 +290,7 @@ class MarketRepository {
       }
     }
 
+    // Pattern 2: "You requested a ItemName, Did you receive it?"
     final requestPattern = RegExp(
       r'You requested a\s+(.+?),\s*Did you receive it\??',
       caseSensitive: false,
@@ -361,6 +305,7 @@ class MarketRepository {
       }
     }
 
+    // Pattern 3: Arabic "لقد تم طلب ItemName من قبل StudentName"
     final arabicOrderPattern = RegExp(r'لقد تم طلب\s+(.+?)\s+من قبل\s+(.+)$');
     final arabicOrderMatch = arabicOrderPattern.firstMatch(message);
 
@@ -370,6 +315,7 @@ class MarketRepository {
       return '$itemName has been ordered from $studentName';
     }
 
+    // Pattern 4: Arabic "لقد طلبت ItemName، هل استلمتها؟"
     final arabicRequestPattern = RegExp(r'لقد طلبت\s+(.+?)،\s*هل استلمتها؟');
     final arabicRequestMatch = arabicRequestPattern.firstMatch(message);
 
@@ -378,6 +324,7 @@ class MarketRepository {
       return 'You requested a $itemName, Did you receive it?';
     }
 
+    // If no pattern matches, use regular translation
     if (toLang == 'ar') {
       return await _translationService.translateToArabic(message);
     } else {
@@ -386,16 +333,10 @@ class MarketRepository {
   }
 
   Future<void> markNotificationAsRead(int notificationId) async {
-    final response = await _apiService.post('/api/notifications/mark-as-read/$notificationId');
-    if (!response.success) {
-      debugPrint('Failed to mark notification as read: ${response.error}');
-    }
+    await _apiService.post('/api/notifications/mark-as-read/$notificationId');
   }
 
   Future<void> deleteNotification(int notificationId) async {
-    final response = await _apiService.delete('/api/notifications/$notificationId');
-    if (!response.success) {
-      debugPrint('Failed to delete notification: ${response.error}');
-    }
+    await _apiService.delete('/api/notifications/$notificationId');
   }
 }

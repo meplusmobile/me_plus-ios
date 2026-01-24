@@ -31,7 +31,9 @@ class _Top10ScreenState extends State<Top10Screen> {
     if (imageUrl == null || imageUrl.isEmpty) {
       return 'https://via.placeholder.com/150';
     }
+    // Remove /uploads/images/ if it exists at the start
     final cleanUrl = imageUrl.replaceFirst(RegExp(r'^\/uploads\/images\/'), '');
+    // Remove leading slash if exists
     final finalUrl = cleanUrl.startsWith('/')
         ? cleanUrl.substring(1)
         : cleanUrl;
@@ -192,6 +194,7 @@ class _Top10ScreenState extends State<Top10Screen> {
             child: Stack(
               alignment: Alignment.bottomCenter,
               children: [
+                // Base platform line
                 Positioned(
                   bottom: 0,
                   left: 0,
@@ -205,6 +208,7 @@ class _Top10ScreenState extends State<Top10Screen> {
                   ),
                 ),
 
+                // Black bar for 1st place (positioned above the red block)
                 Positioned(
                   bottom: 106, // 6 (base) + 100 (height)
                   child: Container(
@@ -217,6 +221,7 @@ class _Top10ScreenState extends State<Top10Screen> {
                   ),
                 ),
 
+                // Blocks Row (Centered and tightly packed)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 6),
                   child: Row(
@@ -331,6 +336,7 @@ class _Top10ScreenState extends State<Top10Screen> {
   }
 
   Widget _buildRankingList() {
+    // Show ALL students in the list, starting from Rank 1
     final allStudents = _students;
 
     if (allStudents.isEmpty) {
@@ -416,6 +422,7 @@ class _Top10ScreenState extends State<Top10Screen> {
         break;
     }
 
+    // All text is white in the design image
     const textColor = Colors.white;
 
     return Padding(
@@ -440,6 +447,7 @@ class _Top10ScreenState extends State<Top10Screen> {
                       borderRadius: BorderRadius.circular(24),
                       child: Stack(
                         children: [
+                          // Decorative Circles (Bubbles)
                           Positioned(
                             top: -10,
                             right: 40,
@@ -465,6 +473,7 @@ class _Top10ScreenState extends State<Top10Screen> {
                             ),
                           ),
 
+                          // Content
                           Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16,
@@ -472,6 +481,7 @@ class _Top10ScreenState extends State<Top10Screen> {
                             ),
                             child: Row(
                               children: [
+                                // Rank
                                 SizedBox(
                                   width: 24,
                                   child: Text(
@@ -485,6 +495,7 @@ class _Top10ScreenState extends State<Top10Screen> {
                                   ),
                                 ),
                                 const SizedBox(width: 12),
+                                // Avatar
                                 Container(
                                   width: 48,
                                   height: 48,
@@ -532,6 +543,7 @@ class _Top10ScreenState extends State<Top10Screen> {
                     ),
                   ),
 
+                  // Level Badge (Top Right/Left based on locale hanging) - Using 5image.png
                   Positioned(
                     top: -1,
                     right: isArabic ? null : 20,
@@ -550,6 +562,7 @@ class _Top10ScreenState extends State<Top10Screen> {
 
           const SizedBox(width: 12),
 
+          // Score Bubble - Same height as name card
           Container(
             width: 80,
             height: 76, // Matched with name card height

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart';
 import 'package:me_plus/data/services/token_storage_service.dart';
-import 'package:me_plus/presentation/providers/locale_provider.dart';
-import 'package:me_plus/presentation/providers/profile_provider.dart';
+import 'package:me_plus/core/constants/app_colors.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+/// Splash screen that checks for existing auth and redirects accordingly
 class SplashCheckScreen extends StatefulWidget {
   const SplashCheckScreen({super.key});
 
@@ -24,11 +23,13 @@ class _SplashCheckScreenState extends State<SplashCheckScreen>
   void initState() {
     super.initState();
 
+    // Setup animation controller
     _controller = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
 
+    // Slide from top to center animation
     _slideAnimation = Tween<double>(
       begin: -200.0,
       end: 0.0,
@@ -39,6 +40,7 @@ class _SplashCheckScreenState extends State<SplashCheckScreen>
       ),
     );
 
+    // Pulse animation (repeating)
     _pulseAnimation = Tween<double>(
       begin: 1.0,
       end: 1.1,
@@ -49,17 +51,17 @@ class _SplashCheckScreenState extends State<SplashCheckScreen>
       ),
     );
 
+    // Start animation
     _controller.forward();
 
+    // Loop pulse animation after initial slide
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         _controller.repeat(reverse: true);
       }
     });
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeApp();
-    });
+    _checkAuthAndRedirect();
   }
 
   @override
@@ -68,66 +70,38 @@ class _SplashCheckScreenState extends State<SplashCheckScreen>
     super.dispose();
   }
 
-  Future<void> _initializeApp() async {
-    debugPrint('🚀 Starting app initialization...');
-    
-    // Initialize providers with timeout to prevent infinite loading
-    if (mounted) {
-      try {
-        await Future.wait([
-          context.read<LocaleProvider>().loadSavedLocale(),
-          context.read<ProfileProvider>().initialize(),
-        ]).timeout(
-          const Duration(seconds: 5),
-          onTimeout: () {
-            debugPrint('⚠️ Provider initialization timed out, continuing...');
-            return [];
-          },
-        );
-        debugPrint('✅ Providers initialized');
-      } catch (e) {
-        debugPrint('❌ Provider init error: $e');
-        // Continue anyway
-      }
-    }
-    
-    // Then check auth and redirect
-    await _checkAuthAndRedirect();
-  }
-
   Future<void> _checkAuthAndRedirect() async {
+    // Delay for splash animation
     await Future.delayed(const Duration(milliseconds: 2500));
 
     if (!mounted) return;
 
-    try {
-      final isLoggedIn = await _tokenStorage.isLoggedIn();
+    // Check if user is logged in
+    final isLoggedIn = await _tokenStorage.isLoggedIn();
 
-      if (isLoggedIn) {
-        final role = await _tokenStorage.getUserRole();
+    if (isLoggedIn) {
+      // User is logged in, get their role and redirect
+      final role = await _tokenStorage.getUserRole();
 
-        if (!mounted) return;
+      if (!mounted) return;
 
-        switch (role?.toLowerCase()) {
-          case 'student':
-            context.go('/student/home');
-            break;
-          case 'marketowner':
-          case 'market_owner':
-            context.go('/market-owner/home');
-            break;
-          case 'parent':
-            context.go('/parent/home');
-            break;
-          default:
-            context.go('/login');
-        }
-      } else {
-        if (!mounted) return;
-        context.go('/login');
+      switch (role?.toLowerCase()) {
+        case 'student':
+          context.go('/student/home');
+          break;
+        case 'marketowner':
+        case 'market_owner':
+          context.go('/market-owner/home');
+          break;
+        case 'parent':
+          context.go('/parent/home');
+          break;
+        default:
+          // Unknown role, go to login
+          context.go('/login');
       }
-    } catch (e) {
-      debugPrint('Error during auth check: $e');
+    } else {
+      // User is not logged in, go to login
       if (!mounted) return;
       context.go('/login');
     }

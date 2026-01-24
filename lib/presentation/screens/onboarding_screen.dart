@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:me_plus/presentation/theme/app_colors.dart';
@@ -124,6 +125,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _completeOnboarding() {
+    // Navigate to login page after completing onboarding
     context.go('/login');
   }
 
@@ -149,7 +151,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     onPressed: _skip,
                     child: Text(
                       localizations.t('skip'),
-                      style: const TextStyle(fontFamily: 'Poppins', 
+                      style: GoogleFonts.poppins(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                         color: AppColors.textPrimary,
@@ -160,6 +162,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
 
+            // Logo - centered
             Positioned(
               top: 16,
               left: 0,
@@ -191,6 +194,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
 
+            // Bottom section with dots and button
             Positioned(
               bottom: 40,
               left: 0,
@@ -237,10 +241,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Image.asset(page.image, height: 280, fit: BoxFit.contain),
           const SizedBox(height: 40),
 
+          // Title
           Text(
             page.title,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontFamily: 'Poppins', 
+            style: GoogleFonts.poppins(
               fontSize: 24,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
@@ -253,7 +258,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Text(
             page.description,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontFamily: 'Inter', 
+            style: GoogleFonts.inter(
               fontSize: 14,
               fontWeight: FontWeight.w400,
               color: AppColors.textSecondary,
@@ -323,7 +328,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         child: Center(
           child: Text(
             text,
-            style: const TextStyle(fontFamily: 'Poppins', 
+            style: GoogleFonts.poppins(
               fontSize: 20,
               fontWeight: FontWeight.w600,
               color: Colors.white,

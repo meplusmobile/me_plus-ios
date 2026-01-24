@@ -7,14 +7,7 @@ import UIKit
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    
-    // Let Flutter handle all plugin registration automatically
-    // Manual registration causes crashes with PathProviderPlugin
+    GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
-  }
-  
-  // Handle app lifecycle to prevent memory issues
-  override func applicationDidReceiveMemoryWarning(_ application: UIApplication) {
-    URLCache.shared.removeAllCachedResponses()
   }
 }

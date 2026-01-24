@@ -21,10 +21,12 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   @override
   void initState() {
     super.initState();
+    // Load profile on screen init
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final profileProvider = context.read<ProfileProvider>();
       profileProvider.loadProfile();
 
+      // Start background prefetch for instant page loading
       PrefetchService().startPrefetch();
     });
   }
@@ -42,6 +44,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
             ),
             body: Stack(
             children: [
+              // Background gradient
               Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
@@ -130,7 +133,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const SizedBox(width: 20),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -362,6 +364,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                       ),
                     ),
                   ),
+                  // Level indicator (current)
                   Positioned(
                     left: Directionality.of(context) == TextDirection.rtl
                         ? null
@@ -549,6 +552,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     child: Stack(
                       alignment: Alignment.bottomCenter,
                       children: [
+                        // Base platform
                         Positioned(
                           bottom: 0,
                           left: 0,

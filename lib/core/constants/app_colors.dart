@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// App-wide color constants
 class AppColors {
   // Primary Colors
   static const Color primary = Color(0xFFFAA72A); // Orange/Gold
@@ -19,6 +20,7 @@ class AppColors {
   static const Color secondaryBlue = Color(0xFF5DADE2); // Light blue
   static const Color secondaryDeepBlue = Color(0xFF60A5FA); // Deep blue
 
+  // Status Colors
   static const Color success = Color(0xFF4CAF50); // Green
   static const Color successLight = Color(0xFF8BC34A);
   static const Color successBright = Color(0xFF6FD195); // Bright green
@@ -43,6 +45,7 @@ class AppColors {
   static const Color textDark = Color(0xFF374151); // Very dark gray
   static const Color textCharcoal = Color(0xFF455A64); // Charcoal
 
+  // Background Colors
   static const Color background = Color(0xFFF8F8F8);
   static const Color backgroundLight = Color(0xFFFFF3E0); // Light beige
   static const Color surface = Color(0xFFFFFFFF);

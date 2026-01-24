@@ -8,6 +8,7 @@ import 'package:me_plus/presentation/widgets/custom_text_field_signup.dart';
 import 'package:me_plus/presentation/widgets/phone_input_field.dart';
 import 'package:me_plus/presentation/widgets/gradient_text.dart';
 import 'package:me_plus/presentation/widgets/language_switcher_button.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:me_plus/presentation/providers/signup_provider.dart';
 import 'package:me_plus/core/localization/app_localizations.dart';
 
@@ -106,6 +107,7 @@ class _SignUpScreenState extends State<SignUpScreen>
 
     _animationController.forward();
 
+    // Removed listeners - validation is handled in form, not on every keystroke
   }
 
   @override
@@ -145,11 +147,14 @@ class _SignUpScreenState extends State<SignUpScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
         child: Stack(
           children: [
+            // Background blur image
             Positioned(
               top: -180,
               left: 0,
@@ -174,6 +179,7 @@ class _SignUpScreenState extends State<SignUpScreen>
               ),
             ),
 
+            // Bottom decoration
             Positioned(
               left: 0,
               right: 0,
@@ -185,6 +191,7 @@ class _SignUpScreenState extends State<SignUpScreen>
               ),
             ),
 
+            // Top left vector
             Positioned(
               top: 40,
               left: 12,
@@ -222,6 +229,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                   children: [
                     const SizedBox(height: 158),
 
+                    // Header
                     FadeTransition(
                       opacity: _fadeAnimations[0],
                       child: SlideTransition(
@@ -256,7 +264,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                                   children: [
                                     Text(
                                       localizations.t('already_have_account'),
-                                      style: const TextStyle(fontFamily: 'Inter', 
+                                      style: GoogleFonts.inter(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w500,
                                         color: AppColors.disabled,
@@ -265,7 +273,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                                     const SizedBox(width: 6),
                                     TextButton(
                                       onPressed: () {
-                                        context.go('/login');
+                                        context.push('/login');
                                       },
                                       style: TextButton.styleFrom(
                                         padding: EdgeInsets.zero,
@@ -275,7 +283,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                                       ),
                                       child: Text(
                                         localizations.t('sign_in'),
-                                        style: const TextStyle(fontFamily: 'Poppins', 
+                                        style: GoogleFonts.poppins(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
                                           color: AppColors.primary,
@@ -491,6 +499,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                                             return;
                                           }
 
+                                          // Parse date from MM / DD / YYYY to yyyy-MM-dd format
                                           final dobParts = _dobController.text
                                               .split(' / ');
                                           final birthdate =
@@ -509,7 +518,8 @@ class _SignUpScreenState extends State<SignUpScreen>
                                             birthdate: birthdate,
                                           );
 
-                                          context.go('/role-selection');
+                                          // Navigate to role selection
+                                          context.push('/role-selection');
                                         }
                                       },
                                 style: ElevatedButton.styleFrom(
@@ -542,6 +552,7 @@ class _SignUpScreenState extends State<SignUpScreen>
             ),
           ],
         ),
+      ),
       ),
     );
   }

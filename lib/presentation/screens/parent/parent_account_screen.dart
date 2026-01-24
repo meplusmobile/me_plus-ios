@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:me_plus/core/constants/app_colors.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
@@ -161,8 +162,9 @@ class _ParentAccountScreenState extends State<ParentAccountScreen> {
                                 }
 
                                 if (_selectedImage != null) {
-                                  // Pass image path - repository will handle upload
-                                  data['imagePath'] = _selectedImage!.path;
+                                  data['Image'] = await MultipartFile.fromFile(
+                                    _selectedImage!.path,
+                                  );
                                 }
 
                                 try {

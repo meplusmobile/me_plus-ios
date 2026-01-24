@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:me_plus/presentation/providers/locale_provider.dart';
 import 'package:me_plus/presentation/theme/app_colors.dart';
 
+/// A widget that displays a language switcher button
+/// Switches between English and Arabic
 class LanguageSwitcherButton extends StatelessWidget {
   final Color? iconColor;
   final double? iconSize;

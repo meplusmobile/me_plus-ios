@@ -28,7 +28,7 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
     _loadData();
   }
 
-  Future<void> _loadData({int retryCount = 0}) async {
+  Future<void> _loadData() async {
     if (!mounted) return;
 
     try {
@@ -46,59 +46,13 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
         });
       }
     } catch (e) {
-      debugPrint('❌ Error loading behavior data: $e');
-      
-      // Retry logic for network errors (max 2 retries)
-      if (retryCount < 2 && _shouldRetry(e.toString())) {
-        debugPrint('🔄 Retrying behavior load (attempt ${retryCount + 1})...');
-        await Future.delayed(Duration(seconds: 1 + retryCount));
-        return _loadData(retryCount: retryCount + 1);
-      }
-      
       if (mounted) {
         setState(() {
-          _error = _getUserFriendlyError(e.toString());
+          _error = e.toString();
           _isLoading = false;
         });
       }
     }
-  }
-  
-  /// Check if error should trigger a retry
-  bool _shouldRetry(String error) {
-    final lowerError = error.toLowerCase();
-    return lowerError.contains('timeout') ||
-           lowerError.contains('connection') ||
-           lowerError.contains('socket') ||
-           lowerError.contains('network');
-  }
-  
-  /// Convert technical errors to user-friendly messages
-  String _getUserFriendlyError(String error) {
-    final lowerError = error.toLowerCase();
-    
-    if (lowerError.contains('timeout')) {
-      return 'انتهت مهلة الاتصال';
-    }
-    if (lowerError.contains('socket') || lowerError.contains('connection')) {
-      return 'لا يوجد اتصال بالإنترنت';
-    }
-    if (lowerError.contains('401') || lowerError.contains('unauthorized')) {
-      return 'انتهت صلاحية الجلسة';
-    }
-    if (lowerError.contains('404')) {
-      return 'لم يتم العثور على البيانات';
-    }
-    if (lowerError.contains('500') || lowerError.contains('server')) {
-      return 'خطأ في الخادم';
-    }
-    
-    // Remove "Exception: " prefix if present
-    if (error.startsWith('Exception: ')) {
-      return error.substring(11);
-    }
-    
-    return error;
   }
 
   Future<void> _handleGiftTap() async {
@@ -110,6 +64,7 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
       return;
     }
 
+    // Check if already given
     if (_behaviorData!.isGiven) {
       _showCustomDialog(
         icon: '✅',
@@ -119,6 +74,7 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
       return;
     }
 
+    // Check if eligible
     if (!_behaviorData!.isEligible) {
       _showCustomDialog(
         icon: '🎁',
@@ -224,6 +180,7 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
 
   Future<void> _claimReward() async {
     try {
+      // Show loading
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -240,6 +197,7 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
       // Reload data
       await _loadData();
 
+      // Show success message
       if (mounted) {
         final message = result['message']?.toString() ?? '';
         _showCustomDialog(
@@ -254,6 +212,7 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
       // Close loading
       if (mounted) Navigator.pop(context);
 
+      // Show error
       if (mounted) {
         _showCustomDialog(
           icon: '❌',
@@ -414,6 +373,7 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
               ],
             ),
           ),
+          // Title
           Row(
             children: [
               Image.asset(
@@ -547,6 +507,7 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
     // Only first card is orange, rest are blue
     final color = index == 0 ? Colors.orange : const Color(0xFF7B96D4);
 
+    // Check if this is the current week by checking if today falls within the week's date range
     final now = DateTime.now();
     final today = DateTime(
       now.year,
@@ -556,6 +517,7 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
 
     bool isCurrentWeek = false;
     if (week.days.isNotEmpty) {
+      // Get the first and last day of this week
       final sortedDays = week.days.map((d) => d.date).toList()..sort();
       final firstDay = sortedDays.first;
       final lastDay = sortedDays.last;
@@ -572,6 +534,7 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
         lastDay.day,
       );
 
+      // Check if today is between first and last day (inclusive)
       isCurrentWeek =
           (today.isAtSameMomentAs(firstDayNormalized) ||
               today.isAfter(firstDayNormalized)) &&
@@ -582,6 +545,7 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
     return Stack(
       clipBehavior: Clip.none,
       children: [
+        // Main Card
         Container(
           margin: const EdgeInsets.only(
             top: 8,
@@ -649,6 +613,7 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: () {
+                        // Show week details dialog
                         showDialog(
                           context: context,
                           builder: (context) => WeekDetailsDialog(
@@ -677,6 +642,7 @@ class _BehaviorScreenState extends State<BehaviorScreen> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Days on the left
                   Expanded(
                     child: LayoutBuilder(
                       builder: (context, constraints) {

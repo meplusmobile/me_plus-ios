@@ -213,6 +213,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
   }
 
   Widget _buildKidCard({required child, required BuildContext context}) {
+    // Parse background color
     Color bgColor = AppColors.secondary;
     try {
       bgColor = Color(int.parse(child.backgroundColor.replaceAll('#', '0xFF')));
@@ -222,6 +223,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
 
     return InkWell(
       onTap: () {
+        // Navigate to child activity calendar when card is tapped
         context.push('/parent/child-activity/${child.id}');
       },
       borderRadius: BorderRadius.circular(24),
@@ -411,6 +413,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                               ? TextDirection.rtl
                               : TextDirection.ltr,
                           children: List.generate(4, (index) {
+                            // Show last 4 days before today
                             // For Arabic RTL: reverse so newest (day -1) appears on right
                             final dayOffset = isArabic
                                 ? (index + 1)
@@ -433,6 +436,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                         );
                       }
 
+                      // Get last 4 days (should be already filtered by API)
                       List<BehaviorDate> activities = snapshot.data!
                           .take(4)
                           .toList();
@@ -485,6 +489,7 @@ class _ParentHomeScreenState extends State<ParentHomeScreen> {
                           final activity = entry.value;
                           final status = activity.behaviorStatus.toUpperCase();
 
+                          // Get day label (SUN, MON, TUE, etc)
                           final days = [
                             'SUN',
                             'MON',

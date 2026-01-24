@@ -54,6 +54,7 @@ class _ChildReportScreenState extends State<ChildReportScreen> {
   }
 
   void _parseSelectedMonth() {
+    // Parse the selected month from widget parameter or use current month
     if (widget.selectedMonth != null) {
       try {
         final parts = widget.selectedMonth!.split('-');
@@ -703,6 +704,7 @@ class DonutChartPainter extends CustomPainter {
     double startAngle = -pi / 2;
     final double total = good + bad + average;
 
+    // If no data, show empty gray circle
     if (total == 0) {
       paint.color = Colors.grey.withValues(alpha: 0.2);
       canvas.drawArc(

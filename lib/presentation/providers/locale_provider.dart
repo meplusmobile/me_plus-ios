@@ -1,65 +1,35 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:me_plus/data/services/storage_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LocaleProvider with ChangeNotifier {
   Locale _locale = const Locale('en');
-  bool _isInitialized = false;
-  final _storage = StorageService();
 
   Locale get locale => _locale;
 
-  LocaleProvider();
+  LocaleProvider() {
+    _loadLocale();
+  }
 
-  Future<void> loadSavedLocale() async {
-    if (_isInitialized) return; // Prevent multiple calls
-    
-    try {
-      final languageCode = await _storage.getString('language_code') ?? 'en';
-      _locale = Locale(languageCode);
-      _isInitialized = true;
-      
-      debugPrint('✅ [LocaleProvider] Loaded locale: $languageCode');
-      notifyListeners();
-    } catch (e) {
-      debugPrint('❌ [LocaleProvider] Failed to load locale: $e');
-      // If storage fails, use default locale
-      _locale = const Locale('en');
-      _isInitialized = true;
-      notifyListeners();
-    }
+  Future<void> _loadLocale() async {
+    final prefs = await SharedPreferences.getInstance();
+    final languageCode = prefs.getString('language_code') ?? 'en';
+    _locale = Locale(languageCode);
+    notifyListeners();
   }
 
   Future<void> setLocale(String languageCode) async {
-    debugPrint('🌐 [LocaleProvider] Setting locale to: $languageCode');
-    
-    if (_locale.languageCode == languageCode) {
-      debugPrint('⚠️ [LocaleProvider] Locale already set to: $languageCode');
-      return;
-    }
+    if (_locale.languageCode == languageCode) return;
 
-    try {
-      // Update locale immediately for UI
-      _locale = Locale(languageCode);
-      notifyListeners();
+    _locale = Locale(languageCode);
 
-      // Save to secure storage
-      await _storage.saveString('language_code', languageCode);
-      await _storage.saveString(
-        'language',
-        languageCode == 'ar' ? 'Arabic' : 'English',
-      );
-      
-      debugPrint('✅ [LocaleProvider] Locale changed to: $languageCode');
-      
-      // Notify listeners again to ensure UI updates
-      notifyListeners();
-    } catch (e) {
-      debugPrint('❌ [LocaleProvider] Failed to save locale: $e');
-      // Revert locale change if save failed
-      _locale = Locale(languageCode == 'ar' ? 'en' : 'ar');
-      notifyListeners();
-    }
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('language_code', languageCode);
+    await prefs.setString(
+      'language',
+      languageCode == 'ar' ? 'Arabic' : 'English',
+    );
+
+    notifyListeners();
   }
 
   bool get isArabic => _locale.languageCode == 'ar';

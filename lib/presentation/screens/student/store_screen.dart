@@ -122,7 +122,7 @@ class _StoreScreenState extends State<StoreScreen> {
     );
   }
 
-  Future<void> _loadData({int retryCount = 0}) async {
+  Future<void> _loadData() async {
     if (!mounted) return;
 
     final profileProvider = Provider.of<ProfileProvider>(
@@ -130,6 +130,7 @@ class _StoreScreenState extends State<StoreScreen> {
       listen: false,
     );
 
+    // Load profile first if not loaded
     if (!profileProvider.hasProfile) {
       await profileProvider.loadProfile();
     }
@@ -137,7 +138,8 @@ class _StoreScreenState extends State<StoreScreen> {
     if (profileProvider.schoolId == null || profileProvider.classId == null) {
       if (mounted) {
         setState(() {
-          _error = 'المتجر غير متاح. بيانات المدرسة أو الصف مفقودة';
+          _error =
+              'Store not available. schoolId or classId missing.\nschoolId: ${profileProvider.schoolId}, classId: ${profileProvider.classId}';
           _isLoading = false;
         });
       }
@@ -170,59 +172,13 @@ class _StoreScreenState extends State<StoreScreen> {
         });
       }
     } catch (e) {
-      debugPrint('❌ Error loading store: $e');
-      
-      // Retry logic for network errors (max 2 retries)
-      if (retryCount < 2 && _shouldRetry(e.toString())) {
-        debugPrint('🔄 Retrying store load (attempt ${retryCount + 1})...');
-        await Future.delayed(Duration(seconds: 1 + retryCount));
-        return _loadData(retryCount: retryCount + 1);
-      }
-      
       if (mounted) {
         setState(() {
-          _error = _getUserFriendlyError(e.toString());
+          _error = 'Error loading store: ${e.toString()}';
           _isLoading = false;
         });
       }
     }
-  }
-  
-  /// Check if error should trigger a retry
-  bool _shouldRetry(String error) {
-    final lowerError = error.toLowerCase();
-    return lowerError.contains('timeout') ||
-           lowerError.contains('connection') ||
-           lowerError.contains('socket') ||
-           lowerError.contains('network');
-  }
-  
-  /// Convert technical errors to user-friendly messages
-  String _getUserFriendlyError(String error) {
-    final lowerError = error.toLowerCase();
-    
-    if (lowerError.contains('timeout')) {
-      return 'انتهت مهلة الاتصال';
-    }
-    if (lowerError.contains('socket') || lowerError.contains('connection')) {
-      return 'لا يوجد اتصال بالإنترنت';
-    }
-    if (lowerError.contains('401') || lowerError.contains('unauthorized')) {
-      return 'انتهت صلاحية الجلسة';
-    }
-    if (lowerError.contains('404')) {
-      return 'لم يتم العثور على المتجر';
-    }
-    if (lowerError.contains('500') || lowerError.contains('server')) {
-      return 'خطأ في الخادم';
-    }
-    
-    // Remove "Exception: " prefix if present
-    if (error.startsWith('Exception: ')) {
-      return error.substring(11);
-    }
-    
-    return 'خطأ في تحميل المتجر';
   }
 
   Future<void> _purchaseItem(StoreReward reward) async {
@@ -233,6 +189,7 @@ class _StoreScreenState extends State<StoreScreen> {
       listen: false,
     );
 
+    // Show confirmation dialog always
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
@@ -251,6 +208,7 @@ class _StoreScreenState extends State<StoreScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Loading animation
                 SizedBox(
                   width: 200,
                   height: 80,
@@ -418,6 +376,7 @@ class _StoreScreenState extends State<StoreScreen> {
       },
     );
 
+    // If user cancelled or doesn't have enough credits, return
     if (confirmed != true) return;
 
     if (profileProvider.schoolId == null ||

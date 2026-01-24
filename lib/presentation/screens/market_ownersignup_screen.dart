@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -8,8 +9,10 @@ import 'package:me_plus/presentation/widgets/gradient_text.dart';
 import 'package:me_plus/presentation/widgets/gradient_button.dart';
 import 'package:me_plus/presentation/widgets/verification_overlay.dart';
 import 'package:me_plus/presentation/providers/signup_provider.dart';
+import 'package:me_plus/presentation/providers/google_signup_provider.dart';
 import 'package:me_plus/data/services/auth_service.dart';
 import 'package:me_plus/data/models/signup_request.dart';
+import 'package:me_plus/data/models/google_signup_request.dart';
 import 'package:me_plus/core/localization/app_localizations.dart';
 
 class MarketOwnerScreenSignUp extends StatefulWidget {
@@ -91,47 +94,111 @@ class _MarketOwnerScreenSignUpState extends State<MarketOwnerScreenSignUp>
 
     try {
       final signupData = context.read<SignupData>();
+      final googleProvider = context.read<GoogleSignupProvider>();
 
-      // Regular signup flow - save market owner specific info
-      signupData.setMarketOwnerInfo(
-        marketName: _marketNameController.text,
-        marketAddress: _marketAddressController.text,
-      );
+      // Check if this is Google signup
+      final isGoogleSignup =
+          googleProvider.hasGoogleAuth && googleProvider.hasBasicInfo;
 
-      // Combine First Name and Market Name
-      final combinedFirstName =
-          '${signupData.firstName}||${signupData.marketName}';
-
-      // Create signup request
-      final request = SignupRequest(
-        firstName: combinedFirstName,
-        lastName: signupData.lastName!,
-        birthdate: signupData.birthdate!,
-        role: signupData.role!,
-        email: signupData.email!,
-        phoneNumber: signupData.phoneNumber!,
-        password: signupData.password!,
-        address: signupData.marketAddress!,
-      );
-
-      final response = await _authService.signup(request);
-
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-
-        VerificationOverlay.show(
-          context,
-          onComplete: () {
-            if (response.isFirstTimeUser) {
-              context.go('/onboarding/market-owner');
-            } else {
-              context.go('/');
-            }
-          },
-          duration: const Duration(seconds: 3),
+      if (isGoogleSignup) {
+        // Google signup flow - save market info in provider and call googleSignup
+        googleProvider.setMarketOwnerInfo(
+          marketName: _marketNameController.text,
+          marketAddress: _marketAddressController.text,
         );
+
+        // Combine First Name and Market Name for Google Signup
+        final encodedFirstName =
+            '${googleProvider.firstName}||${_marketNameController.text}';
+
+        // Create Google signup request with all required data
+        final request = GoogleSignupRequest(
+          accessToken: googleProvider.accessToken!,
+          birthDate: googleProvider.birthDate!,
+          role: googleProvider.role!,
+          phoneNumber: googleProvider.phoneNumber!,
+          password: googleProvider.password!,
+          marketName: _marketNameController.text,
+          address: _marketAddressController.text,
+          firstName: encodedFirstName,
+        );
+
+        // Call Google signup API
+        final response = await _authService.googleSignup(request);
+
+        // WORKAROUND: Explicitly update profile with encoded first name
+        // The backend might ignore firstName in googleSignup, so we update it manually
+        try {
+          await _authService.updateProfile({'FirstName': encodedFirstName});
+        } catch (e) {
+          // Continue anyway, as signup was successful
+        }
+
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+
+          // Show verification overlay
+          VerificationOverlay.show(
+            context,
+            onComplete: () {
+              // Navigate based on isFirstTimeUser
+              if (response.isFirstTimeUser) {
+                context.push('/onboarding/market-owner');
+              } else {
+                context.push('/');
+              }
+            },
+            duration: const Duration(seconds: 3),
+          );
+        }
+      } else {
+        // Regular signup flow
+        // Save market owner specific info
+        signupData.setMarketOwnerInfo(
+          marketName: _marketNameController.text,
+          marketAddress: _marketAddressController.text,
+        );
+
+        // Combine First Name and Market Name
+        final combinedFirstName =
+            '${signupData.firstName}||${signupData.marketName}';
+
+        // Create signup request
+        final request = SignupRequest(
+          firstName: combinedFirstName,
+          lastName: signupData.lastName!,
+          birthdate: signupData.birthdate!,
+          role: signupData.role!,
+          email: signupData.email!,
+          phoneNumber: signupData.phoneNumber!,
+          password: signupData.password!,
+          address: signupData.marketAddress!,
+        );
+
+        // Call API
+        final response = await _authService.signup(request);
+
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+
+          // Show verification overlay
+          VerificationOverlay.show(
+            context,
+            onComplete: () {
+              // Navigate based on isFirstTimeUser
+              if (response.isFirstTimeUser) {
+                context.push('/onboarding/market-owner');
+              } else {
+                context.push('/');
+              }
+            },
+            duration: const Duration(seconds: 3),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -151,11 +218,14 @@ class _MarketOwnerScreenSignUpState extends State<MarketOwnerScreenSignUp>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+          // Background blur image
           Positioned(
             top: -180,
             left: 0,
@@ -180,6 +250,7 @@ class _MarketOwnerScreenSignUpState extends State<MarketOwnerScreenSignUp>
             ),
           ),
 
+          // Bottom decoration
           Positioned(
             left: 0,
             right: 0,
@@ -191,6 +262,7 @@ class _MarketOwnerScreenSignUpState extends State<MarketOwnerScreenSignUp>
             ),
           ),
 
+          // Top left logo (with IgnorePointer to allow clicks through)
           Positioned(
             top: 40,
             left: 12,
@@ -219,6 +291,7 @@ class _MarketOwnerScreenSignUpState extends State<MarketOwnerScreenSignUp>
                   children: [
                     const SizedBox(height: 158),
 
+                    // Header
                     FadeTransition(
                       opacity: _fadeAnimation,
                       child: SlideTransition(
@@ -254,6 +327,7 @@ class _MarketOwnerScreenSignUpState extends State<MarketOwnerScreenSignUp>
           ),
         ],
       ),
+      ),
     );
   }
 
@@ -278,7 +352,7 @@ class _MarketOwnerScreenSignUpState extends State<MarketOwnerScreenSignUp>
         Text(
           localizations.t('help_students_find_store'),
           textAlign: TextAlign.center,
-          style: const TextStyle(fontFamily: 'Inter', 
+          style: GoogleFonts.inter(
             fontSize: 12,
             fontWeight: FontWeight.w500,
             color: AppColors.disabled,

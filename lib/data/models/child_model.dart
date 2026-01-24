@@ -36,6 +36,7 @@ class Child {
   });
 
   factory Child.fromJson(Map<String, dynamic> json) {
+    // Parse birth date
     DateTime? parsedBirthDate;
     if (json['birthDate'] != null && json['birthDate'] != '0001-01-01') {
       try {

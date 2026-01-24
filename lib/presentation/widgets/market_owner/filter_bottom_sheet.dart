@@ -155,6 +155,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             child: ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
+                // Apply filters logic here
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFFAA72A),

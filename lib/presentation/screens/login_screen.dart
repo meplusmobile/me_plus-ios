@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -8,9 +9,12 @@ import 'package:me_plus/presentation/widgets/gradient_text.dart';
 import 'package:me_plus/presentation/widgets/language_switcher_button.dart';
 import 'package:me_plus/presentation/theme/app_colors.dart';
 import 'package:me_plus/data/services/auth_service.dart';
+import 'package:me_plus/data/services/google_auth_service.dart';
 import 'package:me_plus/data/services/token_storage_service.dart';
 import 'package:me_plus/data/models/login_request.dart';
+import 'package:me_plus/data/models/google_login_request.dart';
 import 'package:me_plus/presentation/providers/profile_provider.dart';
+import 'package:me_plus/presentation/providers/google_signup_provider.dart';
 import 'package:me_plus/core/localization/app_localizations.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -27,19 +31,16 @@ class _LoginScreenState extends State<LoginScreen>
   bool _rememberMe = false;
   bool _obscurePassword = true;
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
   late AnimationController _animationController;
   late List<Animation<double>> _fadeAnimations;
   final AuthService _authService = AuthService();
+  final GoogleAuthService _googleAuthService = GoogleAuthService();
 
   @override
   void initState() {
     super.initState();
-    
-    // Defer SharedPreferences call until after first frame (iOS requirement)
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadSavedCredentials();
-    });
-    
+    _loadSavedCredentials();
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
@@ -93,8 +94,6 @@ class _LoginScreenState extends State<LoginScreen>
       return;
     }
 
-    if (!mounted) return;
-
     setState(() {
       _isLoading = true;
     });
@@ -107,205 +106,197 @@ class _LoginScreenState extends State<LoginScreen>
 
       final response = await _authService.login(request);
 
-      if (!mounted) return;
-
-      // CRITICAL iOS DEBUG: Verify token was saved to Keychain
-      final tokenStorage = TokenStorageService();
-      await tokenStorage.debugTokenStorage();
-      
-      final savedToken = await tokenStorage.getToken();
-      debugPrint('🔐 [Login] Token saved to iOS Keychain: ${savedToken != null}');
-      if (savedToken != null && savedToken.length > 20) {
-        debugPrint('🔐 [Login] Token preview: ${savedToken.substring(0, 20)}...');
-      }
-
       // Save Remember Me credentials
+      final tokenStorage = TokenStorageService();
       await tokenStorage.saveRememberMe(
         rememberMe: _rememberMe,
         email: _rememberMe ? _emailController.text : null,
         password: _rememberMe ? _passwordController.text : null,
       );
 
-      if (!mounted) return;
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
 
-      if (response.role == 'Student') {
-        if (response.schoolId == null) {
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            builder: (context) => AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+        // Navigate based on user role
+        if (response.role == 'Student') {
+          // Check if schoolId is null (waiting for approval)
+          if (response.schoolId == null) {
+            // Show waiting dialog
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                title: Row(
+                  children: [
+                    const Icon(
+                      Icons.hourglass_empty,
+                      color: AppColors.primary,
+                      size: 28,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      AppLocalizations.of(context)!.t('pending_approval'),
+                      style: GoogleFonts.poppins(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppLocalizations.of(
+                        context,
+                      )!.t('request_waiting_for_school_approval'),
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      AppLocalizations.of(context)!.t('notify_when_approved'),
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Close dialog only
+                    },
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      backgroundColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text(
+                      AppLocalizations.of(context)!.t('ok'),
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              title: Row(
-                children: [
-                  const Icon(
-                    Icons.hourglass_empty,
-                    color: AppColors.primary,
+            );
+          } else {
+            // Load profile and navigate to student home
+            final profileProvider = context.read<ProfileProvider>();
+            profileProvider.loadProfile(forceRefresh: true).catchError((error) {
+              // Failed to load profile
+            });
+
+            context.go('/student/home');
+          }
+        } else if (response.role == 'Market') {
+          context.go('/market-owner/home');
+        } else if (response.role == 'Parent') {
+          context.go('/parent/home');
+        } else {
+          // For other roles, navigate to a default home or placeholder
+          context.go('/');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        // Show professional error dialog
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.error_outline,
+                    color: Colors.red,
                     size: 28,
                   ),
-                  const SizedBox(width: 12),
-                  Text(
-                    AppLocalizations.of(context)!.t('pending_approval'),
-                    style: const TextStyle(fontFamily: 'Poppins', 
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                ],
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppLocalizations.of(
-                      context,
-                    )!.t('request_waiting_for_school_approval'),
-                    style: const TextStyle(fontFamily: 'Poppins', 
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    AppLocalizations.of(context)!.t('notify_when_approved'),
-                    style: const TextStyle(fontFamily: 'Poppins', 
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop(); // Close dialog only
-                  },
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
-                    ),
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
                   child: Text(
-                    AppLocalizations.of(context)!.t('ok'),
-                    style: const TextStyle(fontFamily: 'Poppins', 
-                      fontSize: 14,
+                    AppLocalizations.of(context)!.t('login_failed'),
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ),
               ],
             ),
-          );
-        } else {
-          final profileProvider = context.read<ProfileProvider>();
-          profileProvider.loadProfile(forceRefresh: true).catchError((error) {
-            // Failed to load profile
-          });
-
-          context.go('/student/home');
-        }
-      } else if (response.role == 'Market') {
-        context.go('/market-owner/home');
-      } else if (response.role == 'Parent') {
-        context.go('/parent/home');
-      } else {
-        // For other roles, navigate to a default home or placeholder
-        context.go('/');
-      }
-    } catch (e) {
-      if (!mounted) return;
-
-      // Log error immediately for debugging
-      debugPrint('❌❌❌ [LoginScreen] Login failed: $e');
-      debugPrint('❌❌❌ [LoginScreen] Error type: ${e.runtimeType}');
-
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _getErrorMessage(e.toString()),
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                    height: 1.5,
+                  ),
                 ),
-                child: const Icon(
-                  Icons.error_outline,
-                  color: Colors.red,
-                  size: 28,
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
                 child: Text(
-                  AppLocalizations.of(context)!.t('login_failed'),
-                  style: const TextStyle(fontFamily: 'Poppins', 
-                    fontSize: 18,
+                  AppLocalizations.of(context)!.t('ok'),
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: Colors.white,
                   ),
                 ),
               ),
             ],
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _getErrorMessage(e.toString()),
-                style: const TextStyle(fontFamily: 'Poppins', 
-                  fontSize: 14,
-                  color: AppColors.textSecondary,
-                  height: 1.5,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-                backgroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: Text(
-                AppLocalizations.of(context)!.t('ok'),
-                style: const TextStyle(fontFamily: 'Poppins', 
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        );
       }
     }
   }
@@ -326,6 +317,288 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
+  Future<void> _handleGoogleSignIn() async {
+    setState(() {
+      _isGoogleLoading = true;
+    });
+
+    try {
+      // Get google user from Sign-In
+      final googleUser = await _googleAuthService.signInWithGoogle();
+
+      if (googleUser == null) {
+        // User canceled the sign-in
+        setState(() {
+          _isGoogleLoading = false;
+        });
+        return;
+      }
+
+      // Get access token
+      final googleAuth = await googleUser.authentication;
+      final accessToken = googleAuth.idToken;
+
+      if (accessToken == null) {
+        throw Exception('Failed to get access token');
+      }
+
+      // Send access token to backend
+      final request = GoogleLoginRequest(accessToken: accessToken);
+      final response = await _authService.googleLogin(request);
+
+      if (mounted) {
+        setState(() {
+          _isGoogleLoading = false;
+        });
+
+        // Navigate based on user role
+        if (response.role == 'Student') {
+          // Check if schoolId is null (waiting for approval)
+          if (response.schoolId == null) {
+            // Show waiting dialog
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (context) => AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                title: Row(
+                  children: [
+                    const Icon(
+                      Icons.hourglass_empty,
+                      color: AppColors.primary,
+                      size: 28,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      AppLocalizations.of(context)!.t('pending_approval'),
+                      style: GoogleFonts.poppins(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppLocalizations.of(
+                        context,
+                      )!.t('request_waiting_for_school_approval'),
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      AppLocalizations.of(context)!.t('notify_when_approved'),
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      backgroundColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text(
+                      AppLocalizations.of(context)!.t('ok'),
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            // Load profile and navigate to student home
+            final profileProvider = context.read<ProfileProvider>();
+            profileProvider.loadProfile(forceRefresh: true).catchError((error) {
+              // Failed to load profile
+            });
+
+            context.go('/student/home');
+          }
+        } else if (response.role == 'Market') {
+          context.go('/market-owner/home');
+        } else if (response.role == 'Parent') {
+          context.go('/parent/home');
+        } else {
+          // For other roles, navigate accordingly
+          context.go('/');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isGoogleLoading = false;
+        });
+
+        // Check if error message indicates user doesn't exist
+        final errorMessage = e.toString().replaceAll('Exception: ', '');
+
+        if (errorMessage.contains('not found') ||
+            errorMessage.contains('does not exist') ||
+            errorMessage.contains('No user found') ||
+            errorMessage.contains('USER_NOT_FOUND')) {
+          // User doesn't exist, set up Google signup provider and redirect
+          final googleSignupProvider = context.read<GoogleSignupProvider>();
+
+          // Get the access token again to save it
+          final googleUser = await _googleAuthService.signInSilently();
+
+          if (googleUser != null) {
+            final googleAuth = await googleUser.authentication;
+            final accessToken = googleAuth.idToken;
+
+            if (accessToken != null) {
+              // Extract names
+              String firstName = '';
+              String lastName = '';
+
+              if (googleUser.displayName != null) {
+                final nameParts = googleUser.displayName!.split(' ');
+                if (nameParts.isNotEmpty) {
+                  firstName = nameParts.first;
+                  if (nameParts.length > 1) {
+                    lastName = nameParts.sublist(1).join(' ');
+                  }
+                }
+              }
+
+              googleSignupProvider.setGoogleUserInfo(
+                accessToken: accessToken,
+                email: googleUser.email,
+                firstName: firstName,
+                lastName: lastName,
+                photoUrl: googleUser.photoUrl,
+              );
+            }
+          }
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  AppLocalizations.of(
+                    context,
+                  )!.t('account_not_found_please_complete_signup'),
+                ),
+                backgroundColor: Colors.orange,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+
+            // Navigate to Google signup details screen
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (mounted) {
+                context.go('/google-signup-details');
+              }
+            });
+          }
+        } else {
+          // Other errors - show professional error dialog
+          if (mounted) {
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                title: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.error_outline,
+                        color: Colors.red,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        AppLocalizations.of(context)!.t('login_failed'),
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _getErrorMessage(errorMessage),
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
+                      backgroundColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text(
+                      AppLocalizations.of(context)!.t('ok'),
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+        }
+      }
+    }
+  }
+
   @override
   void dispose() {
     _animationController.dispose();
@@ -338,49 +611,55 @@ class _LoginScreenState extends State<LoginScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Stack(
-        children: [
-          // Background Image
-          Positioned.fill(
-            child: Image.network(
-              'https://c.animaapp.com/mhqrlq9bisClG6/img/blur.png',
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.orange.withValues(alpha: 0.1),
-                      Colors.blue.withValues(alpha: 0.1),
-                    ],
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // Background blur effect
+            Positioned(
+              top: -180,
+              left: 0,
+              right: 0,
+              child: Image.network(
+                'https://c.animaapp.com/mhqrlq9bisClG6/img/blur.png',
+                height: 430,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  height: 430,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.orange.withValues(alpha: 0.1),
+                        Colors.blue.withValues(alpha: 0.1),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
 
-          // Bottom decoration
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Image.asset(
-              'assets/images/bottombackgroundloginpage.png',
-              fit: BoxFit.cover,
-              alignment: Alignment.bottomCenter,
+            // Bottom decoration
+            Positioned(
+              bottom: -80,
+              left: 0,
+              right: 0,
+              child: Image.asset(
+                'assets/images/bottombackgroundloginpage.png',
+                fit: BoxFit.cover,
+                alignment: Alignment.bottomCenter,
+              ),
             ),
-          ),
 
-          // Main content
-          SafeArea(
-            child: SingleChildScrollView(
+            // Main content
+            SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: Column(
                   children: [
                     const SizedBox(height: 40),
 
+                    // Logo and Language Switcher
                     FadeTransition(
                       opacity: _fadeAnimations[3],
                       child: SlideTransition(
@@ -404,6 +683,7 @@ class _LoginScreenState extends State<LoginScreen>
 
                     const SizedBox(height: 51),
 
+                    // Header
                     FadeTransition(
                       opacity: _fadeAnimations[0],
                       child: SlideTransition(
@@ -436,7 +716,7 @@ class _LoginScreenState extends State<LoginScreen>
                                   localizations.t(
                                     'enter_email_password_to_sign_in',
                                   ),
-                                  style: const TextStyle(fontFamily: 'Poppins', 
+                                  style: GoogleFonts.poppins(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
                                     color: AppColors.textSecondary,
@@ -468,7 +748,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 // Email field
                                 Text(
                                   localizations.t('email'),
-                                  style: const TextStyle(fontFamily: 'Poppins', 
+                                  style: GoogleFonts.poppins(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
                                     color: AppColors.textSecondary,
@@ -487,7 +767,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 // Password field
                                 Text(
                                   localizations.t('password'),
-                                  style: const TextStyle(fontFamily: 'Poppins', 
+                                  style: GoogleFonts.poppins(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
                                     color: AppColors.textSecondary,
@@ -542,7 +822,7 @@ class _LoginScreenState extends State<LoginScreen>
                                         const SizedBox(width: 5),
                                         Text(
                                           localizations.t('remember_me'),
-                                          style: const TextStyle(fontFamily: 'Poppins', 
+                                          style: GoogleFonts.poppins(
                                             fontSize: 12,
                                             fontWeight: FontWeight.w500,
                                             color: AppColors.textSecondary,
@@ -562,7 +842,7 @@ class _LoginScreenState extends State<LoginScreen>
                                       ),
                                       child: Text(
                                         localizations.t('forgot_password'),
-                                        style: const TextStyle(fontFamily: 'Poppins', 
+                                        style: GoogleFonts.poppins(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
                                           color: AppColors.primary,
@@ -595,9 +875,10 @@ class _LoginScreenState extends State<LoginScreen>
                               children: [
                                 GradientButton(
                                   onPressed: _isLoading ? null : _handleLogin,
-                                  text: localizations.t('sign_in'),
+                                  text: _isLoading
+                                      ? localizations.t('signing_in')
+                                      : localizations.t('sign_in'),
                                   enabled: !_isLoading,
-                                  isLoading: _isLoading,
                                 ),
 
                                 const SizedBox(height: 32),
@@ -612,7 +893,7 @@ class _LoginScreenState extends State<LoginScreen>
                                       ),
                                       child: Text(
                                         localizations.t('or_sign_in_with'),
-                                        style: const TextStyle(fontFamily: 'Poppins', 
+                                        style: GoogleFonts.poppins(
                                           fontSize: 12,
                                           color: AppColors.textSecondary,
                                           letterSpacing: -0.12,
@@ -625,53 +906,53 @@ class _LoginScreenState extends State<LoginScreen>
 
                                 const SizedBox(height: 16),
 
-                                // DISABLED: Google sign in button - DISABLED
-                                // Container(
-                                //   height: 48,
-                                //   decoration: BoxDecoration(
-                                //     color: Colors.white,
-                                //     borderRadius: BorderRadius.circular(10),
-                                //     border: Border.all(
-                                //       color: AppColors.secondaryLight,
-                                //     ),
-                                //     boxShadow: [
-                                //       BoxShadow(
-                                //         color: AppColors.secondaryLight
-                                //             .withValues(alpha: 0.6),
-                                //         blurRadius: 6,
-                                //         offset: const Offset(0, -3),
-                                //       ),
-                                //     ],
-                                //   ),
-                                //   child: Material(
-                                //     color: Colors.transparent,
-                                //     child: InkWell(
-                                //       onTap: _isGoogleLoading || _isLoading
-                                //           ? null
-                                //           : _handleGoogleSignIn,
-                                //       borderRadius: BorderRadius.circular(10),
-                                //       child: Center(
-                                //         child: _isGoogleLoading
-                                //             ? const SizedBox(
-                                //                 width: 18,
-                                //                 height: 18,
-                                //                 child: CircularProgressIndicator(
-                                //                   strokeWidth: 2,
-                                //                   valueColor:
-                                //                       AlwaysStoppedAnimation<
-                                //                         Color
-                                //                       >(AppColors.primary),
-                                //                 ),
-                                //               )
-                                //             : SvgPicture.asset(
-                                //                 'assets/images/Google__G__logo.svg',
-                                //                 width: 18,
-                                //                 height: 18,
-                                //               ),
-                                //       ),
-                                //     ),
-                                //   ),
-                                // ),
+                                // Google sign in button
+                                Container(
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: AppColors.secondaryLight,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppColors.secondaryLight
+                                            .withValues(alpha: 0.6),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, -3),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: _isGoogleLoading || _isLoading
+                                          ? null
+                                          : _handleGoogleSignIn,
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Center(
+                                        child: _isGoogleLoading
+                                            ? const SizedBox(
+                                                width: 18,
+                                                height: 18,
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  valueColor:
+                                                      AlwaysStoppedAnimation<
+                                                        Color
+                                                      >(AppColors.primary),
+                                                ),
+                                              )
+                                            : SvgPicture.asset(
+                                                'assets/images/Google__G__logo.svg',
+                                                width: 18,
+                                                height: 18,
+                                              ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                                 const SizedBox(height: 24),
 
                                 // Sign up link
@@ -680,7 +961,7 @@ class _LoginScreenState extends State<LoginScreen>
                                   children: [
                                     Text(
                                       localizations.t('dont_have_account'),
-                                      style: const TextStyle(fontFamily: 'Inter', 
+                                      style: GoogleFonts.inter(
                                         fontSize: 12,
                                         fontWeight: FontWeight.w500,
                                         color: AppColors.disabled,
@@ -699,7 +980,7 @@ class _LoginScreenState extends State<LoginScreen>
                                       ),
                                       child: Text(
                                         localizations.t('sign_up'),
-                                        style: const TextStyle(fontFamily: 'Poppins', 
+                                        style: GoogleFonts.poppins(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
                                           color: AppColors.primary,
@@ -720,8 +1001,8 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

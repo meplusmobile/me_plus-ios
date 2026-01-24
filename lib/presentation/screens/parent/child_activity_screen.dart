@@ -63,6 +63,7 @@ class _ChildActivityScreenState extends State<ChildActivityScreen> {
         date: monthStr,
       );
 
+      // Build a map that shows which behavior TYPES exist for each day based on dayStatuses
       final Map<DateTime, Set<String>> statuses = <DateTime, Set<String>>{};
 
       for (var item in behaviorDates) {
@@ -77,6 +78,8 @@ class _ChildActivityScreenState extends State<ChildActivityScreen> {
           statuses[dateKey] = <String>{};
         }
 
+        // Parse dayStatuses to count positive and negative occurrences
+        // dayStatuses format: "Positive ,Negative" or "Positive ," or ",Negative" or ","
         if (item.dayStatuses.isNotEmpty) {
           final parts = item.dayStatuses.split(',');
           int positiveCount = 0;
@@ -167,6 +170,7 @@ class _ChildActivityScreenState extends State<ChildActivityScreen> {
     final dateKey = DateTime(day.year, day.month, day.day);
     final behaviorTypes = _behaviorStatuses[dateKey];
 
+    // Build list of ovals to display
     final List<Widget> ovals = [];
 
     if (behaviorTypes != null && behaviorTypes.isNotEmpty) {
@@ -358,6 +362,7 @@ class _ChildActivityScreenState extends State<ChildActivityScreen> {
   }
 
   Widget _buildHeader() {
+    // Parse background color
     Color bgColor = AppColors.secondary;
     if (_child != null) {
       try {
@@ -708,6 +713,7 @@ class _ChildActivityScreenState extends State<ChildActivityScreen> {
         String pointsText = '';
         String title = '';
 
+        // Check behaviorType first, then fall back to type
         final behaviorType =
             activity.behaviorType?.toUpperCase() ??
             activity.type.toUpperCase();
@@ -777,6 +783,7 @@ class _ChildActivityScreenState extends State<ChildActivityScreen> {
     final localeProvider = context.watch<LocaleProvider>();
     final isArabic = localeProvider.isArabic;
 
+    // Show description in user's selected language
     final description = isArabic ? descriptionAr : descriptionEn;
 
     return Container(

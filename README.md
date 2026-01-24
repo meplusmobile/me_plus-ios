@@ -1,281 +1,281 @@
-# Me Plus iOS App
+# Me Plus - Student Behavior Management System
 
-Flutter application with iOS deployment support.
+<div align="center">
+  <img src="assets/images/logo.png" alt="Me Plus Logo" width="200"/>
+  
+  [![Flutter](https://img.shields.io/badge/Flutter-3.0+-blue.svg)](https://flutter.dev/)
+  [![Dart](https://img.shields.io/badge/Dart-3.0+-blue.svg)](https://dart.dev/)
+  [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+</div>
 
-## 📋 Prerequisites
+## 📱 Overview
 
-### For Development (Mac)
-- **macOS** 12.0 or later
-- **Xcode** 15.0 or later ([Download from App Store](https://apps.apple.com/app/xcode/id497799835))
-- **Flutter SDK** 3.19.0 or later ([Install Flutter](https://docs.flutter.dev/get-started/install/macos))
-- **CocoaPods** ([Install guide](https://cocoapods.org/))
+**Me Plus** is a comprehensive mobile application designed to manage and track student behavior, activities, and achievements in educational institutions. The app provides a gamified approach to behavior management with a reward system, real-time notifications, and multi-language support (Arabic & English).
 
-### For CI/CD (Any platform)
-- **Codemagic** account (builds on cloud Mac)
-- **GitHub** repository access
+### ✨ Key Features
 
----
+- 🎯 **Behavior Tracking**: Monitor student behaviors with positive, negative, and mixed classifications
+- 🏆 **Reward System**: Students can earn points and claim rewards for good behavior
+- 📊 **Activity Calendar**: Visual calendar displaying daily behavior indicators
+- 🔔 **Real-time Notifications**: Instant updates on behaviors, tasks, and rewards
+- 🌍 **Bilingual Support**: Seamless Arabic-English translation with auto-detection
+- 📈 **Weekly Streaks**: Track consecutive positive behavior with streak counters
+- 🎁 **Store System**: Students can purchase rewards using earned points
+- 👤 **Profile Management**: Customizable profiles with avatar upload
 
-## 🚀 Quick Start (Mac)
+## 🏗️ Architecture
 
-### 1. Clone Repository
-```bash
-git clone https://github.com/meplusmobile/me_plus-ios.git
-cd me_plus-ios
+The application follows **Clean Architecture** principles with clear separation of concerns:
+
+```
+lib/
+├── core/                    # Core utilities and services
+│   ├── constants/          # API endpoints, app constants
+│   ├── localization/       # Multi-language support
+│   └── services/           # Translation, prefetch services
+├── data/                   # Data layer
+│   ├── models/            # Data models (Activity, Notification, etc.)
+│   ├── repositories/      # Data repositories
+│   └── services/          # API services (Auth, API client)
+├── presentation/          # UI layer
+│   ├── providers/        # State management (Provider)
+│   ├── screens/          # App screens
+│   └── widgets/          # Reusable widgets
+└── routes/               # Navigation configuration
 ```
 
-### 2. Install Dependencies
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Flutter SDK (3.0 or higher)
+- Dart SDK (3.0 or higher)
+- Android Studio / VS Code
+- Git
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/fadihamad40984/me_plus.git
+   cd me_plus
+   ```
+
+2. **Install dependencies**
+   ```bash
+   flutter pub get
+   ```
+
+3. **Run the app**
+   ```bash
+   # For development
+   flutter run
+
+   # For specific platform
+   flutter run -d android
+   flutter run -d ios
+   flutter run -d windows
+   ```
+
+### Building for Production
+
 ```bash
-# Get Flutter packages
-flutter pub get
+# Android APK
+flutter build apk --release
 
-# Install iOS dependencies
-cd ios
-pod install
-cd ..
-```
+# Android App Bundle
+flutter build appbundle --release
 
-### 3. Build & Run
-
-#### Debug Build (for testing)
-```bash
-flutter run -d <device_id>
-```
-
-#### Release Build (unsigned IPA)
-```bash
-flutter build ios --release --no-codesign
-
-# Create IPA manually
-cd build/ios/Release-iphoneos
-mkdir Payload
-cp -r Runner.app Payload/
-zip -r Runner-Release.ipa Payload/
-```
-
-#### Release Build (signed for App Store)
-```bash
-# Open Xcode workspace
-open ios/Runner.xcworkspace
-
-# In Xcode:
-# 1. Select Runner target
-# 2. Go to Signing & Capabilities
-# 3. Select your Team (Apple Developer Account)
-# 4. Build > Archive
-# 5. Distribute App > App Store Connect
-```
-
----
-
-## 🔧 Configuration
-
-### iOS Settings
-- **Bundle ID**: `meplusapp`
-- **Deployment Target**: iOS 13.0
-- **Development Team**: Configure in Xcode (Signing & Capabilities)
-
-### App Permissions (Info.plist)
-- Camera access
-- Photo library access
-- Network access
-- Google Sign-In
-
----
-
-## 🏗️ Build from Mac (Complete Guide)
-
-### Step 1: Setup Xcode
-```bash
-# Install Xcode Command Line Tools
-xcode-select --install
-
-# Accept Xcode license
-sudo xcodebuild -license accept
-```
-
-### Step 2: Install Flutter
-```bash
-# Download Flutter SDK
-git clone https://github.com/flutter/flutter.git -b stable
-export PATH="$PATH:`pwd`/flutter/bin"
-
-# Verify installation
-flutter doctor
-```
-
-### Step 3: Install CocoaPods
-```bash
-sudo gem install cocoapods
-pod setup
-```
-
-### Step 4: Build Project
-```bash
-# Clean previous builds
-flutter clean
-
-# Get dependencies
-flutter pub get
-
-# Install iOS pods
-cd ios && pod install && cd ..
-
-# Run Flutter Doctor to verify setup
-flutter doctor -v
-
-# Build release IPA
+# iOS
 flutter build ios --release
+
+# Windows
+flutter build windows --release
 ```
-
-### Step 5: Code Signing (for distribution)
-```bash
-# Open project in Xcode
-open ios/Runner.xcworkspace
-
-# In Xcode:
-# 1. Select Runner project (left sidebar)
-# 2. Select Runner target
-# 3. Go to "Signing & Capabilities" tab
-# 4. Enable "Automatically manage signing"
-# 5. Select your Team from dropdown
-# 6. Build > Archive (⌘+B to build first)
-# 7. Window > Organizer
-# 8. Select archive > Distribute App
-# 9. Choose distribution method:
-#    - App Store Connect (for TestFlight/App Store)
-#    - Ad Hoc (for internal testing)
-#    - Development (for local devices)
-```
-
----
-
-## 🔄 CI/CD with Codemagic
-
-### Automatic Builds
-Push to `main` branch triggers automatic build on Codemagic.
-
-### Manual Build
-1. Go to [Codemagic Dashboard](https://codemagic.io/apps)
-2. Select `me_plus-ios` project
-3. Click "Start new build"
-4. Download IPA from Artifacts
-
-### Codemagic Configuration
-The `codemagic.yaml` file is configured to:
-- Build **Release** mode (not debug)
-- Generate **unsigned IPA** (sign externally or in Xcode)
-- Send email notification on build completion
-
----
-
-## 🐛 Troubleshooting
-
-### CocoaPods Issues
-```bash
-# Clear CocoaPods cache
-cd ios
-rm -rf Pods Podfile.lock
-pod deintegrate
-pod install
-cd ..
-```
-
-### Flutter Issues
-```bash
-# Clear Flutter cache
-flutter clean
-flutter pub get
-
-# Reinstall
-rm -rf ~/.flutter
-git clone https://github.com/flutter/flutter.git -b stable ~/.flutter
-```
-
-### Xcode Build Errors
-```bash
-# Clean Xcode derived data
-rm -rf ~/Library/Developer/Xcode/DerivedData
-
-# Reset Xcode
-xcodebuild clean
-```
-
-### Signing Issues
-- Verify Apple Developer account is active
-- Check Bundle ID matches App Store Connect
-- Ensure provisioning profiles are up to date
-- In Xcode: Product > Clean Build Folder (⌘+Shift+K)
-
----
-
-## 📱 Testing
-
-### Simulator
-```bash
-flutter run -d "iPhone 15 Pro"
-```
-
-### Physical Device
-```bash
-# List devices
-flutter devices
-
-# Run on specific device
-flutter run -d <device_id>
-```
-
-### TestFlight
-1. Build archive in Xcode
-2. Upload to App Store Connect
-3. Submit for TestFlight review
-4. Add internal/external testers
-
----
 
 ## 📦 Dependencies
 
-Main packages:
-- `dio` - HTTP client
-- `provider` - State management
-- `go_router` - Navigation
-- `google_sign_in` - Google authentication
-- `image_picker` - Camera/gallery access
-- `shared_preferences` - Local storage
-- `path_provider` - File system access
+### Core Dependencies
+- **flutter**: UI framework
+- **provider**: State management
+- **dio**: HTTP client for API calls
+- **shared_preferences**: Local data persistence
+- **intl**: Internationalization and date formatting
 
-See `pubspec.yaml` for complete list.
+### UI Components
+- **table_calendar**: Calendar widget for activity tracking
+- **image_picker**: Profile picture selection
+- **flutter_svg**: SVG image support
+
+### API Integration
+- **Google Translate API**: Automatic text translation
+- **Azure Blob Storage**: Image hosting
+
+## 🎨 Design System
+
+### Color Palette
+- **Primary Orange**: `#FAA72A`
+- **Success Green**: `#4CAF50`
+- **Error Red**: `#FF4444`
+- **Background**: `#F8F8F8`
+- **Text Primary**: `#2E2E2E`
+- **Text Secondary**: `#8B8B8B`
+
+### Typography
+- **Font Family**: Poppins
+- **Heading**: 20px, Semi-Bold (600)
+- **Body**: 14-16px, Regular (400)
+- **Caption**: 12px, Regular (400)
+
+## 🌐 API Integration
+
+The app connects to a RESTful backend API hosted on Azure:
+
+**Base URL**: `https://meplus3-hjfehnfpfyg2gyau.israelcentral-01.azurewebsites.net`
+
+### Main Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/auth/login` | POST | User authentication |
+| `/api/notifications` | GET | Fetch notifications |
+| `/api/activity` | GET | Get monthly activity data |
+| `/api/behaviors` | GET | Get daily behaviors |
+| `/api/behavior-streak/claim-reward` | POST | Claim behavior reward |
+| `/api/store/items` | GET | Fetch store items |
+
+## 🔐 Authentication
+
+The app uses JWT-based authentication:
+
+1. User logs in with email/password
+2. Server returns JWT token
+3. Token stored in SharedPreferences
+4. Token included in all API requests via Dio interceptor
+5. Auto-refresh mechanism for expired tokens
+
+## 🌍 Internationalization
+
+### Auto-Translation System
+
+The app features an intelligent auto-translation system:
+
+- **Language Detection**: Automatically detects if text is Arabic or English
+- **Google Translate Integration**: Uses unofficial Google Translate API
+- **Caching**: Translated text cached to minimize API calls
+- **Fallback**: If translation fails, original text is displayed
+
+### Supported Languages
+
+- **Arabic (العربية)**: Right-to-left (RTL) layout support
+- **English**: Default language
+
+## 📊 Features in Detail
+
+### 1. Behavior Management
+- Visual indicators for positive (green), negative (red), and mixed (orange) behaviors
+- Weekly behavior tracking with streak counters
+- Detailed behavior notes from teachers
+- Behavior history calendar view
+
+### 2. Reward System
+- Point-based reward system
+- Claimable rewards for behavior streaks
+- In-app store for purchasing items
+- Approval workflow for reward requests
+
+### 3. Notifications
+- Real-time push notifications
+- Categorized notifications (behavior, task, reward)
+- Mark as read/unread functionality
+- Swipe to delete notifications
+- Custom notification images from backend
+
+### 4. Activity Calendar
+- Month-by-month view of all activities
+- Color-coded behavior indicators
+- Day selection to view detailed behaviors
+- Empty state with visual feedback
+
+### 5. Profile Management
+- Avatar upload to Azure Blob Storage
+- Student information display
+- Points and level tracking
+- Settings and preferences
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+flutter test
+
+# Run with coverage
+flutter test --coverage
+
+# Run specific test file
+flutter test test/widget_test.dart
+```
+
+## 📱 Supported Platforms
+
+- ✅ Android (API 21+)
+- ✅ iOS (iOS 12+)
+- ✅ Windows (10+)
+- ⏳ Web (Coming soon)
+- ⏳ macOS (Coming soon)
+- ⏳ Linux (Coming soon)
+
+## 🤝 Contributing
+
+We welcome contributions! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+### Code Style
+
+- Follow [Effective Dart](https://dart.dev/guides/language/effective-dart) guidelines
+- Use `flutter format` before committing
+- Write meaningful commit messages
+- Add comments for complex logic
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 👥 Authors
+
+- **Fadi Hamad** - [@fadihamad40984](https://github.com/fadihamad40984)
+
+## 🙏 Acknowledgments
+
+- Flutter team for the amazing framework
+- Google Translate API for translation services
+- Azure for cloud storage
+- All contributors and testers
+
+## 📧 Contact
+
+For questions or support, please contact:
+- Email: fadih40984@gmail.com
+- GitHub: [@fadihamad40984](https://github.com/fadihamad40984)
+
+## 🗺️ Roadmap
+
+- [ ] Push notifications support
+- [ ] Offline mode with local database
+- [ ] Parent portal integration
+- [ ] Teacher dashboard
+- [ ] Analytics and reporting
+- [ ] Dark mode support
+- [ ] Multi-school support
+- [ ] Gamification enhancements
 
 ---
 
-## 🔑 Important Notes
-
-### For Mac Users
-- You can build **signed** release IPA directly
-- Full Xcode integration available
-- Can upload to App Store Connect
-- Can test on simulators and devices
-
-### For Windows Users
-- Use **Codemagic** for cloud builds
-- Download unsigned IPA from Codemagic
-- Sign IPA using online services or Mac
-- Install via AltStore/Sideloadly/3uTools
-
-### App Version
-Current version: `1.0.0+24` (in `pubspec.yaml`)
-- Update version before each release
-- Build number auto-increments
-
----
-
-## 📞 Support
-
-- **Repository**: https://github.com/meplusmobile/me_plus-ios
-- **Developer**: fadihamad40984@gmail.com
-
----
-
-## 📄 License
-
-Private project - All rights reserved.
+<div align="center">
+  Made with ❤️ using Flutter
+</div>

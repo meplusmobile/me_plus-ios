@@ -256,6 +256,7 @@ class _MarketNotificationsScreenState extends State<MarketNotificationsScreen> {
                 if (!notification.isRead) {
                   _markAsRead(notification.id);
                 }
+                // Navigate to orders page when notification is tapped
                 context.go('/market-owner/orders');
               },
               borderRadius: BorderRadius.circular(16),
@@ -295,6 +296,7 @@ class _MarketNotificationsScreenState extends State<MarketNotificationsScreen> {
   String _getFullImageUrl(String? imageUrl) {
     if (imageUrl == null || imageUrl.isEmpty) return '';
 
+    // If already a full URL, return as is
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
       return imageUrl;
     }
@@ -302,6 +304,7 @@ class _MarketNotificationsScreenState extends State<MarketNotificationsScreen> {
     // Azure Blob Storage base URL for images
     const baseUrl = 'https://meplus2.blob.core.windows.net/images';
 
+    // Remove leading slash if present
     final cleanPath = imageUrl.startsWith('/')
         ? imageUrl.substring(1)
         : imageUrl;
@@ -323,8 +326,10 @@ class _MarketNotificationsScreenState extends State<MarketNotificationsScreen> {
     final localeProvider = context.watch<LocaleProvider>();
     final isArabic = localeProvider.isArabic;
 
+    // Show ONLY message in user's selected language
     final message = isArabic ? messageAr : messageEn;
 
+    // Get full image URL
     final fullImageUrl = _getFullImageUrl(imageUrl);
 
     return Container(
@@ -343,6 +348,7 @@ class _MarketNotificationsScreenState extends State<MarketNotificationsScreen> {
         children: [
           Stack(
             children: [
+              // Show image from API if available, otherwise use icon
               fullImageUrl.isNotEmpty
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(20),

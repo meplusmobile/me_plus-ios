@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+/// A widget that implements double-tap-to-exit behavior for non-root routes.
+/// 
+/// Wraps a screen and intercepts back button presses. On the first press,
+/// shows a SnackBar prompting the user to press back again to exit.
+/// On the second press within 2 seconds, exits the app using SystemNavigator.pop().
+/// 
+/// Use this on screens like profile, account, settings - NOT on home routes.
 class DoubleTapToExit extends StatefulWidget {
   final Widget child;
   final String message;

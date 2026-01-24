@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:me_plus/presentation/theme/app_colors.dart';
@@ -128,6 +129,7 @@ class _SchoolClassSelectionScreenState
           _isLoading = false;
         });
 
+        // Show verification overlay
         VerificationOverlay.show(
           context,
           duration: const Duration(seconds: 3),
@@ -164,6 +166,7 @@ class _SchoolClassSelectionScreenState
       body: SafeArea(
         child: Stack(
           children: [
+            // Background blur image
             Positioned(
               top: -180,
               left: 0,
@@ -188,6 +191,7 @@ class _SchoolClassSelectionScreenState
               ),
             ),
 
+            // Bottom decoration
             Positioned(
               left: 0,
               right: 0,
@@ -199,6 +203,7 @@ class _SchoolClassSelectionScreenState
               ),
             ),
 
+            // Top left logo (with IgnorePointer to allow clicks through)
             Positioned(
               top: 40,
               left: 12,
@@ -223,7 +228,7 @@ class _SchoolClassSelectionScreenState
                       children: [
                         Text(
                           'Failed to load schools',
-                          style: const TextStyle(fontFamily: 'Poppins', 
+                          style: GoogleFonts.poppins(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                             color: Colors.red,
@@ -248,6 +253,7 @@ class _SchoolClassSelectionScreenState
                         children: [
                           const SizedBox(height: 158),
 
+                          // Header
                           Builder(
                             builder: (context) {
                               final localizations = AppLocalizations.of(
@@ -275,7 +281,7 @@ class _SchoolClassSelectionScreenState
                                   Text(
                                     localizations.t('choose_school_class_desc'),
                                     textAlign: TextAlign.center,
-                                    style: const TextStyle(fontFamily: 'Inter', 
+                                    style: GoogleFonts.inter(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w500,
                                       color: AppColors.disabled,

@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
+/// Application theme configuration
 class AppTheme {
+  // Primary color
   static const Color primaryColor = Color(0xFF0066CC);
 
+  // Light theme
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
@@ -12,34 +16,25 @@ class AppTheme {
       ),
       primaryColor: primaryColor,
       scaffoldBackgroundColor: Colors.white,
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: primaryColor,
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: TextStyle(
-          fontFamily: 'Inter',
+        titleTextStyle: GoogleFonts.inter(
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: Colors.white,
         ),
       ),
-      textTheme: const TextTheme(
-        bodyLarge: TextStyle(fontFamily: 'Inter'),
-        bodyMedium: TextStyle(fontFamily: 'Inter'),
-        bodySmall: TextStyle(fontFamily: 'Inter'),
-        titleLarge: TextStyle(fontFamily: 'Inter'),
-        titleMedium: TextStyle(fontFamily: 'Inter'),
-        titleSmall: TextStyle(fontFamily: 'Inter'),
-      ),
+      textTheme: GoogleFonts.interTextTheme(),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryColor,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          textStyle: const TextStyle(
-            fontFamily: 'Inter',
+          textStyle: GoogleFonts.inter(
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),

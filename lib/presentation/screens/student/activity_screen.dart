@@ -45,6 +45,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
       final monthStr = DateFormat('yyyy-MM').format(_focusedDay);
       final behaviorDates = await _repository.getActivity(date: monthStr);
 
+      // Build a map that shows which behavior TYPES exist for each day based on dayStatuses
       final Map<DateTime, Set<String>> statuses = <DateTime, Set<String>>{};
 
       for (var item in behaviorDates) {
@@ -59,6 +60,8 @@ class _ActivityScreenState extends State<ActivityScreen> {
           statuses[dateKey] = <String>{};
         }
 
+        // Parse dayStatuses to count positive and negative occurrences
+        // dayStatuses format: "Positive ,Negative" or "Positive ," or ",Negative" or ","
         if (item.dayStatuses.isNotEmpty) {
           final parts = item.dayStatuses.split(',');
           int positiveCount = 0;
@@ -156,6 +159,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
     final dateKey = DateTime(day.year, day.month, day.day);
     final behaviorTypes = _behaviorStatuses[dateKey];
 
+    // Build list of ovals to display
     final List<Widget> ovals = [];
 
     if (behaviorTypes != null && behaviorTypes.isNotEmpty) {
@@ -550,6 +554,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
         String pointsText = '';
         String title = '';
 
+        // Check behaviorType first, then fall back to type
         final behaviorType =
             activity.behaviorType?.toUpperCase() ??
             activity.type.toUpperCase();
@@ -619,6 +624,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
     final localeProvider = context.watch<LocaleProvider>();
     final isArabic = localeProvider.isArabic;
 
+    // Show description in user's selected language
     final description = isArabic ? descriptionAr : descriptionEn;
 
     return Container(

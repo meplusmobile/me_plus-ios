@@ -9,6 +9,7 @@ import 'package:me_plus/presentation/screens/roleselection_screen.dart';
 import 'package:me_plus/presentation/screens/market_ownersignup_screen.dart';
 import 'package:me_plus/presentation/screens/parentsignup_screen.dart';
 import 'package:me_plus/presentation/screens/studentsignup_screen.dart';
+import 'package:me_plus/presentation/screens/google_signup_details_screen.dart';
 import 'package:me_plus/presentation/screens/onboarding_screen.dart';
 import 'package:me_plus/presentation/screens/forgot_password_screen.dart';
 import 'package:me_plus/presentation/screens/verify_code_screen.dart';
@@ -24,7 +25,6 @@ import 'package:me_plus/presentation/screens/student/profile_screen.dart';
 import 'package:me_plus/presentation/screens/student/account_screen.dart';
 import 'package:me_plus/presentation/screens/student/purchases_screen.dart';
 import 'package:me_plus/presentation/screens/student/missing_reward_screen.dart';
-import 'package:me_plus/presentation/screens/debug/debug_api_screen.dart';
 import 'package:me_plus/presentation/screens/school_class_selection_screen.dart';
 import 'package:me_plus/presentation/screens/market_owner/market_owner_home_screen.dart';
 import 'package:me_plus/presentation/screens/market_owner/add_reward_screen.dart';
@@ -70,6 +70,11 @@ class AppRouter {
         path: '/signup',
         name: 'signup',
         builder: (context, state) => const SignUpScreen(),
+      ),
+      GoRoute(
+        path: '/google-signup-details',
+        name: 'google-signup-details',
+        builder: (context, state) => const GoogleSignupDetailsScreen(),
       ),
       GoRoute(
         path: '/signup/student',
@@ -226,11 +231,7 @@ class AppRouter {
           const MissingRewardScreen(),
         ),
       ),
-      GoRoute(
-        path: '/debug/api',
-        name: 'debug-api',
-        builder: (context, state) => const DebugApiScreen(),
-      ),
+      // Market Owner Routes
       GoRoute(
         path: '/market-owner/home',
         name: 'market-owner-home',
@@ -311,6 +312,7 @@ class AppRouter {
           const MarketItemsScreen(),
         ),
       ),
+      // Parent Routes
       GoRoute(
         path: '/parent/home',
         name: 'parent-home',

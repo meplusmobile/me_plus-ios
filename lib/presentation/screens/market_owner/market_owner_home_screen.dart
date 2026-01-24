@@ -409,6 +409,7 @@ class _MarketOwnerHomeScreenState extends State<MarketOwnerHomeScreen> {
             .where((order) => order.status.toUpperCase() == 'IN PROGRESS')
             .toList();
 
+        // If no orders, show empty state
         if (inProgressOrders.isEmpty) {
           return Center(
             child: Text(AppLocalizations.of(context)!.t('no_recent_requests')),

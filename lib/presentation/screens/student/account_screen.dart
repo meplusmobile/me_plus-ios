@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:me_plus/core/constants/app_colors.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:dio/dio.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'dart:io';
 import 'package:me_plus/presentation/providers/profile_provider.dart';
 import 'package:me_plus/core/localization/app_localizations.dart';
-import 'package:me_plus/core/utils/image_picker_helper.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -26,9 +27,11 @@ class _AccountScreenState extends State<AccountScreen> {
   final _schoolController = TextEditingController();
   final _gradeController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isSaving = false;
+  bool _isPasswordEmpty = true;
   File? _selectedImage;
+  final ImagePicker _imagePicker = ImagePicker();
   String? _initialCountryCode;
-  // ignore: unused_field
   String? _fullPhoneNumber;
 
   @override
@@ -62,6 +65,7 @@ class _AccountScreenState extends State<AccountScreen> {
         _lastNameController.text = profile.lastName;
         _emailController.text = profile.email ?? '';
 
+        // Parse phone number
         if (profile.phone != null && profile.phone!.isNotEmpty) {
           _fullPhoneNumber = profile.phone;
           // Extract country code and number
@@ -72,6 +76,7 @@ class _AccountScreenState extends State<AccountScreen> {
             if (phone.startsWith('+961')) {
               _initialCountryCode = 'LB';
               String number = phone.substring(4); // Remove +961
+              // Remove leading 0 if exists
               if (number.startsWith('0')) {
                 number = number.substring(1);
               }
@@ -79,6 +84,7 @@ class _AccountScreenState extends State<AccountScreen> {
             } else if (phone.startsWith('+970')) {
               _initialCountryCode = 'PS';
               String number = phone.substring(4); // Remove +970
+              // Remove leading 0 if exists
               if (number.startsWith('0')) {
                 number = number.substring(1);
               }
@@ -110,13 +116,110 @@ class _AccountScreenState extends State<AccountScreen> {
     }
   }
 
+  Future<void> _saveProfile() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      final profileProvider = context.read<ProfileProvider>();
+
+      // Build update data as form-data
+      final updateData = <String, dynamic>{
+        'FirstName': _firstNameController.text.trim(),
+        'LastName': _lastNameController.text.trim(),
+        'PhoneNumber':
+            _fullPhoneNumber ?? _phoneController.text.trim(), // Use full number
+      };
+
+      // Add birthDate if provided
+      if (_dobController.text.isNotEmpty) {
+        updateData['BirthDate'] = _dobController.text;
+      }
+
+      // Add password if changed
+      if (_passwordController.text.isNotEmpty && !_isPasswordEmpty) {
+        updateData['Password'] = _passwordController.text;
+      }
+
+      // Add image if selected
+      if (_selectedImage != null) {
+        updateData['image'] = await MultipartFile.fromFile(
+          _selectedImage!.path,
+          filename: 'profile.jpg',
+        );
+      }
+
+      await profileProvider.updateProfile(updateData);
+
+      if (mounted) {
+        // Reload profile data from API after successful update
+        await _refreshProfile();
+
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              // ignore: use_build_context_synchronously
+              AppLocalizations.of(context)!.t('profile_updated_successfully'),
+            ),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        // Clear password field and selected image after successful update
+        _passwordController.clear();
+        _isPasswordEmpty = true;
+        setState(() {
+          _selectedImage = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${AppLocalizations.of(context)!.t('failed_to_update_profile')}: ${e.toString().replaceAll('Exception: ', '')}',
+            ),
+            backgroundColor: AppColors.errorLight,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
+  }
+
   Future<void> _pickImage() async {
-    final file = await ImagePickerHelper.showImageSourceDialog(context);
-    
-    if (file != null) {
-      setState(() {
-        _selectedImage = file;
-      });
+    try {
+      final XFile? pickedFile = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+
+      if (pickedFile != null) {
+        setState(() {
+          _selectedImage = File(pickedFile.path);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to pick image: $e'),
+            backgroundColor: AppColors.errorLight,
+          ),
+        );
+      }
     }
   }
 
@@ -212,7 +315,7 @@ class _AccountScreenState extends State<AccountScreen> {
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 48), // Balance the back button
         ],
       ),
     );
@@ -593,6 +696,42 @@ class _AccountScreenState extends State<AccountScreen> {
     } catch (e) {
       return isoDate;
     }
+  }
+
+  Widget _buildSaveButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: ElevatedButton(
+        onPressed: _isSaving ? null : _saveProfile,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          disabledBackgroundColor: AppColors.disabled,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(26),
+          ),
+          elevation: 0,
+        ),
+        child: _isSaving
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : Text(
+                AppLocalizations.of(context)!.t('save_changes'),
+                style: const TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+      ),
+    );
   }
 
   Widget _buildDropdownField({required String label, required String value}) {

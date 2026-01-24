@@ -44,7 +44,10 @@ class _WeekDetailsDialogState extends State<WeekDetailsDialog> {
 
       final behaviors = await _repository.getWeekDetails(widget.weekNumber);
 
+      // Translate all behavior notes
+      // ignore: use_build_context_synchronously
       final localeProvider = Provider.of<LocaleProvider>(
+        // ignore: use_build_context_synchronously
         context,
         listen: false,
       );
@@ -61,9 +64,11 @@ class _WeekDetailsDialogState extends State<WeekDetailsDialog> {
             );
 
             if (isArabic && sourceLanguage == 'en') {
+              // Translate English to Arabic
               _translatedTexts[cacheKey] = await _translationService
                   .translateToArabic(behavior.behaviorNotes);
             } else if (!isArabic && sourceLanguage == 'ar') {
+              // Translate Arabic to English
               _translatedTexts[cacheKey] = await _translationService
                   .translateToEnglish(behavior.behaviorNotes);
             } else {
@@ -71,6 +76,7 @@ class _WeekDetailsDialogState extends State<WeekDetailsDialog> {
               _translatedTexts[cacheKey] = behavior.behaviorNotes;
             }
           } catch (e) {
+            // If translation fails, use original text
             _translatedTexts[cacheKey] = behavior.behaviorNotes;
           }
         }
@@ -216,6 +222,7 @@ class _WeekDetailsDialogState extends State<WeekDetailsDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Header
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Stack(
@@ -251,6 +258,7 @@ class _WeekDetailsDialogState extends State<WeekDetailsDialog> {
                 ),
               ),
               const SizedBox(height: 16),
+              // Content
               Expanded(child: _buildContent()),
             ],
           ),
@@ -312,6 +320,7 @@ class _WeekDetailsDialogState extends State<WeekDetailsDialog> {
         final key = groupedBehaviors.keys.elementAt(index);
         final behaviors = groupedBehaviors[key]!;
 
+        // Parse key
         final parts = key.split('|');
         final dayName = parts[0];
         final date = DateTime.parse(parts[1]);
@@ -329,6 +338,7 @@ class _WeekDetailsDialogState extends State<WeekDetailsDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Day Header
         Padding(
           padding: const EdgeInsets.only(top: 16, bottom: 8),
           child: Text(
@@ -356,6 +366,7 @@ class _WeekDetailsDialogState extends State<WeekDetailsDialog> {
     final points = behavior.totalPoints;
     final pointsText = points >= 0 ? '+$points XP' : '$points XP';
 
+    // Get translated text from cache
     final cacheKey = '${behavior.behaviorNotes}_${isArabic ? 'ar' : 'en'}';
     final displayNotes = _translatedTexts[cacheKey] ?? behavior.behaviorNotes;
 

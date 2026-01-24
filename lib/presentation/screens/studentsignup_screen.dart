@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -41,6 +42,7 @@ class _StudentScreenSignUpState extends State<StudentScreenSignUp> {
         password: signupData.password!,
       );
 
+      // Call API - signup in background
       await _authService.signup(request);
 
       if (mounted) {
@@ -48,8 +50,9 @@ class _StudentScreenSignUpState extends State<StudentScreenSignUp> {
           _isLoading = false;
         });
 
+        // Navigate directly to school/class selection screen
         // Token is already saved in signup response automatically
-        context.go('/signup/student/school-selection');
+        context.push('/signup/student/school-selection');
       }
     } catch (e) {
       if (mounted) {
@@ -69,11 +72,14 @@ class _StudentScreenSignUpState extends State<StudentScreenSignUp> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        backgroundColor: AppColors.background,
+        body: SafeArea(
         child: Stack(
           children: [
+            // Background blur image
             Positioned(
               top: -180,
               left: 0,
@@ -98,6 +104,7 @@ class _StudentScreenSignUpState extends State<StudentScreenSignUp> {
               ),
             ),
 
+            // Bottom decoration
             Positioned(
               left: 0,
               right: 0,
@@ -109,6 +116,7 @@ class _StudentScreenSignUpState extends State<StudentScreenSignUp> {
               ),
             ),
 
+            // Top left logo (with IgnorePointer to allow clicks through)
             Positioned(
               top: 40,
               left: 12,
@@ -130,6 +138,7 @@ class _StudentScreenSignUpState extends State<StudentScreenSignUp> {
                   children: [
                     const SizedBox(height: 158),
 
+                    // Header
                     Column(
                       children: [
                         const GradientText(
@@ -149,7 +158,7 @@ class _StudentScreenSignUpState extends State<StudentScreenSignUp> {
                         Text(
                           'Complete your registration. You will select your school and class in the next step.',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(fontFamily: 'Inter', 
+                          style: GoogleFonts.inter(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                             color: AppColors.disabled,
@@ -178,6 +187,7 @@ class _StudentScreenSignUpState extends State<StudentScreenSignUp> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

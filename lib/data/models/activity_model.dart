@@ -232,6 +232,7 @@ class NotificationModel {
     };
   }
 
+  /// Copy with method to create a new instance with updated fields
   NotificationModel copyWith({
     int? id,
     String? title,

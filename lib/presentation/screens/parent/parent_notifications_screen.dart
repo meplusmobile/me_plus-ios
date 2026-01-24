@@ -257,6 +257,7 @@ class _ParentNotificationsScreenState extends State<ParentNotificationsScreen> {
                 if (!notification.isRead) {
                   _markAsRead(notification.id);
                 }
+                // Navigate to child activity page
                 final childrenProvider = context.read<ChildrenProvider>();
                 if (childrenProvider.hasChildren) {
                   final firstChild = childrenProvider.children.first;
@@ -300,6 +301,7 @@ class _ParentNotificationsScreenState extends State<ParentNotificationsScreen> {
   String _getFullImageUrl(String? imageUrl) {
     if (imageUrl == null || imageUrl.isEmpty) return '';
 
+    // If already a full URL, return as is
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
       return imageUrl;
     }
@@ -307,6 +309,7 @@ class _ParentNotificationsScreenState extends State<ParentNotificationsScreen> {
     // Azure Blob Storage base URL for images
     const baseUrl = 'https://meplus2.blob.core.windows.net/images';
 
+    // Remove leading slash if present
     final cleanPath = imageUrl.startsWith('/')
         ? imageUrl.substring(1)
         : imageUrl;
@@ -328,9 +331,11 @@ class _ParentNotificationsScreenState extends State<ParentNotificationsScreen> {
     final localeProvider = context.watch<LocaleProvider>();
     final isArabic = localeProvider.isArabic;
 
+    // Show message in user's selected language
     // Names (student, teacher) are already preserved in the translated messages
     final message = isArabic ? messageAr : messageEn;
 
+    // Get full image URL
     final fullImageUrl = _getFullImageUrl(imageUrl);
 
     return Container(
@@ -349,6 +354,7 @@ class _ParentNotificationsScreenState extends State<ParentNotificationsScreen> {
         children: [
           Stack(
             children: [
+              // Show image from API if available, otherwise use icon
               fullImageUrl.isNotEmpty
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(20),

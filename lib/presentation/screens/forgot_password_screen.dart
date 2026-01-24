@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:me_plus/presentation/theme/app_colors.dart';
 import 'package:me_plus/presentation/widgets/custom_text_field_signin.dart';
@@ -80,6 +81,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
           _isLoading = false;
         });
 
+        // Navigate to verification code screen
         context.push('/verify-code', extra: _emailController.text);
       }
     } catch (e) {
@@ -105,6 +107,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
       body: Stack(
         fit: StackFit.expand,
         children: [
+          // Bottom decoration - cover from middle to bottom
           Positioned(
             left: 0,
             right: 0,
@@ -125,6 +128,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 80), // Increased space for logo area
+                    // Back button directly above title
                     Material(
                       color: Colors.transparent,
                       child: InkWell(
@@ -147,6 +151,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
                     const SizedBox(height: 8),
 
+                    // Title
                     FadeTransition(
                       opacity: _fadeAnimations[0],
                       child: SlideTransition(
@@ -159,7 +164,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                             final localizations = AppLocalizations.of(context)!;
                             return Text(
                               localizations.t('forgot_your_password'),
-                              style: const TextStyle(fontFamily: 'Poppins', 
+                              style: GoogleFonts.poppins(
                                 fontSize: 32,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.textPrimary,
@@ -174,6 +179,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
                     const SizedBox(height: 8),
 
+                    // Subtitle
                     FadeTransition(
                       opacity: _fadeAnimations[0],
                       child: SlideTransition(
@@ -186,7 +192,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                             final localizations = AppLocalizations.of(context)!;
                             return Text(
                               localizations.t('enter_email_to_reset'),
-                              style: const TextStyle(fontFamily: 'Inter', 
+                              style: GoogleFonts.inter(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
                                 color: AppColors.disabled,
@@ -215,7 +221,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                               children: [
                                 Text(
                                   localizations.t('email'),
-                                  style: const TextStyle(fontFamily: 'Poppins', 
+                                  style: GoogleFonts.poppins(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w500,
                                     color: AppColors.disabled,
@@ -275,6 +281,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
             ),
           ),
 
+          // Logo and language switcher at top - moved down
           Positioned(
             top: 0,
             left: 0,
@@ -288,8 +295,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
+                    // Empty space to balance the layout
                     const SizedBox(width: 48),
 
+                    // Logo
                     FadeTransition(
                       opacity: _fadeAnimations[3],
                       child: SvgPicture.asset(
