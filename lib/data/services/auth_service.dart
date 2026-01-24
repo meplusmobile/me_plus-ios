@@ -90,20 +90,19 @@ class AuthService {
       );
 
       // CRITICAL TEST: Verify token was actually saved and can be retrieved
-      debugPrint('🧪 [Login] Testing token retrieval immediately after save...');
+      // With in-memory cache, this should be instant!
+      debugPrint('🧪 [Login] Verifying token immediately after save...');
       final testToken = await _tokenStorage.getToken();
-      debugPrint('🧪 [Login] Token retrieved: ${testToken != null ? "SUCCESS" : "FAILED"}');
+      
       if (testToken == null) {
         debugPrint('🚨 [Login] CRITICAL: Token is NULL after save!');
         _debugLog.logError('CRITICAL: Token NULL after save!');
+      } else if (testToken == authResponse.token) {
+        debugPrint('✅✅✅ [Login] Token verified: ${testToken.substring(0, 20)}... (length: ${testToken.length})');
+        _debugLog.logSuccess('✅✅✅ LOGIN SUCCESS - Token verified!');
       } else {
-        debugPrint('🧪 [Login] Token matches: ${testToken == authResponse.token}');
-        debugPrint('🧪 [Login] Token length: ${testToken.length} vs ${authResponse.token.length}');
-        if (testToken == authResponse.token) {
-          _debugLog.logSuccess('Token verified: saved and retrieved successfully!');
-        } else {
-          _debugLog.logError('Token mismatch! Saved != Retrieved');
-        }
+        debugPrint('⚠️ [Login] Token mismatch! Length: ${testToken.length} vs ${authResponse.token.length}');
+        _debugLog.logError('Token mismatch! Saved != Retrieved');
       }
 
       _debugLog.logSuccess('Login successful! Token saved to iOS Keychain');

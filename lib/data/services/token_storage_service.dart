@@ -13,6 +13,11 @@ class TokenStorageService {
   static const String _savedPasswordKey = 'saved_password';
 
   final _storage = StorageService();
+  
+  // ========== IN-MEMORY CACHE FOR INSTANT ACCESS ==========
+  // Critical for iOS: Keychain has delay, cache gives instant access
+  String? _cachedAccessToken;
+  String? _cachedRefreshToken;
 
   // Save authentication data - tokens use iOS Keychain for security
   Future<void> saveAuthData({
@@ -23,25 +28,55 @@ class TokenStorageService {
     required String role,
     required bool isFirstTimeUser,
   }) async {
-    // Save tokens to secure storage (iOS Keychain)
+    debugPrint('💾 [TokenStorage] Saving auth data...');
+    
+    // 1. Cache tokens in memory FIRST (instant access)
+    _cachedAccessToken = token;
+    _cachedRefreshToken = refreshToken;
+    debugPrint('✅ [TokenStorage] Tokens cached in memory');
+    
+    // 2. Save tokens to iOS Keychain (with proper timing)
     await _storage.saveSecureString(_tokenKey, token);
     await _storage.saveSecureString(_refreshTokenKey, refreshToken);
     
-    // Save other data to regular preferences
+    // 3. Save other data to storage
     await _storage.saveString(_userIdKey, userId);
     await _storage.saveString(_userEmailKey, email);
     await _storage.saveString(_userRoleKey, role);
     await _storage.saveBool(_isFirstTimeUserKey, isFirstTimeUser);
     
-    debugPrint('✅ Auth data saved: token & refreshToken in iOS Keychain, userId=$userId');
+    debugPrint('✅ [TokenStorage] Auth data saved: userId=$userId');
   }
 
   Future<String?> getToken() async {
-    return await _storage.getSecureString(_tokenKey);
+    // Try cache first (instant!)
+    if (_cachedAccessToken != null) {
+      debugPrint('🎯 [TokenStorage] Token from cache (instant)');
+      return _cachedAccessToken;
+    }
+    
+    // Fallback to keychain
+    debugPrint('🔍 [TokenStorage] Reading token from keychain...');
+    final token = await _storage.getSecureString(_tokenKey);
+    if (token != null) {
+      _cachedAccessToken = token; // Cache it for next time
+      debugPrint('✅ [TokenStorage] Token loaded and cached');
+    }
+    return token;
   }
 
   Future<String?> getRefreshToken() async {
-    return await _storage.getSecureString(_refreshTokenKey);
+    // Try cache first
+    if (_cachedRefreshToken != null) {
+      return _cachedRefreshToken;
+    }
+    
+    // Fallback to keychain
+    final refreshToken = await _storage.getSecureString(_refreshTokenKey);
+    if (refreshToken != null) {
+      _cachedRefreshToken = refreshToken;
+    }
+    return refreshToken;
   }
 
   Future<String?> getUserId() async {
@@ -68,6 +103,12 @@ class TokenStorageService {
   // Clear all authentication data (logout)
   Future<void> clearAuthData() async {
     try {
+      debugPrint('🗑️ [TokenStorage] Clearing auth data...');
+      
+      // Clear cache FIRST
+      _cachedAccessToken = null;
+      _cachedRefreshToken = null;
+      
       // Clear tokens from iOS Keychain
       await _storage.removeSecure(_tokenKey);
       await _storage.removeSecure(_refreshTokenKey);

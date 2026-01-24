@@ -25,11 +25,11 @@ class StorageService {
       debugPrint('🔄 Initializing FlutterSecureStorage (iOS Keychain)...');
       
       // Critical iOS Keychain settings:
-      // - unlocked: accessible when device is unlocked
+      // - unlocked_this_device: Most reliable, no iCloud sync, device-only
       // - synchronizable: false = don't sync to iCloud (fixes most issues)
       _secureStorage = FlutterSecureStorage(
         iOptions: IOSOptions(
-          accessibility: KeychainAccessibility.unlocked,
+          accessibility: KeychainAccessibility.unlocked_this_device,
           synchronizable: false,
         ),
         aOptions: AndroidOptions(
