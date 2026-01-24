@@ -24,11 +24,13 @@ class StorageService {
       // Initialize secure storage with iOS Keychain configuration
       debugPrint('🔄 Initializing FlutterSecureStorage (iOS Keychain)...');
       
-      // Use unlocked accessibility for better iOS compatibility
+      // Critical iOS Keychain settings:
+      // - unlocked: accessible when device is unlocked
+      // - synchronizable: false = don't sync to iCloud (fixes most issues)
       _secureStorage = FlutterSecureStorage(
         iOptions: IOSOptions(
           accessibility: KeychainAccessibility.unlocked,
-          accountName: 'com.meplus.mobileapp',
+          synchronizable: false,
         ),
         aOptions: AndroidOptions(
           encryptedSharedPreferences: true,
@@ -39,10 +41,24 @@ class StorageService {
       
       // Test write/read to verify it works
       try {
-        await _secureStorage!.write(key: '__test__', value: 'test');
-        final testRead = await _secureStorage!.read(key: '__test__');
-        await _secureStorage!.delete(key: '__test__');
-        debugPrint('✅ Keychain test: ${testRead == 'test' ? 'PASSED' : 'FAILED'}');
+        const testKey = '__storage_init_test__';
+        const testValue = 'test_value_12345';
+        
+        await _secureStorage!.write(key: testKey, value: testValue);
+        debugPrint('🧪 Test write complete');
+        
+        await Future.delayed(const Duration(milliseconds: 200));
+        
+        final testRead = await _secureStorage!.read(key: testKey);
+        debugPrint('🧪 Test read: ${testRead != null ? 'SUCCESS' : 'FAILED'}');
+        
+        await _secureStorage!.delete(key: testKey);
+        
+        if (testRead == testValue) {
+          debugPrint('✅ Keychain test: PASSED ✅');
+        } else {
+          debugPrint('❌ Keychain test: FAILED (read: $testRead)');
+        }
       } catch (e) {
         debugPrint('⚠️ Keychain test error: $e');
       }
@@ -75,15 +91,25 @@ class StorageService {
       await secureStorage!.write(key: key, value: value);
       debugPrint('✅ [saveSecureString] Write complete: $key (length: ${value.length})');
       
-      // Add small delay to ensure iOS Keychain commits
-      await Future.delayed(const Duration(milliseconds: 100));
+      // iOS Keychain requires a brief delay for write operations to commit
+      await Future.delayed(const Duration(milliseconds: 250));
       
       // Verify the write
       final verify = await secureStorage!.read(key: key);
       if (verify == value) {
-        debugPrint('🧪 [saveSecureString] ✅ Verification SUCCESS');
+        debugPrint('🧪 [saveSecureString] ✅ Verification: SUCCESS ✅');
+      } else if (verify == null) {
+        debugPrint('🧪 [saveSecureString] ❌ Verification: FAILED - Read returned NULL');
+        // Try one more time after longer delay
+        await Future.delayed(const Duration(milliseconds: 500));
+        final retry = await secureStorage!.read(key: key);
+        if (retry == value) {
+          debugPrint('🧪 [saveSecureString] ✅ Retry verification: SUCCESS');
+        } else {
+          debugPrint('🧪 [saveSecureString] ❌ Retry verification: STILL NULL');
+        }
       } else {
-        debugPrint('🧪 [saveSecureString] ❌ Verification FAILED: ${verify == null ? 'NULL' : 'MISMATCH'}');
+        debugPrint('🧪 [saveSecureString] ⚠️ Verification: MISMATCH (length: ${verify.length})');
       }
     } catch (e, stackTrace) {
       debugPrint('❌ [saveSecureString] Error: $e');
